@@ -1,5 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { MESSAGEID } from "../utils/utils";
+import { gameSettings } from "../game/global";
+import { CheckResult } from "../game/slotResults";
 
 export const messageHandler = (socket: Server, clientId: string) => {
   return (message: any) => {
@@ -9,10 +11,13 @@ export const messageHandler = (socket: Server, clientId: string) => {
     );
 
     if (messageData.id == MESSAGEID.AUTH) {
-      //   gameSettings.initiate(messageData.Data.GameID, clientId);
+      gameSettings.initiate(messageData.Data.GameID, clientId);
     }
 
-    if (messageData.id === MESSAGEID.SPIN) {
+    if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
+      gameSettings.currentBet = messageData.Data.CurrentBet;
+      const result = new CheckResult(clientId);
+      //  result.searchWinSymbols();
     }
 
     if (messageData.id === MESSAGEID.GAMBLE) {

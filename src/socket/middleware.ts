@@ -1,9 +1,13 @@
-import { emitError, initializeErrorEmmiter } from "../utils/erroremmiter";
+import {
+  MyEmmiter,
+  gameEmiter,
+  initializeErrorEmmiter,
+} from "../utils/gameEmmiter";
 
 const socketMiddleware = (socket, next) => {
   initializeErrorEmmiter(socket);
   console.log(`Socket middleware triggered for socket ID: ${socket.id}`);
-  emitError.Call("101", "BHAG JAA");
+  // emitError.CallError("101", "hello");
   next();
 };
 

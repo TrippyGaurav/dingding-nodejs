@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { clients } from "../utils/utils";
 import { messageHandler } from "./handler";
-import { emitError, initializeErrorEmmiter } from "../utils/erroremmiter";
+import { gameEmiter, initializeErrorEmmiter } from "../utils/gameEmmiter";
 
 const socketController = (io) => {
   io.on("connection", (socket) => {
