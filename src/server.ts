@@ -4,6 +4,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import socketMiddleware from "./socket/middleware";
 import socketController from "./socket/controller";
+import { error } from "console";
 
 const app = express();
 

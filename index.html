@@ -10,7 +10,18 @@
       socket.on("connect", () => {
         console.log("Connected to the server");
 
-        socket.emit("message", JSON.stringify({ message: "Hello" }));
+        socket.emit(
+          "message",
+          JSON.stringify({
+            id: "1",
+            data: {
+              gameId: "Keno",
+            },
+          })
+        );
+      });
+      socket.on("InternalError", (errorMessage) => {
+        console.log(errorMessage);
       });
 
       // Listen for the custom event from the server

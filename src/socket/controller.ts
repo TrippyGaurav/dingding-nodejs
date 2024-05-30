@@ -1,16 +1,14 @@
 import { v4 as uuidv4 } from "uuid";
 import { clients } from "../utils/utils";
 import { messageHandler } from "./handler";
+import { emitError, initializeErrorEmmiter } from "../utils/erroremmiter";
 
 const socketController = (io) => {
   io.on("connection", (socket) => {
     io.emit("newConnectionAlert", "A new user has connected!");
 
     let isAlive = true;
-
-    // Generate a unique client ID
-    const clientId = uuidv4();
-    clients.set(clientId, socket);
+    clients.set(socket.id, socket);
 
     // Function to handle pong messages
     function heartbeat() {
@@ -36,11 +34,17 @@ const socketController = (io) => {
 
     socket.on("pong", heartbeat);
 
-    socket.on("message", messageHandler(socket));
+    socket.on("message", messageHandler(socket, socket.id));
 
     socket.on("disconnect", () => {
       console.log("A user disconnected");
     });
+
+    // Error handling
+    // socket.on("error", (err) => {
+    //   console.error("Socket error: ", err.message);
+    //   socket.emit("errorMessage", { message: err.message });
+    // });
   });
 };
 
