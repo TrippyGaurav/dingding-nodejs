@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h2>WebSocket Test</h2>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+
+    <script t>
+      const socket = io("http://localhost:3000");
+
+      socket.on("connect", () => {
+        console.log("Connected to the server");
+      });
+
+      // Listen for the custom event from the server
+      socket.on("newConnectionAlert", (message) => {
+        console.log(message); // Display the alert message in the console
+        // Optionally, you could display this message in the UI as well
+      });
+    </script>
+  </body>
+</html>
