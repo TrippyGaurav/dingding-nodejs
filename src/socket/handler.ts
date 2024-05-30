@@ -1,13 +1,8 @@
-const socketHandler = (io) => {
-  io.on("connection", (socket) => {
-    console.log("A user connected");
+import { Server } from "socket.io";
 
-    io.emit("newConnectionAlert", "A new user has connected!");
-
-    socket.on("disconnect", () => {
-      console.log("A user disconnected");
-    });
-  });
+export const messageHandler = (socket: Server) => {
+  return (message: any) => {
+    const messageData = JSON.parse(message);
+    console.log("Message : ", messageData);
+  };
 };
-
-export default socketHandler;

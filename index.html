@@ -9,6 +9,8 @@
 
       socket.on("connect", () => {
         console.log("Connected to the server");
+
+        socket.emit("message", JSON.stringify({ message: "Hello" }));
       });
 
       // Listen for the custom event from the server
