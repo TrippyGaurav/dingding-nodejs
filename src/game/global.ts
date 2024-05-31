@@ -8,7 +8,8 @@ import {
   specialIcons,
   winning,
 } from "./gameUtils";
-import { gameEmiter } from "../utils/gameEmmiter";
+import { getClient } from "../user/user";
+// import { gameEmiter } from "../utils/gameEmmiter";
 //TODO : Need to work here
 // import { sendMessageToClient } from "./App";
 // import { Alerts } from "./Alerts";
@@ -71,14 +72,14 @@ export const gameSettings: GameSettings = {
       const data = await resp.json();
       if (data == "Not found") {
         // Alerts(clientID, "Invalid Game ID");
-        gameEmiter.sendError("404", "GAMENOTFOUND");
+        getClient(clientID).sendError("404", "GAMENOTFOUND");
         gameSettings.startGame = false;
         return;
       }
       gameSettings.currentGamedata = data;
       // const currentGameData=gameData.filter((element)=>element.id==GameID)
     } catch (error) {
-      gameEmiter.sendError("404", "NETWORK ERROR");
+      getClient(clientID).sendError("404", "NETWORK ERROR");
 
       return;
     }

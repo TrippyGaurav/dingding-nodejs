@@ -1,6 +1,6 @@
 import { gameSettings, playerData } from "./global";
 import { bonusGameType } from "./gameUtils";
-import { gameEmiter } from "../utils/gameEmmiter";
+import { getClient } from "../user/user";
 // import { sendMessageToClient } from "./App";
 
 export class GambleGame {
@@ -53,7 +53,7 @@ export class GambleGame {
       PlayerData: playerData,
     };
     //TODO : ADD MESSAGE FOR CLIENT
-    gameEmiter.sendMessage("GambleResult", ResultData);
+    getClient(clientId).sendMessage("GambleResult", ResultData);
     // sendMessageToClient(clientId, "GambleResult", ResultData);
   }
 

@@ -9,7 +9,7 @@ import {
   bonusGameType,
 } from "./gameUtils";
 import { bonusGame } from "./bonusResults";
-import { gameEmiter } from "../utils/gameEmmiter";
+import { getClient } from "../user/user";
 
 export class CheckResult {
   clientID: string;
@@ -45,6 +45,7 @@ export class CheckResult {
       // Alerts(clientID, "Low Balance");
       return;
     }
+    // TODO : Middle ware goes here
     console.log("CurrentBet : " + gameSettings.currentBet);
 
     playerData.Balance -= gameSettings.currentBet;
@@ -375,7 +376,7 @@ export class CheckResult {
       },
       PlayerData: playerData,
     };
-    gameEmiter.sendMessage("ResultData", ResultData);
+    getClient(this.clientID).sendMessage("ResultData", ResultData);
     // sendMessageToClient(this.clientID, "ResultData", ResultData);
   }
 

@@ -5,3 +5,9 @@ export enum MESSAGEID {
   SPIN = "SPIN",
   GAMBLE = "GAMBLE",
 }
+
+export const enum MESSAGETYPE {
+  ALERT = "alert",
+  MESSAGE = "message",
+  ERROR = "internalError",
+}
