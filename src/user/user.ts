@@ -1,5 +1,4 @@
-import { Socket, Server } from "socket.io";
-import { v4 as uuidv4 } from "uuid";
+import { Socket } from "socket.io";
 import { MESSAGEID, MESSAGETYPE } from "../utils/utils";
 import { gameSettings } from "../game/global";
 import { CheckResult } from "../game/slotResults";

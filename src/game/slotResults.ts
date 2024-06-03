@@ -10,6 +10,7 @@ import {
 } from "./gameUtils";
 import { bonusGame } from "./bonusResults";
 import { getClient } from "../user/user";
+import { middleware } from "../utils/middleware";
 
 export class CheckResult {
   clientID: string;
@@ -45,7 +46,12 @@ export class CheckResult {
       // Alerts(clientID, "Low Balance");
       return;
     }
+
     // TODO : Middle ware goes here
+    (async () => {
+      await middleware();
+    })();
+
     console.log("CurrentBet : " + gameSettings.currentBet);
 
     playerData.Balance -= gameSettings.currentBet;

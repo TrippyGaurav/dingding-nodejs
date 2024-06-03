@@ -2,9 +2,7 @@ import express from "express";
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import socketMiddleware from "./socket/middleware";
 import socketController from "./socket/controller";
-import { error } from "console";
 
 const app = express();
 
@@ -19,7 +17,6 @@ const io = new Server(server, {
   },
 });
 
-io.use(socketMiddleware);
 socketController(io);
 
 export default server;
