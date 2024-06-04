@@ -1,8 +1,8 @@
-import { Socket, Server } from "socket.io";
-import { v4 as uuidv4 } from "uuid";
+import { Socket } from "socket.io";
 import { MESSAGEID, MESSAGETYPE } from "../utils/utils";
 import { gameSettings } from "../game/global";
 import { CheckResult } from "../game/slotResults";
+import { getRTP } from "../game/rtpgenerator";
 
 export let users: Map<string, User> = new Map();
 
@@ -13,7 +13,7 @@ export class User {
   constructor(socket: Socket) {
     this.isAlive = true;
     this.socket = socket;
-    console.log(socket.id);
+    console.log("Client if from users:", socket.id);
 
     socket.on("pong", this.heartbeat);
     socket.on("message", this.messageHandler());
@@ -51,7 +51,8 @@ export class User {
 
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
         gameSettings.currentBet = messageData.data.currentBet;
-        new CheckResult(this.socket.id);
+        // new CheckResult(this.socket.id);
+        getRTP(this.socket.id);
       }
 
       if (messageData.id === MESSAGEID.GAMBLE) {
