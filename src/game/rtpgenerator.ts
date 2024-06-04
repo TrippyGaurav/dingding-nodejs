@@ -5,7 +5,7 @@ export function getRTP(client: string) {
   let moneySpend: number = 0;
   let moneyWon: number = 0;
 
-  for (let i = 0; i < 100000; i++) {
+  for (let i = 0; i < 100; i++) {
     const resultData = new CheckResult(client);
     moneySpend += gameSettings.currentBet;
     moneyWon += resultData.winData.totalWinningAmount;
