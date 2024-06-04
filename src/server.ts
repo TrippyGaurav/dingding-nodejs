@@ -3,10 +3,24 @@ import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import socketController from "./socket/controller";
-
+import transactionRoutes from "./dashboard/transaction/transactionRoutes";
+import companyController from "./dashboard/controllers";
+import userRoutes from "./dashboard/user/userRoutes";
 const app = express();
 
-app.use(cors({ origin: "*" }));
+const corsOptions = {
+  origin: [
+    "*",
+
+    "http://192.168.1.26:5173",
+    "http://localhost:3000",
+    "https://game-crm-backend-r32s.onrender.com",
+  ],
+  credentials: true,
+  optionSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 const server = createServer(app);
 // HEALTH ROUTES
@@ -18,6 +32,10 @@ app.get("/", (req, res, next) => {
   };
   res.status(200).json(health);
 });
+//OTHER ROUTES
+app.use("/api/users", userRoutes);
+app.use("/api/transaction", transactionRoutes);
+app.use("/api/company", companyController);
 const io = new Server(server, {
   cors: {
     origin: "*",
