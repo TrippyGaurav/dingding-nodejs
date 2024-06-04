@@ -76,7 +76,6 @@ export const gameSettings: GameSettings = {
       // const currentGameData=gameData.filter((element)=>element.id==GameID)
     } catch (error) {
       getClient(clientID).sendError("404", "NETWORK ERROR");
-
       return;
     }
 
@@ -148,6 +147,7 @@ export function addPayLineSymbols(
     pay: pay,
     freeSpins: freeSpins,
   });
+  
 }
 
 export function makePayLines() {

@@ -13,7 +13,7 @@ export class User {
   constructor(socket: Socket) {
     this.isAlive = true;
     this.socket = socket;
-    console.log(socket.id);
+    console.log("Client if from users:", socket.id);
 
     socket.on("pong", this.heartbeat);
     socket.on("message", this.messageHandler());

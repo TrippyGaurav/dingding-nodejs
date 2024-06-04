@@ -11,7 +11,7 @@ import {
 import { bonusGame } from "./bonusResults";
 import { getClient } from "../user/user";
 import { middleware } from "../utils/middleware";
-
+import { startInfiniteSpins } from "./reel";
 export class CheckResult {
   clientID: string;
   scatter: string;
