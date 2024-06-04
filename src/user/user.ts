@@ -51,9 +51,13 @@ export class User {
 
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
         gameSettings.currentBet = messageData.data.currentBet;
-        // new CheckResult(this.socket.id);
-        getRTP(this.socket.id);
+        new CheckResult(this.socket.id);
       }
+      if(messageData.id == "generateRTP")
+        {
+          gameSettings.currentBet = messageData.data.currentBet;
+          getRTP(this.socket.id,messageData.data.spins);
+        }
 
       if (messageData.id === MESSAGEID.GAMBLE) {
       }
