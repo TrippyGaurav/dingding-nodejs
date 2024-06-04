@@ -59,18 +59,18 @@ export class CheckResult {
     console.log("player balance:", playerData.Balance);
     console.log("player havewon:", playerData.haveWon);
 
-    const rng = new RandomResultGenerator();
+    new RandomResultGenerator();
 
-    this.scatter = specialIcons.scatter;
     gameSettings.bonus.start = false;
-
+    this.scatter = specialIcons.scatter;
     this.useScatter = gameSettings.useScatter && this.scatter !== null;
-
     this.jackpot = gameSettings.jackpot;
     this.useJackpot = this.jackpot !== null;
     this.scatterPayTable = gameSettings.scatterPayTable;
     this.bonusPaytable = gameSettings.bonusPayTable;
     this.reels = gameSettings.resultSymbolMatrix;
+    console.log("SCATTER PAYTABLE : ", this.scatterPayTable);
+    console.log("Bonus PAYTABLE : ", this.bonusPaytable);
 
     // this.scatterWin = [];
     // this.jackpotWin = [];
@@ -457,6 +457,7 @@ export class PayLines {
   line: any;
   pay: any;
   freeSpins: any;
+
   constructor(line, pay, freeSpins, wild) {
     this.line = line;
     this.pay = pay;

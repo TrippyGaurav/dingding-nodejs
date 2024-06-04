@@ -2,6 +2,7 @@ import { Socket } from "socket.io";
 import { MESSAGEID, MESSAGETYPE } from "../utils/utils";
 import { gameSettings } from "../game/global";
 import { CheckResult } from "../game/slotResults";
+import { getRTP } from "../game/rtpgenerator";
 
 export let users: Map<string, User> = new Map();
 
@@ -50,7 +51,8 @@ export class User {
 
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
         gameSettings.currentBet = messageData.data.currentBet;
-        new CheckResult(this.socket.id);
+        // new CheckResult(this.socket.id);
+        getRTP(this.socket.id);
       }
 
       if (messageData.id === MESSAGEID.GAMBLE) {
