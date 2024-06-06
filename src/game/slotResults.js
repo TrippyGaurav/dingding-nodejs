@@ -91,6 +91,9 @@ class CheckResult {
         console.log("TOTAL WINING : " + this.winData.totalWinningAmount);
         // console.log(gameWining.WinningLines);
         // console.log(gameWining.winningSymbols);
+        const winRate = (global_1.getCurrentRTP.playerWon / global_1.getCurrentRTP.playerTotalBets) * 100;
+        console.log(`Total Spend : ${global_1.getCurrentRTP.playerTotalBets}  Total Won : ${global_1.getCurrentRTP.playerWon} 
+      Current RTP : ${winRate.toFixed(2)}% `);
         console.log("_____________RESULT_END________________");
     }
     checkForBonus() {
@@ -467,6 +470,8 @@ class WinData {
         global_1.playerData.Balance += this.totalWinningAmount;
         global_1.playerData.haveWon += this.totalWinningAmount;
         global_1.playerData.currentWining = this.totalWinningAmount;
+        global_1.getCurrentRTP.playerWon += this.totalWinningAmount;
+        global_1.getCurrentRTP.playerTotalBets += global_1.gameSettings.currentBet;
         // gameWining.freeSpins = gameWining.freeSpins+this.freeSpins;
     }
 }

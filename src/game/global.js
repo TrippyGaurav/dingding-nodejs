@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.makePayLines = exports.addPayLineSymbols = exports.gameWining = exports.UiInitData = exports.playerData = exports.gameSettings = void 0;
+exports.makePayLines = exports.addPayLineSymbols = exports.getCurrentRTP = exports.gameWining = exports.UiInitData = exports.playerData = exports.gameSettings = void 0;
 const slotDataInit_1 = require("./slotDataInit");
 const gameUtils_1 = require("./gameUtils");
 const user_1 = require("../user/user");
@@ -119,6 +119,10 @@ exports.gameWining = {
     shouldFreeSpin: undefined,
     freeSpins: 0,
     currentBet: 0,
+};
+exports.getCurrentRTP = {
+    playerWon: 0,
+    playerTotalBets: 0,
 };
 function addPayLineSymbols(symbol, repetition, pay, freeSpins) {
     const line = Array(repetition).fill(symbol); // Create an array with 'repetition' number of 'symbol'
