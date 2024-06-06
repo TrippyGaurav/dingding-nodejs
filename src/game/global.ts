@@ -128,6 +128,10 @@ export let gameWining: winning = {
   freeSpins: 0,
   currentBet: 0,
 };
+export const getCurrentRTP = {
+  playerWon: 0,
+  playerTotalBets: 0,
+};
 
 export function addPayLineSymbols(
   symbol: string,
@@ -147,7 +151,6 @@ export function addPayLineSymbols(
     pay: pay,
     freeSpins: freeSpins,
   });
-  
 }
 
 export function makePayLines() {

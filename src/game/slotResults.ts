@@ -1,6 +1,6 @@
 // import { Alerts } from "./Alerts";
 // import { sendMessageToClient } from "./App";
-import { gameSettings, playerData } from "./global";
+import { gameSettings, getCurrentRTP, playerData } from "./global";
 import { RandomResultGenerator } from "./slotDataInit";
 import {
   ScatterPayEntry,
@@ -130,6 +130,14 @@ export class CheckResult {
     console.log("TOTAL WINING : " + this.winData.totalWinningAmount);
     // console.log(gameWining.WinningLines);
     // console.log(gameWining.winningSymbols);
+    const winRate: number =
+      (getCurrentRTP.playerWon / getCurrentRTP.playerTotalBets) * 100;
+    console.log(
+      `Total Spend : ${getCurrentRTP.playerTotalBets}  Total Won : ${
+        getCurrentRTP.playerWon
+      } 
+      Current RTP : ${winRate.toFixed(2)}% `
+    );
 
     console.log("_____________RESULT_END________________");
   }
@@ -575,6 +583,9 @@ export class WinData {
     playerData.Balance += this.totalWinningAmount;
     playerData.haveWon += this.totalWinningAmount;
     playerData.currentWining = this.totalWinningAmount;
+
+    getCurrentRTP.playerWon += this.totalWinningAmount;
+    getCurrentRTP.playerTotalBets += gameSettings.currentBet;
     // gameWining.freeSpins = gameWining.freeSpins+this.freeSpins;
   }
 }

@@ -12,10 +12,10 @@
     >
       <button id="spin" style="padding: 8px 16px; font-size: 16px">Spin</button>
     </div>
-    <script src="https://game-rtp-backend.onrender.com/socket.io/socket.io.js"></script>
+    <script src="http://localhost:5000/socket.io/socket.io.js"></script>
 
     <script>
-      const socket = io("https://game-rtp-backend.onrender.com");
+      const socket = io("http://localhost:5000");
 
       socket.on("connect_error", (error) => {
         console.error("Connection Error:", error.message);
