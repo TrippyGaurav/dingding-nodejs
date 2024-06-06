@@ -62,7 +62,7 @@ class User {
         this.socket.emit("alert" /* MESSAGETYPE.ALERT */, message);
     }
     sendMessage(id, message) {
-        this.socket.emit("message" /* MESSAGETYPE.MESSAGE */, { id, message });
+        this.socket.emit("message" /* MESSAGETYPE.MESSAGE */, JSON.stringify({ id, message }));
     }
 }
 exports.User = User;
