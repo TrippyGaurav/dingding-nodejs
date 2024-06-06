@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import socketController from "./socket/controller";
 import userRoutes from "./dashboard/user/userRoutes";
 import transactionRoutes from "./dashboard/transaction/transactionRoutes";
+import Games from "./dashboard/casinoGames/gamesRoutes";
 const app = express();
 
 const corsOptions = {
@@ -36,6 +37,7 @@ app.get("/", (req, res, next) => {
 //OTHER ROUTES
 app.use("/api/users", userRoutes);
 app.use("/api/transaction", transactionRoutes);
+app.use("/api/games", Games);
 
 const io = new Server(server, {
   cors: {
