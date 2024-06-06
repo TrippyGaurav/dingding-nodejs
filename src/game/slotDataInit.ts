@@ -44,6 +44,7 @@ export function sendInitdata(clientID: string) {
     UIData: UiInitData,
     PlayerData: playerData,
   };
+
   getClient(clientID).sendMessage("InitData", dataToSend);
   // sendMessageToClient(clientID, "InitData", dataToSend);
 }

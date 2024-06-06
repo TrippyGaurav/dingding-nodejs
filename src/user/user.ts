@@ -17,6 +17,13 @@ export class User {
 
     socket.on("pong", this.heartbeat);
     socket.on("message", this.messageHandler());
+    socket.on(MESSAGEID.AUTH, (message: any) => {
+      const messageData = JSON.parse(message);
+      console.log(`Auth Message : ${JSON.stringify(messageData)}`);
+      console.log(messageData.Data.GameID);
+
+      gameSettings.initiate(messageData.Data.GameID, this.socket.id);
+    });
     socket.on("disconnect", () => this.deleteUserFromMap());
   }
 
@@ -43,11 +50,6 @@ export class User {
   messageHandler = () => {
     return (message: any) => {
       const messageData = JSON.parse(message);
-
-      if (messageData.id == MESSAGEID.AUTH) {
-        console.log("AUTH : ", messageData);
-        gameSettings.initiate(messageData.data.gameID, this.socket.id);
-      }
 
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
         gameSettings.currentBet = messageData.data.currentBet;

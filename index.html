@@ -25,11 +25,11 @@
         console.log("Connected to the server");
 
         socket.emit(
-          "message",
+          "AUTH",
           JSON.stringify({
             id: "AUTH",
-            data: {
-              gameID: "SL-VIK",
+            Data: {
+              GameID: "SL-VIK",
             },
           })
         );
