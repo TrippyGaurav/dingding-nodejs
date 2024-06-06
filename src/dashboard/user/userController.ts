@@ -117,7 +117,7 @@ const loginUser = async (req: Request, res: Response) => {
       sameSite: "none",
     });
 
-    return res.status(200).json({ message: "Login successful" });
+    return res.status(200).json({ message: "Login successful", token: token });
   } catch (err) {
     return res
       .status(500)
