@@ -90,8 +90,8 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }, process.env.JWT_SECRET, { expiresIn: "24h" });
         res.cookie("userToken", token, {
             maxAge: 1000 * 60 * 60 * 24,
-            httpOnly: false,
-            secure: true,
+            httpOnly: true,
+            // secure: true,
             sameSite: "none",
         });
         return res.status(200).json({ message: "Login successful" });

@@ -15,10 +15,6 @@ class User {
         this.messageHandler = () => {
             return (message) => {
                 const messageData = JSON.parse(message);
-                if (messageData.id == utils_1.MESSAGEID.AUTH) {
-                    console.log("AUTH : ", messageData);
-                    global_1.gameSettings.initiate(messageData.data.gameID, this.socket.id);
-                }
                 if (messageData.id === utils_1.MESSAGEID.SPIN && global_1.gameSettings.startGame) {
                     global_1.gameSettings.currentBet = messageData.data.currentBet;
                     new slotResults_1.CheckResult(this.socket.id);
@@ -47,6 +43,12 @@ class User {
         console.log("Client if from users:", socket.id);
         socket.on("pong", this.heartbeat);
         socket.on("message", this.messageHandler());
+        socket.on(utils_1.MESSAGEID.AUTH, (message) => {
+            const messageData = JSON.parse(message);
+            console.log(`Auth Message : ${JSON.stringify(messageData)}`);
+            console.log(messageData.Data.GameID);
+            global_1.gameSettings.initiate(messageData.Data.GameID, this.socket.id);
+        });
         socket.on("disconnect", () => this.deleteUserFromMap());
     }
     sendError(errorCode, message) {
