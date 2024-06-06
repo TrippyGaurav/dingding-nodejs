@@ -12,6 +12,7 @@ import { bonusGame } from "./bonusResults";
 import { getClient } from "../user/user";
 import { middleware } from "../utils/middleware";
 import { startInfiniteSpins } from "./reel";
+import { verifyToken } from "../middleware/tokenAuth";
 export class CheckResult {
   clientID: string;
   scatter: string;
@@ -52,6 +53,8 @@ export class CheckResult {
       await middleware();
     })();
 
+    //TODO:To get the user information
+  
     console.log("CurrentBet : " + gameSettings.currentBet);
 
     playerData.Balance -= gameSettings.currentBet;
@@ -138,7 +141,6 @@ export class CheckResult {
       } 
       Current RTP : ${winRate.toFixed(2)}% `
     );
-
     console.log("_____________RESULT_END________________");
   }
 

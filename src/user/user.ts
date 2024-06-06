@@ -3,24 +3,32 @@ import { MESSAGEID, MESSAGETYPE } from "../utils/utils";
 import { gameSettings } from "../game/global";
 import { CheckResult } from "../game/slotResults";
 import { getRTP } from "../game/rtpgenerator";
-
+import { verifySocketToken } from "../middleware/authMiddleware";
 export let users: Map<string, User> = new Map();
 
 export class User {
   socket: Socket;
   isAlive: boolean = false;
-
+  username: string;
+  designation: string;
   constructor(socket: Socket) {
     this.isAlive = true;
     this.socket = socket;
-    console.log("Client if from users:", socket.id);
+    this.username = socket?.data?.username;
+    this.designation = socket?.data?.designation;
+    // console.log(
+    //   "Client if from users:",
+    //   socket.id,
+    //   this.username,
+    //   this.designation
+    // );
 
     socket.on("pong", this.heartbeat);
     socket.on("message", this.messageHandler());
     socket.on(MESSAGEID.AUTH, (message: any) => {
       const messageData = JSON.parse(message);
-      console.log(`Auth Message : ${JSON.stringify(messageData)}`);
-      console.log(messageData.Data.GameID);
+      // console.log(`Auth Message : ${JSON.stringify(messageData)}`);
+      // console.log(messageData.Data.GameID);
 
       gameSettings.initiate(messageData.Data.GameID, this.socket.id);
     });
@@ -79,8 +87,19 @@ export class User {
 }
 
 export function initializeUser(socket: Socket) {
-  const user = new User(socket);
-  users.set(user.socket.id, user);
+  verifySocketToken(socket)
+    .then((decoded) => {
+      socket.data.username = decoded.username;
+      socket.data.designation = decoded.designation;
+
+      const user = new User(socket);
+      users.set(user.socket.id, user);
+      // console.log("User initialized:", user);
+    })
+    .catch((err) => {
+      console.error(err.message);
+      socket.disconnect();
+    });
 }
 
 export function getClient(clientId: string) {
