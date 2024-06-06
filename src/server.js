@@ -10,6 +10,7 @@ const socket_io_1 = require("socket.io");
 const controller_1 = __importDefault(require("./socket/controller"));
 const userRoutes_1 = __importDefault(require("./dashboard/user/userRoutes"));
 const transactionRoutes_1 = __importDefault(require("./dashboard/transaction/transactionRoutes"));
+const gamesRoutes_1 = __importDefault(require("./dashboard/casinoGames/gamesRoutes"));
 const app = (0, express_1.default)();
 const corsOptions = {
     origin: [
@@ -37,6 +38,7 @@ app.get("/", (req, res, next) => {
 //OTHER ROUTES
 app.use("/api/users", userRoutes_1.default);
 app.use("/api/transaction", transactionRoutes_1.default);
+app.use("/api/games", gamesRoutes_1.default);
 const io = new socket_io_1.Server(server, {
     cors: {
         origin: "*",
