@@ -40,7 +40,7 @@ export class User {
   }
 
   sendMessage(id: string, message: any) {
-    this.socket.emit(MESSAGETYPE.MESSAGE, { id, message });
+    this.socket.emit(MESSAGETYPE.MESSAGE, JSON.stringify({ id, message }));
   }
 
   heartbeat = () => {
