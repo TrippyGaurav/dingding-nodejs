@@ -33,6 +33,8 @@ class CheckResult {
         (() => __awaiter(this, void 0, void 0, function* () {
             yield (0, middleware_1.middleware)();
         }))();
+        //minus the balance
+        //TODO:To get the user information
         console.log("CurrentBet : " + global_1.gameSettings.currentBet);
         global_1.playerData.Balance -= global_1.gameSettings.currentBet;
         console.log("player balance:", global_1.playerData.Balance);
@@ -94,6 +96,7 @@ class CheckResult {
         const winRate = (global_1.getCurrentRTP.playerWon / global_1.getCurrentRTP.playerTotalBets) * 100;
         console.log(`Total Spend : ${global_1.getCurrentRTP.playerTotalBets}  Total Won : ${global_1.getCurrentRTP.playerWon} 
       Current RTP : ${winRate.toFixed(2)}% `);
+        (0, user_1.getClient)(this.clientID).updateCreditsInDb(global_1.playerData.Balance);
         console.log("_____________RESULT_END________________");
     }
     checkForBonus() {
@@ -472,7 +475,6 @@ class WinData {
         global_1.playerData.currentWining = this.totalWinningAmount;
         global_1.getCurrentRTP.playerWon += this.totalWinningAmount;
         global_1.getCurrentRTP.playerTotalBets += global_1.gameSettings.currentBet;
-        // gameWining.freeSpins = gameWining.freeSpins+this.freeSpins;
     }
 }
 exports.WinData = WinData;
