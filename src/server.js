@@ -16,10 +16,10 @@ const corsOptions = {
     origin: [
         "*",
         "http://192.168.1.26:5173",
-        "http://192.168.1.28:3000",
         "http://localhost:5000",
         "http://localhost:3000",
         "https://game-crm-backend-r32s.onrender.com",
+        "https://milkyway-platform.vercel.app",
     ],
     credentials: true,
     optionSuccessStatus: 200,
