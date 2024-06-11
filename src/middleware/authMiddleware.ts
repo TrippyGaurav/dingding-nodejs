@@ -19,6 +19,7 @@ export const verifySocketToken = (socket: Socket): Promise<DecodedToken> => {
             reject(new Error("You are not authenticated"));
           } else {
             resolve(decoded!);
+            console.log('authenticated player')
           }
         }
       );
