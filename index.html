@@ -15,8 +15,12 @@
     <script src="http://localhost:5000/socket.io/socket.io.js"></script>
 
     <script>
-      const socket = io("http://localhost:5000");
-
+      const socket = io("http://localhost:5000", {
+        auth: {
+          token:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImdhdXJhdiIsImRlc2lnbmF0aW9uIjoiY29tcGFueSIsImlhdCI6MTcxNzY3NDAyNiwiZXhwIjoxNzE3NzYwNDI2fQ._DgHo-YpNwtbDE55nMOERjZ3VEL167VvcRGzSU41qyo",
+        },
+      });
       socket.on("connect_error", (error) => {
         console.error("Connection Error:", error.message);
       });

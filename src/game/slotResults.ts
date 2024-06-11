@@ -1,6 +1,6 @@
 // import { Alerts } from "./Alerts";
 // import { sendMessageToClient } from "./App";
-import { gameSettings, getCurrentRTP, playerData } from "./global";
+import { gameSettings, gameWining, getCurrentRTP, playerData } from "./global";
 import { RandomResultGenerator } from "./slotDataInit";
 import {
   ScatterPayEntry,
@@ -12,6 +12,8 @@ import { bonusGame } from "./bonusResults";
 import { getClient } from "../user/user";
 import { middleware } from "../utils/middleware";
 import { startInfiniteSpins } from "./reel";
+import { verifyToken } from "../middleware/tokenAuth";
+import { gameData } from "./testData";
 export class CheckResult {
   clientID: string;
   scatter: string;
@@ -51,6 +53,9 @@ export class CheckResult {
     (async () => {
       await middleware();
     })();
+    //minus the balance
+
+    //TODO:To get the user information
 
     console.log("CurrentBet : " + gameSettings.currentBet);
 
@@ -138,7 +143,7 @@ export class CheckResult {
       } 
       Current RTP : ${winRate.toFixed(2)}% `
     );
-
+    getClient(this.clientID).updateCreditsInDb(playerData.Balance);
     console.log("_____________RESULT_END________________");
   }
 
@@ -586,6 +591,5 @@ export class WinData {
 
     getCurrentRTP.playerWon += this.totalWinningAmount;
     getCurrentRTP.playerTotalBets += gameSettings.currentBet;
-    // gameWining.freeSpins = gameWining.freeSpins+this.freeSpins;
   }
 }

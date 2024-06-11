@@ -1,29 +1,33 @@
 import { Socket } from "socket.io";
 import { MESSAGEID, MESSAGETYPE } from "../utils/utils";
-import { gameSettings } from "../game/global";
+import { gameSettings, gameWining, playerData } from "../game/global";
 import { CheckResult } from "../game/slotResults";
 import { getRTP } from "../game/rtpgenerator";
+import { verifySocketToken } from "../middleware/authMiddleware";
+import User from "../dashboard/user/userModel";
+import { gameData } from "../game/testData";
+import Transaction from "../dashboard/transaction/transactionModel";
+export let users: Map<string, SocketUser> = new Map();
 
-export let users: Map<string, User> = new Map();
-
-export class User {
+export class SocketUser {
   socket: Socket;
   isAlive: boolean = false;
-
+  username: string;
+  designation: string;
   constructor(socket: Socket) {
     this.isAlive = true;
     this.socket = socket;
-    console.log("Client if from users:", socket.id);
-
+    this.username = socket?.data?.username;
+    this.designation = socket?.data?.designation;
+    // console.log(
+    //   "Client if from users:",
+    //   socket.id,
+    //   this.username,
+    //   this.designation
+    // );
     socket.on("pong", this.heartbeat);
     socket.on("message", this.messageHandler());
-    socket.on(MESSAGEID.AUTH, (message: any) => {
-      const messageData = JSON.parse(message);
-      console.log(`Auth Message : ${JSON.stringify(messageData)}`);
-      console.log(messageData.Data.GameID);
-
-      gameSettings.initiate(messageData.Data.GameID, this.socket.id);
-    });
+    socket.on(MESSAGEID.AUTH, this.handleAuth);
     socket.on("disconnect", () => this.deleteUserFromMap());
   }
 
@@ -65,10 +69,30 @@ export class User {
     };
   };
 
+  //to get the player initial balance after socket connection
+  handleAuth = async (message: any) => {
+    try {
+      const messageData = JSON.parse(message);
+      gameSettings.initiate(messageData.Data.GameID, this.socket.id);
+      const CurrentUser = await User.findOne({
+        username: this.username,
+      }).exec();
+      if (CurrentUser) {
+        playerData.Balance = CurrentUser.credits;
+        console.log("Player Balance", CurrentUser.credits);
+        this.sendMessage(MESSAGEID.AUTH, CurrentUser.credits);
+      } else {
+        this.sendError("USER_NOT_FOUND", "User not found in the database");
+      }
+    } catch (error) {
+      console.error("Error handling AUTH message:", error);
+      this.sendError("AUTH_ERROR", "An error occurred during authentication");
+    }
+  };
+
   deleteUserFromMap = () => {
     // Attempt to delete the user from the map
     const clientID = this.socket.id;
-
     if (getClient(clientID)) {
       users.delete(clientID);
       console.log(`User with ID ${clientID} was successfully removed.`);
@@ -76,11 +100,35 @@ export class User {
       console.log(`No user found with ID ${clientID}.`);
     }
   };
+
+  //Update player credits case win ,bet,and lose;
+  async updateCreditsInDb(finalBalance: number) {
+    const transaction = await Transaction.create({});
+
+    await User.findOneAndUpdate(
+      { username: this.username },
+      {
+        $push: { transactions: transaction._id },
+        credits: finalBalance,
+      },
+      { new: true }
+    );
+  }
 }
 
 export function initializeUser(socket: Socket) {
-  const user = new User(socket);
-  users.set(user.socket.id, user);
+  verifySocketToken(socket)
+    .then((decoded) => {
+      socket.data.username = decoded.username;
+      socket.data.designation = decoded.designation;
+
+      const user = new SocketUser(socket);
+      users.set(user.socket.id, user);
+    })
+    .catch((err) => {
+      console.error(err.message);
+      socket.disconnect();
+    });
 }
 
 export function getClient(clientId: string) {
