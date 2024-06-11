@@ -16,6 +16,7 @@ const verifySocketToken = (socket) => {
                 }
                 else {
                     resolve(decoded);
+                    console.log('authenticated player');
                 }
             });
         }
