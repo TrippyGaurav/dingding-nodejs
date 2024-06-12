@@ -212,15 +212,7 @@ async function addClientToUserList(res, userId, clientId) {
 
 //{getRealTimeCredits of users}
 const getClientList = async (req: Request, res: Response) => {
-  const {
-    pageNumber,
-    limit,
-    username,
-    isAll,
-    isActive,
-    isAllClients,
-    isStorePlayers,
-  } = req.body;
+  const { pageNumber, limit, username } = req.body;
 
   const page = parseInt(pageNumber) || 1;
   const limitValue = parseInt(limit) || 10;
@@ -235,12 +227,11 @@ const getClientList = async (req: Request, res: Response) => {
       {
         $project: {
           clientCount: { $size: "$clientList" },
-          designation: 1,
         },
       },
     ]);
 
-    const totalClientCount = user[0].clientCount;
+    const totalClientCount = user[0]?.clientCount;
 
     if (!totalClientCount) {
       return res.status(204).json({ error: "No User Found for this client" });
@@ -260,47 +251,23 @@ const getClientList = async (req: Request, res: Response) => {
       };
     }
 
-    var userList = {};
-    if (user[0].designation == "subDistributer") {
-      userList = await User.find({ username: username })
-        .populate({
-          path: "clientList",
-          match: {
-            activeStatus: isAll ? { $in: [true, false] } : isActive,
-            designation: isAllClients
-              ? { $in: ["store", "player"] }
-              : isStorePlayers
-              ? "store"
-              : "player",
-          },
-          select:
-            "username nickName activeStatus designation credits totalRedeemed totalRecharged lastLogin loginTimes",
-          options: {
-            limit: limitValue,
-            skip: startIndex,
-          },
-        })
-        .exec();
-    } else {
-      userList = await User.find({ username: username })
-        .populate({
-          path: "clientList",
-          match: {
-            activeStatus: isAll ? { $in: [true, false] } : isActive,
-          },
-          select:
-            "username nickName activeStatus designation credits totalRedeemed totalRecharged lastLogin loginTimes",
-          options: {
-            limit: limitValue,
-            skip: startIndex,
-          },
-        })
-        .exec();
-    }
-    const userClientList = userList[0].clientList;
+    const userList = await User.find({ username: username })
+      .populate({
+        path: "clientList",
+        select:
+          "username nickName activeStatus designation credits totalRedeemed totalRecharged lastLogin loginTimes",
+        options: {
+          limit: limitValue,
+          skip: startIndex,
+        },
+      })
+      .exec();
+
+    const userClientList = userList[0]?.clientList;
     if (!userClientList) {
       return res.status(201).json({ error: "No Clients Found" });
     }
+
     return res
       .status(200)
       .json({ userClientList, totalPageCount: totalClientCount });
@@ -308,6 +275,7 @@ const getClientList = async (req: Request, res: Response) => {
     return res.status(500).json(err);
   }
 };
+
 //{DELETE CLIENT}
 const deleteClient = async (req, res) => {
   const { username } = req.params;
