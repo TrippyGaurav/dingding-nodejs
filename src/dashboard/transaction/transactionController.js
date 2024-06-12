@@ -75,7 +75,7 @@ const updateClientCredits = (req, res) => __awaiter(void 0, void 0, void 0, func
             session.endSession();
             return res.status(400).json({ error: "Please recharge yourself first" });
         }
-        if (creditValue > user.credits) {
+        if (creditValue > user.credits || creditValue === user.credits) {
             yield session.abortTransaction();
             session.endSession();
             return res

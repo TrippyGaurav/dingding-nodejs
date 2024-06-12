@@ -12,6 +12,14 @@ const userRoutes_1 = __importDefault(require("./dashboard/user/userRoutes"));
 const transactionRoutes_1 = __importDefault(require("./dashboard/transaction/transactionRoutes"));
 const gamesRoutes_1 = __importDefault(require("./dashboard/casinoGames/gamesRoutes"));
 const app = (0, express_1.default)();
+//Cloudinary configs
+app.use(express_1.default.json({ limit: "25mb" }));
+app.use(express_1.default.urlencoded({ limit: "25mb", extended: true }));
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    next();
+});
+//cors config
 const corsOptions = {
     origin: [
         "*",

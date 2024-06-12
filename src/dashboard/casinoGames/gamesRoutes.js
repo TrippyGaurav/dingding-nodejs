@@ -14,4 +14,5 @@ Games.post("/add", tokenAuth_1.verifyToken, gamesController_1.sendGames);
 Games.get("/getGames", auth_1.verifyAuth, gamesController_1.getGames);
 //PUT REQUEST
 Games.put("/changes", auth_1.verifyAuth, gamesController_1.changeGames);
+Games.post("/upload", gamesController_1.image);
 exports.default = Games;

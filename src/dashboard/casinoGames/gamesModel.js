@@ -16,6 +16,8 @@ const GameSchema = new mongoose_1.default.Schema({
         require: true,
         default: true,
     },
+}, {
+    timestamps: true,
 });
 const Game = mongoose_1.default.model("casinoGames", GameSchema);
 exports.default = Game;

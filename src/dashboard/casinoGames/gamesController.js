@@ -12,8 +12,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changeGames = exports.getGames = exports.sendGames = void 0;
+exports.image = exports.changeGames = exports.getGames = exports.sendGames = void 0;
 const gamesModel_1 = __importDefault(require("./gamesModel"));
+const cloudinary_1 = require("cloudinary");
+cloudinary_1.v2.config({
+    cloud_name: "dhl5hifpz",
+    api_key: "788474111765231",
+    api_secret: "6kSJ1ia8ndE3aprfCvpn_1ubNUs",
+});
+const opts = {
+    overwrite: true,
+    invalidate: true,
+    resource_type: "auto",
+};
 // Function to send games as JSON
 const sendGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { gameId, gameName, gameThumbnailUrl, gameHostLink, type, category, creatorDesignation, } = req.body;
@@ -93,3 +104,35 @@ function deleteGame(_id) {
         return yield gamesModel_1.default.findOneAndDelete({ _id });
     });
 }
+//
+const uploadImage = (image) => {
+    return new Promise((resolve, reject) => {
+        cloudinary_1.v2.uploader.upload(image, { folder: "casinoGames" }, (error, result) => {
+            if (result && result.secure_url) {
+                console.log(result.secure_url);
+                return resolve(result.secure_url);
+            }
+            console.log(error.message);
+            return reject({ message: error.message });
+        });
+    });
+};
+//
+const image = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.body.image) {
+        return res.status(400).json({ error: "Please upload the image" });
+    }
+    try {
+        const image = req.body.image;
+        const imageUrl = yield uploadImage(image);
+        res.json({
+            message: "File uploaded successfully",
+            imageUrl: imageUrl,
+        });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to upload file" });
+    }
+});
+exports.image = image;
