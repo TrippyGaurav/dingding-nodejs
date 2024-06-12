@@ -2,6 +2,7 @@ import exp from "constants";
 import Game from "./gamesModel";
 import { NextFunction, Request, Response } from "express";
 import { v2 as cloudinary } from "cloudinary";
+import { error } from "console";
 cloudinary.config({
   cloud_name: "dhl5hifpz",
   api_key: "788474111765231",
@@ -123,6 +124,9 @@ const uploadImage = (image) => {
 };
 //
 export const image = async (req: Request, res: Response) => {
+  if(!req.body.image){
+    return res.status(400).json({error:"Please upload the image"})
+  }
   try {
     const image = req.body.image;
     const imageUrl = await uploadImage(image);
