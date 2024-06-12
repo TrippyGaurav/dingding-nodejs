@@ -2,28 +2,23 @@ import exp from "constants";
 import Game from "./gamesModel";
 import { NextFunction, Request, Response } from "express";
 import { v2 as cloudinary } from "cloudinary";
-import { error } from "console";
-cloudinary.config({
-  cloud_name: "dhl5hifpz",
-  api_key: "788474111765231",
-  api_secret: "6kSJ1ia8ndE3aprfCvpn_1ubNUs",
-});
+import { config } from "../../config/config";
 
-const opts = {
-  overwrite: true,
-  invalidate: true,
-  resource_type: "auto",
-};
+cloudinary.config({
+  cloud_name: config.cloud_name,
+  api_key: config.api_key,
+  api_secret: config.api_secret,
+});
 
 // Function to send games as JSON
 export const sendGames = async (req: Request, res: Response) => {
   const {
-    gameId,
     gameName,
     gameThumbnailUrl,
     gameHostLink,
     type,
     category,
+    tagName,
     creatorDesignation,
   } = req.body;
   // Check if the user is from the company
@@ -35,12 +30,12 @@ export const sendGames = async (req: Request, res: Response) => {
   }
   try {
     const game = new Game({
-      gameId,
       gameName,
       gameThumbnailUrl,
       gameHostLink,
       type,
       category,
+      tagName,
     });
     const savedGame = await game.save();
     res.status(201).json(savedGame);
@@ -124,8 +119,8 @@ const uploadImage = (image) => {
 };
 //
 export const image = async (req: Request, res: Response) => {
-  if(!req.body.image){
-    return res.status(400).json({error:"Please upload the image"})
+  if (!req.body.image) {
+    return res.status(400).json({ error: "Please upload the image" });
   }
   try {
     const image = req.body.image;
