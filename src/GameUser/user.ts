@@ -6,6 +6,7 @@ import { getRTP } from "../game/rtpgenerator";
 import { verifySocketToken } from "../utils/playerAuth";
 import User from "../dashboard/user/userModel";
 import Transaction from "../dashboard/transaction/transactionModel";
+import { GambleGame } from "../game/gambleResults";
 export let users: Map<string, SocketUser> = new Map();
 
 export class SocketUser {
@@ -64,6 +65,47 @@ export class SocketUser {
       }
 
       if (messageData.id === MESSAGEID.GAMBLE) {
+        console.log("message data", messageData);
+        if (!gameSettings.currentGamedata.gamble.isEnabled) return;
+
+        if (playerData.currentWining > 1) {
+          gameSettings.gamble.start = true;
+        } else {
+          gameSettings.gamble.start = false;
+        }
+
+        console.log("gamblestart", gameSettings.gamble.start);
+
+        if (gameSettings.gamble.start) {
+          if (!gameSettings.gamble.game)
+            gameSettings.gamble.game = new GambleGame(
+              this.socket.id,
+              playerData.currentWining
+            );
+
+          if (!getClient(this.socket.id))
+            gameSettings.gamble.game = new GambleGame(
+              this.socket.id,
+              playerData.currentWining
+            );
+
+          if (messageData?.collect) {
+            gameSettings.gamble.game.updateplayerBalance();
+            gameSettings.gamble.game.reset();
+            return;
+          }
+
+          // if(gameSettings.gamble.game.gambleCount<gameSettings.gamble.maxCount){
+          gameSettings.gamble.game.generateData(playerData.currentWining);
+
+          // }else{
+          //     gameSettings.gamble.game.updateplayerBalance();
+          //     gameSettings.gamble.game.reset();
+          // }
+
+          // gameSettings.gamble.currentCount++;
+          console.log("player balance After Gamble Game", playerData);
+        }
       }
     };
   };

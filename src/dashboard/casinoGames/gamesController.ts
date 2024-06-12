@@ -1,5 +1,18 @@
+import exp from "constants";
 import Game from "./gamesModel";
 import { NextFunction, Request, Response } from "express";
+import { v2 as cloudinary } from "cloudinary";
+cloudinary.config({
+  cloud_name: "dhl5hifpz",
+  api_key: "788474111765231",
+  api_secret: "6kSJ1ia8ndE3aprfCvpn_1ubNUs",
+});
+
+const opts = {
+  overwrite: true,
+  invalidate: true,
+  resource_type: "auto",
+};
 
 // Function to send games as JSON
 export const sendGames = async (req: Request, res: Response) => {
@@ -90,3 +103,35 @@ async function updateGame(_id: string, status: string) {
 async function deleteGame(_id: string) {
   return await Game.findOneAndDelete({ _id });
 }
+
+//
+const uploadImage = (image) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload(
+      image,
+      { folder: "casinoGames" },
+      (error, result) => {
+        if (result && result.secure_url) {
+          console.log(result.secure_url);
+          return resolve(result.secure_url);
+        }
+        console.log(error.message);
+        return reject({ message: error.message });
+      }
+    );
+  });
+};
+//
+export const image = async (req: Request, res: Response) => {
+  try {
+    const image = req.body.image;
+    const imageUrl = await uploadImage(image);
+    res.json({
+      message: "File uploaded successfully",
+      imageUrl: imageUrl,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to upload file" });
+  }
+};

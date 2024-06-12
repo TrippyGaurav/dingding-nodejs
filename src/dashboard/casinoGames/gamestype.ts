@@ -7,3 +7,4 @@ export interface Games {
   category: string;
   status: Boolean;
 }
+

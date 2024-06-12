@@ -14,6 +14,7 @@ const GameSchema = new mongoose.Schema<Games>({
   },
 });
 
+
 const Game = mongoose.model<Games>("casinoGames", GameSchema);
 
 export default Game;

@@ -71,7 +71,7 @@ export const updateClientCredits = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Please recharge yourself first" });
     }
 
-    if (creditValue > user.credits) {
+    if (creditValue > user.credits || creditValue === user.credits) {
       await session.abortTransaction();
       session.endSession();
       return res
