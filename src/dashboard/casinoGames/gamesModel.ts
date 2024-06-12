@@ -3,8 +3,7 @@ import { Games } from "./gamestype";
 import { timeStamp } from "console";
 const GameSchema = new mongoose.Schema<Games>(
   {
-    gameId: { type: Number, required: true },
-    gameName: { type: String, required: true },
+    gameName: { type: String, required: true, unique: true },
     gameThumbnailUrl: { type: String, required: true },
     gameHostLink: { type: String, required: true },
     type: { type: String, required: true },
@@ -13,6 +12,10 @@ const GameSchema = new mongoose.Schema<Games>(
       type: Boolean,
       require: true,
       default: true,
+    },
+    tagName: {
+      type: String,
+      require: true,
     },
   },
   {
