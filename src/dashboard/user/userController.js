@@ -179,7 +179,8 @@ function addClientToUserList(res, userId, clientId) {
 }
 //{getRealTimeCredits of users}
 const getClientList = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { pageNumber, limit, username, isAll, isActive, isAllClients, isStorePlayers, } = req.body;
+    var _a, _b;
+    const { pageNumber, limit, username } = req.body;
     const page = parseInt(pageNumber) || 1;
     const limitValue = parseInt(limit) || 10;
     const startIndex = (page - 1) * limitValue;
@@ -190,11 +191,10 @@ const getClientList = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             {
                 $project: {
                     clientCount: { $size: "$clientList" },
-                    designation: 1,
                 },
             },
         ]);
-        const totalClientCount = user[0].clientCount;
+        const totalClientCount = (_a = user[0]) === null || _a === void 0 ? void 0 : _a.clientCount;
         if (!totalClientCount) {
             return res.status(204).json({ error: "No User Found for this client" });
         }
@@ -210,43 +210,17 @@ const getClientList = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 limit: limitValue,
             };
         }
-        var userList = {};
-        if (user[0].designation == "subDistributer") {
-            userList = yield userModel_1.default.find({ username: username })
-                .populate({
-                path: "clientList",
-                match: {
-                    activeStatus: isAll ? { $in: [true, false] } : isActive,
-                    designation: isAllClients
-                        ? { $in: ["store", "player"] }
-                        : isStorePlayers
-                            ? "store"
-                            : "player",
-                },
-                select: "username nickName activeStatus designation credits totalRedeemed totalRecharged lastLogin loginTimes",
-                options: {
-                    limit: limitValue,
-                    skip: startIndex,
-                },
-            })
-                .exec();
-        }
-        else {
-            userList = yield userModel_1.default.find({ username: username })
-                .populate({
-                path: "clientList",
-                match: {
-                    activeStatus: isAll ? { $in: [true, false] } : isActive,
-                },
-                select: "username nickName activeStatus designation credits totalRedeemed totalRecharged lastLogin loginTimes",
-                options: {
-                    limit: limitValue,
-                    skip: startIndex,
-                },
-            })
-                .exec();
-        }
-        const userClientList = userList[0].clientList;
+        const userList = yield userModel_1.default.find({ username: username })
+            .populate({
+            path: "clientList",
+            select: "username nickName activeStatus designation credits totalRedeemed totalRecharged lastLogin loginTimes",
+            options: {
+                limit: limitValue,
+                skip: startIndex,
+            },
+        })
+            .exec();
+        const userClientList = (_b = userList[0]) === null || _b === void 0 ? void 0 : _b.clientList;
         if (!userClientList) {
             return res.status(201).json({ error: "No Clients Found" });
         }
