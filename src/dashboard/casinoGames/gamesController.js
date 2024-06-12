@@ -15,19 +15,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.image = exports.changeGames = exports.getGames = exports.sendGames = void 0;
 const gamesModel_1 = __importDefault(require("./gamesModel"));
 const cloudinary_1 = require("cloudinary");
+const config_1 = require("../../config/config");
 cloudinary_1.v2.config({
-    cloud_name: "dhl5hifpz",
-    api_key: "788474111765231",
-    api_secret: "6kSJ1ia8ndE3aprfCvpn_1ubNUs",
+    cloud_name: config_1.config.cloud_name,
+    api_key: config_1.config.api_key,
+    api_secret: config_1.config.api_secret,
 });
-const opts = {
-    overwrite: true,
-    invalidate: true,
-    resource_type: "auto",
-};
 // Function to send games as JSON
 const sendGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { gameId, gameName, gameThumbnailUrl, gameHostLink, type, category, creatorDesignation, } = req.body;
+    const { gameName, gameThumbnailUrl, gameHostLink, type, category, tagName, creatorDesignation, } = req.body;
     // Check if the user is from the company
     if (creatorDesignation !== "company") {
         return res.status(401).json({
@@ -36,12 +32,12 @@ const sendGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     try {
         const game = new gamesModel_1.default({
-            gameId,
             gameName,
             gameThumbnailUrl,
             gameHostLink,
             type,
             category,
+            tagName,
         });
         const savedGame = yield game.save();
         res.status(201).json(savedGame);
