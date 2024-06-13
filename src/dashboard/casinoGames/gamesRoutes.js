@@ -11,8 +11,9 @@ const Games = express_1.default.Router();
 //POST ROUTES
 Games.post("/add", tokenAuth_1.verifyToken, gamesController_1.sendGames);
 //GET ROUTES
-Games.get("/getGames", auth_1.verifyAuth, gamesController_1.getGames);
+Games.get("/getGames", tokenAuth_1.verifyToken, gamesController_1.getGames);
+Games.post("/upload", gamesController_1.image);
+Games.post("/favourite", tokenAuth_1.verifyToken, gamesController_1.favourite);
 //PUT REQUEST
 Games.put("/changes", auth_1.verifyAuth, gamesController_1.changeGames);
-Games.post("/upload", gamesController_1.image);
 exports.default = Games;

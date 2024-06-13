@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.image = exports.changeGames = exports.getGames = exports.sendGames = void 0;
+exports.image = exports.favourite = exports.changeGames = exports.getGames = exports.sendGames = void 0;
 const gamesModel_1 = __importDefault(require("./gamesModel"));
 const cloudinary_1 = require("cloudinary");
 const config_1 = require("../../config/config");
+const userModel_1 = __importDefault(require("../user/userModel"));
 cloudinary_1.v2.config({
     cloud_name: config_1.config.cloud_name,
     api_key: config_1.config.api_key,
@@ -49,11 +50,29 @@ const sendGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.sendGames = sendGames;
 const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { category } = req.query;
+    const { username } = req.body;
     try {
         let query = { status: true };
         if (category && category !== "all") {
-            query["category"] = category;
+            if (category === "fav") {
+                if (!username) {
+                    return res
+                        .status(400)
+                        .json({ error: "Username is required for fav category" });
+                }
+                const user = yield userModel_1.default.findOne({ username: username });
+                if (!user) {
+                    return res.status(404).json({ error: "User not found" });
+                }
+                // Find games that are in the user's favourite list
+                res.status(200).json(user.favourite);
+            }
+            else {
+                // For other categories, add category filter to the query
+                query["category"] = category;
+            }
         }
+        // Find games based on the constructed query
         const games = yield gamesModel_1.default.find(query);
         res.status(200).json(games);
     }
@@ -100,6 +119,40 @@ function deleteGame(_id) {
         return yield gamesModel_1.default.findOneAndDelete({ _id });
     });
 }
+//fav games
+const favourite = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { username, gameId, type } = req.body;
+    try {
+        // Find the user by username
+        const player = yield userModel_1.default.findOne({ username: username });
+        if (!player) {
+            return res.status(404).send({ message: "User not found" });
+        }
+        if (type === "Add") {
+            // Check if the game is already in the user's favourites
+            if (player.favourite.includes(gameId)) {
+                return res.status(400).send({ message: "Game already selected" });
+            }
+            // Add the game to the user's favourites
+            const updatedPlayer = yield userModel_1.default.findOneAndUpdate({ username: player.username }, { $push: { favourite: gameId } }, { new: true });
+            res
+                .status(200)
+                .send({ message: "Game added to favourites", player: updatedPlayer });
+        }
+        else if (type === "remove") {
+            // Remove the game from the user's favourites
+            const updatedPlayer = yield userModel_1.default.findOneAndUpdate({ username: player.username }, { $pull: { favourite: gameId } }, { new: true });
+            return res.status(200).send({
+                message: "Game removed from favourites",
+                player: updatedPlayer,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).send({ message: "Internal Server Error", error });
+    }
+});
+exports.favourite = favourite;
 //
 const uploadImage = (image) => {
     return new Promise((resolve, reject) => {
