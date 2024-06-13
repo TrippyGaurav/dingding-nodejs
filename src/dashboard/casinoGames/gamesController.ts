@@ -3,7 +3,8 @@ import Game from "./gamesModel";
 import { NextFunction, Request, Response } from "express";
 import { v2 as cloudinary } from "cloudinary";
 import { config } from "../../config/config";
-
+import User from "../user/userModel";
+import mongoose from "mongoose";
 cloudinary.config({
   cloud_name: config.cloud_name,
   api_key: config.api_key,
@@ -46,22 +47,40 @@ export const sendGames = async (req: Request, res: Response) => {
 
 export const getGames = async (req: Request, res: Response) => {
   const { category } = req.query;
+  const { username } = req.body;
+
   try {
     let query: any = { status: true };
     if (category && category !== "all") {
-      query["category"] = category;
+      if (category === "fav") {
+        if (!username) {
+          return res
+            .status(400)
+            .json({ error: "Username is required for fav category" });
+        }
+        const user = await User.findOne({ username: username });
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        // Find games that are in the user's favourite list
+        res.status(200).json(user.favourite);
+      } else {
+        // For other categories, add category filter to the query
+        query["category"] = category;
+      }
     }
+
+    // Find games based on the constructed query
     const games = await Game.find(query);
     res.status(200).json(games);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 export const changeGames = async (req: Request, res: Response) => {
   try {
     const { _id, status, type } = req.body;
-
     if (type === "updateStatus") {
       const updatedGame = await updateGame(_id, status);
       if (!updatedGame) {
@@ -99,6 +118,50 @@ async function updateGame(_id: string, status: string) {
 async function deleteGame(_id: string) {
   return await Game.findOneAndDelete({ _id });
 }
+//fav games
+
+export const favourite = async (req: Request, res: Response) => {
+  const { username, gameId, type } = req.body;
+
+  try {
+    // Find the user by username
+    const player = await User.findOne({ username: username });
+    if (!player) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    if (type === "Add") {
+      // Check if the game is already in the user's favourites
+      if (player.favourite.includes(gameId)) {
+        return res.status(400).send({ message: "Game already selected" });
+      }
+      // Add the game to the user's favourites
+      const updatedPlayer = await User.findOneAndUpdate(
+        { username: player.username },
+        { $push: { favourite: gameId } },
+        { new: true }
+      );
+
+      res
+        .status(200)
+        .send({ message: "Game added to favourites", player: updatedPlayer });
+    } else if (type === "remove") {
+      // Remove the game from the user's favourites
+      const updatedPlayer = await User.findOneAndUpdate(
+        { username: player.username },
+        { $pull: { favourite: gameId } },
+        { new: true }
+      );
+
+      return res.status(200).send({
+        message: "Game removed from favourites",
+        player: updatedPlayer,
+      });
+    }
+  } catch (error) {
+    res.status(500).send({ message: "Internal Server Error", error });
+  }
+};
 
 //
 const uploadImage = (image) => {

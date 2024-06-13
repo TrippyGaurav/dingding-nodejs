@@ -1,5 +1,5 @@
 import { Transaction } from "../transaction/transactionType";
-
+import { Games } from "../casinoGames/gamestype";
 export interface User {
   username: string;
   nickName?: string;
@@ -8,6 +8,7 @@ export interface User {
   designation: string;
   clientList: User[];
   transactions: Transaction[];
+  favourite: Games[];
   lastLogin?: string;
   loginTimes: number;
   totalRecharged: number;

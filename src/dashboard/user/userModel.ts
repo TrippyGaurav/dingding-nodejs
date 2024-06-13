@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema<User>(
         ref: "Transaction",
       },
     ],
+    favourite: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Game",
+      },
+    ],
     lastLogin: {
       type: String,
     },
