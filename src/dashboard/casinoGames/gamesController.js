@@ -64,11 +64,12 @@ const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 if (!user) {
                     return res.status(404).json({ error: "User not found" });
                 }
-                // Find games that are in the user's favourite list
-                res.status(200).json(user.favourite);
+                const favouriteGames = yield gamesModel_1.default.find({
+                    _id: { $in: user.favourite },
+                }).lean();
+                return res.status(200).json(favouriteGames);
             }
             else {
-                // For other categories, add category filter to the query
                 query["category"] = category;
             }
         }
@@ -108,14 +109,14 @@ const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             },
         ]);
         if (games.length > 0) {
-            res.status(200).json(games[0]);
+            return res.status(200).json(games[0]);
         }
         else {
-            res.status(200).json({ featured: [], otherGames: [] });
+            return res.status(200).json({ featured: [], otherGames: [] });
         }
     }
     catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 });
 exports.getGames = getGames;
@@ -172,17 +173,14 @@ const favourite = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 return res.status(400).send({ message: "Game already selected" });
             }
             // Add the game to the user's favourites
-            const updatedPlayer = yield userModel_1.default.findOneAndUpdate({ username: player.username }, { $push: { favourite: gameId } }, { new: true });
-            res
-                .status(200)
-                .send({ message: "Game added to favourites", player: updatedPlayer });
+            yield userModel_1.default.findOneAndUpdate({ username: player.username }, { $push: { favourite: gameId } }, { new: true });
+            res.status(200).send({ message: "Game added to favourites" });
         }
         else if (type === "remove") {
             // Remove the game from the user's favourites
-            const updatedPlayer = yield userModel_1.default.findOneAndUpdate({ username: player.username }, { $pull: { favourite: gameId } }, { new: true });
+            yield userModel_1.default.findOneAndUpdate({ username: player.username }, { $pull: { favourite: gameId } }, { new: true });
             return res.status(200).send({
                 message: "Game removed from favourites",
-                player: updatedPlayer,
             });
         }
     }
