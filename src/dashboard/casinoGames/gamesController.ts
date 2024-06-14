@@ -72,8 +72,45 @@ export const getGames = async (req: Request, res: Response) => {
     }
 
     // Find games based on the constructed query
-    const games = await Game.find(query);
-    res.status(200).json(games);
+    const games = await Game.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: null,
+          featured: {
+            $push: { $cond: [{ $eq: ["$type", "featured"] }, "$$ROOT", null] },
+          },
+          otherGames: {
+            $push: { $cond: [{ $ne: ["$type", "featured"] }, "$$ROOT", null] },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          featured: {
+            $filter: {
+              input: "$featured",
+              as: "game",
+              cond: { $ne: ["$$game", null] },
+            },
+          },
+          otherGames: {
+            $filter: {
+              input: "$otherGames",
+              as: "game",
+              cond: { $ne: ["$$game", null] },
+            },
+          },
+        },
+      },
+    ]);
+
+    if (games.length > 0) {
+      res.status(200).json(games[0]);
+    } else {
+      res.status(200).json({ featured: [], otherGames: [] });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
