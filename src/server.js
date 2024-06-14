@@ -15,14 +15,8 @@ const app = (0, express_1.default)();
 //Cloudinary configs
 app.use(express_1.default.json({ limit: "25mb" }));
 app.use(express_1.default.urlencoded({ limit: "25mb", extended: true }));
-const allowedOrigins = ['http://localhost:3000', 'https://game-rtp-backend-w7g7.onrender.com'];
 app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader("Access-Control-Allow-Origin", "*");
     next();
 });
 //cors config
