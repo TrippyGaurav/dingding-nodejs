@@ -75,6 +75,7 @@ const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // Find games based on the constructed query
         const games = yield gamesModel_1.default.aggregate([
             { $match: query },
+            { $sort: { createdAt: -1 } },
             {
                 $group: {
                     _id: null,
