@@ -118,9 +118,17 @@ const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.getGames = getGames;
 const changeGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { _id, status, type } = req.body;
-        if (type === "updateStatus") {
-            const updatedGame = yield updateGame(_id, status);
+        const { _id, status, type, gameName, gameThumbnailUrl, gameHostLink, category, tagName, } = req.body;
+        if (type === "updateGame") {
+            const updatedFields = {
+                status,
+                gameName,
+                gameThumbnailUrl,
+                gameHostLink,
+                category,
+                tagName,
+            };
+            const updatedGame = yield updateGame(_id, updatedFields);
             if (!updatedGame) {
                 return res.status(404).json({ message: "Game not found" });
             }
@@ -144,11 +152,9 @@ const changeGames = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.changeGames = changeGames;
-function updateGame(_id, status) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return yield gamesModel_1.default.findOneAndUpdate({ _id }, { $set: { status } }, { new: true });
-    });
-}
+const updateGame = (_id, updatedFields) => __awaiter(void 0, void 0, void 0, function* () {
+    return yield gamesModel_1.default.findByIdAndUpdate(_id, updatedFields, { new: true });
+});
 function deleteGame(_id) {
     return __awaiter(this, void 0, void 0, function* () {
         return yield gamesModel_1.default.findOneAndDelete({ _id });
