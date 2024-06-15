@@ -90,9 +90,9 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const token = jsonwebtoken_1.default.sign({
             username: user.username,
             designation: user.designation,
-        }, process.env.JWT_SECRET, { expiresIn: "24h" });
+        }, process.env.JWT_SECRET, { expiresIn: "7d" });
         res.cookie("userToken", token, {
-            maxAge: 1000 * 60 * 60 * 24,
+            maxAge: 1000 * 60 * 60 * 24 * 7,
             httpOnly: true,
             // secure: true,
             sameSite: "none",
