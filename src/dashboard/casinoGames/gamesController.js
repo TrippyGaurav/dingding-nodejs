@@ -34,7 +34,8 @@ const sendGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const game = new gamesModel_1.default({
             gameName,
-            gameThumbnailUrl,
+            gameThumbnailUrl: gameThumbnailUrl ||
+                "https://res.cloudinary.com/dhl5hifpz/image/upload/v1718444865/casinoGames/yk07efxqevcbikqsxvuw.tiff",
             gameHostLink,
             type,
             category,
