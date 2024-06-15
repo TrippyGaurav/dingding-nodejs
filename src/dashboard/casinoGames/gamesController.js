@@ -118,13 +118,14 @@ const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.getGames = getGames;
 const changeGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { _id, status, type, gameName, gameThumbnailUrl, gameHostLink, category, tagName, } = req.body;
-        if (type === "updateGame") {
+        const { _id, status, updateType, type, gameName, gameThumbnailUrl, gameHostLink, category, tagName, } = req.body;
+        if (updateType === "updateGame") {
             const updatedFields = {
                 status,
                 gameName,
                 gameThumbnailUrl,
                 gameHostLink,
+                type,
                 category,
                 tagName,
             };
@@ -137,7 +138,7 @@ const changeGames = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 updatedGame: updatedGame,
             });
         }
-        if (type === "deleteGame") {
+        if (updateType === "deleteGame") {
             const deletedGame = yield deleteGame(_id);
             if (!deletedGame) {
                 return res.status(404).json({ message: "Game not found" });
