@@ -64,12 +64,16 @@ const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 if (!user) {
                     return res.status(404).json({ error: "User not found" });
                 }
-                query._id = { $in: user.favourite };
+                const favouriteGames = yield gamesModel_1.default.find({
+                    _id: { $in: user.favourite },
+                }).lean();
+                return res.status(200).json(favouriteGames);
             }
             else {
-                query.category = category;
+                query["category"] = category;
             }
         }
+        // Find games based on the constructed query
         const games = yield gamesModel_1.default.aggregate([
             { $match: query },
             { $sort: { createdAt: -1 } },
