@@ -19,7 +19,6 @@ const slotResults_1 = require("../game/slotResults");
 const rtpgenerator_1 = require("../game/rtpgenerator");
 const playerAuth_1 = require("../utils/playerAuth");
 const userModel_1 = __importDefault(require("../dashboard/user/userModel"));
-const transactionModel_1 = __importDefault(require("../dashboard/transaction/transactionModel"));
 const gambleResults_1 = require("../game/gambleResults");
 exports.users = new Map();
 class SocketUser {
@@ -137,9 +136,7 @@ class SocketUser {
     //Update player credits case win ,bet,and lose;
     updateCreditsInDb(finalBalance) {
         return __awaiter(this, void 0, void 0, function* () {
-            const transaction = yield transactionModel_1.default.create({});
             yield userModel_1.default.findOneAndUpdate({ username: this.username }, {
-                $push: { transactions: transaction._id },
                 credits: finalBalance,
             }, { new: true });
         });
