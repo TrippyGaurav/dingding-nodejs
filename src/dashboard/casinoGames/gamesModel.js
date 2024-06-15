@@ -6,7 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const GameSchema = new mongoose_1.default.Schema({
     gameName: { type: String, required: true, unique: true },
-    gameThumbnailUrl: { type: String, required: true },
+    gameThumbnailUrl: {
+        type: String,
+        required: true,
+        default: "https://res.cloudinary.com/dhl5hifpz/image/upload/v1718444865/casinoGames/yk07efxqevcbikqsxvuw.tiff",
+    },
     gameHostLink: { type: String, required: true },
     type: { type: String, required: true },
     category: { type: String, required: true },
