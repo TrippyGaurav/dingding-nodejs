@@ -72,6 +72,9 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (!user) {
             return res.status(404).json({ error: "User not found. Please register" });
         }
+        if (user.designation === "player") {
+            return res.status(400).json({ error: "Login Restricted For Player" });
+        }
         const passwordIsValid = yield bcrypt_1.default.compare(password, user.password);
         if (!passwordIsValid) {
             return res.status(401).json({ error: "Invalid credentials" });
