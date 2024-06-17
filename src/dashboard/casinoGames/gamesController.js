@@ -52,17 +52,8 @@ exports.sendGames = sendGames;
 const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { category } = req.query;
     const { username } = req.body;
-    const referer = req.get("Referer");
-    console.log(`Request made from URL: ${referer}`);
     try {
-        let query = {};
-        if (referer === config_1.config.platform) {
-            query.status = true;
-        }
-        else {
-            query = {};
-        }
-        // let query: any = { status: true };
+        let query = { status: true };
         if (category && category !== "all") {
             if (category === "fav") {
                 if (!username) {
@@ -128,14 +119,13 @@ const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.getGames = getGames;
 const changeGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { _id, status, updateType, type, gameName, gameThumbnailUrl, gameHostLink, category, tagName, } = req.body;
-        if (updateType === "updateGame") {
+        const { _id, status, type, gameName, gameThumbnailUrl, gameHostLink, category, tagName, } = req.body;
+        if (type === "updateGame") {
             const updatedFields = {
                 status,
                 gameName,
                 gameThumbnailUrl,
                 gameHostLink,
-                type,
                 category,
                 tagName,
             };
@@ -148,7 +138,7 @@ const changeGames = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                 updatedGame: updatedGame,
             });
         }
-        if (updateType === "deleteGame") {
+        if (type === "deleteGame") {
             const deletedGame = yield deleteGame(_id);
             if (!deletedGame) {
                 return res.status(404).json({ message: "Game not found" });
