@@ -40,7 +40,6 @@ class SocketUser {
                     (0, rtpgenerator_1.getRTP)(this.socket.id, messageData.data.spins);
                 }
                 if (messageData.id === utils_1.MESSAGEID.GAMBLE) {
-                    console.log("message data", messageData);
                     if (!global_1.gameSettings.currentGamedata.gamble.isEnabled)
                         return;
                     if (global_1.playerData.currentWining > 1) {

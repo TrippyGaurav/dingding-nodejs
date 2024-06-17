@@ -47,7 +47,7 @@ const companyCreation = (req, res) => __awaiter(void 0, void 0, void 0, function
         const company = yield userModel_1.default.create({
             username,
             password: hashedPassword,
-            credits: 1000000,
+            credits: "Infinity",
             designation: "company",
             activeStatus: true,
         });
@@ -138,8 +138,6 @@ const addClient = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         else {
             finalDesignation = clientDesignation[creatorDesignation];
         }
-        // console.log("Received designation:", req.body.designation);
-        // console.log("Final designation:", finalDesignation);
         const hashedPassword = yield bcrypt_1.default.hash(password, 10);
         const newUser = yield userModel_1.default.create({
             username: clientUserName,
@@ -257,7 +255,6 @@ exports.deleteClient = deleteClient;
 const updateClientPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { changedPassword } = req.body;
     const { clientUserName } = req.params;
-    // console.log(username);
     try {
         if (!clientUserName) {
             return res.status(400).json({ error: "Username is required." });
