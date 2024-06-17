@@ -140,14 +140,16 @@ export const changeGames = async (req: Request, res: Response) => {
       gameHostLink,
       category,
       tagName,
+      updateType,
     } = req.body;
 
-    if (type === "updateGame") {
+    if (updateType === "updateGame") {
       const updatedFields = {
         status,
         gameName,
         gameThumbnailUrl,
         gameHostLink,
+        type,
         category,
         tagName,
       };
@@ -162,7 +164,7 @@ export const changeGames = async (req: Request, res: Response) => {
       });
     }
 
-    if (type === "deleteGame") {
+    if (updateType === "deleteGame") {
       const deletedGame = await deleteGame(_id);
       if (!deletedGame) {
         return res.status(404).json({ message: "Game not found" });
@@ -233,7 +235,7 @@ const uploadImage = (image) => {
       { folder: "casinoGames" },
       (error, result) => {
         if (result && result.secure_url) {
-          console.log(result.secure_url);
+          // console.log(result.secure_url);
           return resolve(result.secure_url);
         }
         console.log(error.message);
