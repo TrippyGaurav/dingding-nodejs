@@ -1,16 +1,9 @@
 import Transaction from "./transactionModel";
 import User from "../user/userModel";
 import { NextFunction, Request, Response } from "express";
-import { error } from "console";
 import mongoose from "mongoose";
 
-const clientDesignation = {
-  company: "master",
-  master: "distributer",
-  distributer: "subDistributer",
-  subDistributer: "store",
-  store: "player",
-};
+
 
 //{GET THE DETAILS OF USERS CREDITS}
 export const getRealTimeCredits = async (req: Request, res: Response) => {
@@ -34,7 +27,7 @@ export const getRealTimeCredits = async (req: Request, res: Response) => {
 //{UPDATE THE USER CREDITS}
 export const updateClientCredits = async (req: Request, res: Response) => {
   const { clientUserName } = req.params;
-  const { credits, username, creatorDesignation, type } = req.body;
+  const { credits, username, creatorDesignation } = req.body;
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -55,36 +48,28 @@ export const updateClientCredits = async (req: Request, res: Response) => {
       session.endSession();
       return res.status(400).json({ error: "Client user not found." });
     }
-    if (typeof credits !== "number" || isNaN(credits) || !isFinite(credits)) {
+    if (typeof credits !== "number" || isNaN(credits)) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({ error: "Invalid credits value." });
     }
 
     const creditValue = credits;
-    const userCredits = user.credits - creditValue;
+    let userCredits = user.credits;
     const clientUserCredits = clientUser.credits + creditValue;
 
-    if (user.credits <= 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Please recharge yourself first" });
-    }
-
-    if (creditValue > user.credits || creditValue === user.credits) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(400)
-        .json({ error: "Client's credits cannot exceed user's credits." });
-    }
-
-    if (user.designation !== "company" && userCredits <= 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(400)
-        .json({ error: "Insufficient credits for this transaction." });
+    // Handle the company with infinite credits
+    if (user.designation === "company") {
+      // Do nothing; infinite credits case
+    } else if (typeof userCredits === "number") {
+      userCredits -= creditValue;
+      if (userCredits < 0) {
+        await session.abortTransaction();
+        session.endSession();
+        return res
+          .status(400)
+          .json({ error: "Insufficient credits for this transaction." });
+      }
     }
 
     if (clientUserCredits < 0) {
@@ -100,7 +85,7 @@ export const updateClientCredits = async (req: Request, res: Response) => {
         {
           credit: creditValue,
           creditorDesignation: creatorDesignation,
-          debitorDesignation: clientDesignation[creatorDesignation],
+          debitorDesignation: clientUser.designation,
           creditor: username,
           debitor: clientUserName,
         },
@@ -108,11 +93,10 @@ export const updateClientCredits = async (req: Request, res: Response) => {
       { session }
     );
 
-    // Update client user
+    // Update client user credits without updating their transactions list
     await User.findOneAndUpdate(
       { username: clientUserName },
       {
-        $push: { transactions: transaction._id },
         credits: clientUserCredits,
         ...(creditValue > 0 && {
           totalRecharged: (clientUser.totalRecharged || 0) + creditValue,
@@ -380,7 +364,6 @@ export const transactions = async (req: Request, res: Response) => {
     }
 
     await user.populate("transactions");
-    console.log(user.transactions);
     return res.status(200).json(user.transactions);
   } catch (err) {
     console.error(err);

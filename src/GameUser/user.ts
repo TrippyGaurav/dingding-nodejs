@@ -65,7 +65,7 @@ export class SocketUser {
       }
 
       if (messageData.id === MESSAGEID.GAMBLE) {
-        console.log("message data", messageData);
+    
         if (!gameSettings.currentGamedata.gamble.isEnabled) return;
 
         if (playerData.currentWining > 1) {

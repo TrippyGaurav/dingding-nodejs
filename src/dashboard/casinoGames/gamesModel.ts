@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { Games } from "./gamestype";
-import { timeStamp } from "console";
 const GameSchema = new mongoose.Schema<Games>(
   {
     gameName: { type: String, required: true, unique: true },
