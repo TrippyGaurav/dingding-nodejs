@@ -12,6 +12,7 @@ const Games = express_1.default.Router();
 Games.post("/add", tokenAuth_1.verifyToken, gamesController_1.sendGames);
 //GET ROUTES
 Games.get("/getGames", tokenAuth_1.verifyToken, gamesController_1.getGames);
+Games.get("/getGames/:id", tokenAuth_1.verifyToken, gamesController_1.getGameById);
 Games.post("/upload", gamesController_1.image);
 Games.post("/favourite", tokenAuth_1.verifyToken, gamesController_1.favourite);
 //PUT REQUEST

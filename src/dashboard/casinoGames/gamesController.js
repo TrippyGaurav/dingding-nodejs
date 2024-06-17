@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.image = exports.favourite = exports.changeGames = exports.getGames = exports.sendGames = void 0;
+exports.getGameById = exports.image = exports.favourite = exports.changeGames = exports.getGames = exports.sendGames = void 0;
 const gamesModel_1 = __importDefault(require("./gamesModel"));
 const cloudinary_1 = require("cloudinary");
 const config_1 = require("../../config/config");
@@ -51,9 +51,12 @@ const sendGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.sendGames = sendGames;
 const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { category } = req.query;
-    const { username } = req.body;
+    const { username, creatorDesignation } = req.body;
     try {
-        let query = { status: true };
+        let query = {};
+        if (creatorDesignation === "player") {
+            query.status = true;
+        }
         if (category && category !== "all") {
             if (category === "fav") {
                 if (!username) {
@@ -106,11 +109,22 @@ const getGames = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             },
         ]);
         if (games.length > 0) {
-            return res.status(200).json(games[0]);
+            if (creatorDesignation === "player" && Array.isArray(games)) {
+                const formatGames = (gameList) => gameList.map(({ _id, gameName, gameThumbnailUrl }) => ({
+                    _id,
+                    gameName,
+                    gameThumbnailUrl,
+                }));
+                return res.status(200).json({
+                    featured: formatGames(games[0].featured),
+                    otherGames: formatGames(games[0].otherGames),
+                });
+            }
+            else if (creatorDesignation !== "player") {
+                return res.status(200).json(games[0]);
+            }
         }
-        else {
-            return res.status(200).json({ featured: [], otherGames: [] });
-        }
+        return res.status(200).json({ featured: [], otherGames: [] });
     }
     catch (error) {
         return res.status(500).json({ error: error.message });
@@ -224,3 +238,24 @@ const image = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.image = image;
+//GET INDIVITUAL GAMES URL AND CHECK STATUS
+const getGameById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { creatorDesignation } = req.body;
+    const { id } = req.params;
+    try {
+        // if (creatorDesignation !== "player") {
+        //   return res.status(401).json({ message: "You are not a player" });
+        // }
+        const GameAndStatus = yield gamesModel_1.default.findOne({ _id: id, status: true });
+        if (GameAndStatus) {
+            return res.status(200).json({ url: GameAndStatus.gameHostLink });
+        }
+        else {
+            return res.status(404).json({ message: "Game is Under Maintenance" });
+        }
+    }
+    catch (error) {
+        res.status(500).send({ message: "Internal Server Error", error });
+    }
+});
+exports.getGameById = getGameById;
