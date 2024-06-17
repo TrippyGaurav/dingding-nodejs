@@ -47,11 +47,12 @@ export const sendGames = async (req: Request, res: Response) => {
 
 export const getGames = async (req: Request, res: Response) => {
   const { category } = req.query;
-  const { username } = req.body;
-
+  const { username, creatorDesignation } = req.body;
   try {
-    let query: any = { status: true };
-
+    let query: any = {};
+    if (creatorDesignation === "player") {
+      query.status = true;
+    }
     if (category && category !== "all") {
       if (category === "fav") {
         if (!username) {
@@ -105,10 +106,24 @@ export const getGames = async (req: Request, res: Response) => {
     ]);
 
     if (games.length > 0) {
-      return res.status(200).json(games[0]);
-    } else {
-      return res.status(200).json({ featured: [], otherGames: [] });
+      if (creatorDesignation === "player" && Array.isArray(games)) {
+        const formatGames = (gameList) =>
+          gameList.map(({ _id, gameName, gameThumbnailUrl }) => ({
+            _id,
+            gameName,
+            gameThumbnailUrl,
+          }));
+
+        return res.status(200).json({
+          featured: formatGames(games[0].featured),
+          otherGames: formatGames(games[0].otherGames),
+        });
+      } else if (creatorDesignation !== "player") {
+        return res.status(200).json(games[0]);
+      }
     }
+
+    return res.status(200).json({ featured: [], otherGames: [] });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -242,5 +257,23 @@ export const image = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to upload file" });
+  }
+};
+//GET INDIVITUAL GAMES URL AND CHECK STATUS
+export const getGameById = async (req: Request, res: Response) => {
+  const { creatorDesignation } = req.body;
+  const { id } = req.params;
+  try {
+    // if (creatorDesignation !== "player") {
+    //   return res.status(401).json({ message: "You are not a player" });
+    // }
+    const GameAndStatus = await Game.findOne({ _id: id, status: true });
+    if (GameAndStatus) {
+      return res.status(200).json({ url: GameAndStatus.gameHostLink });
+    } else {
+      return res.status(404).json({ message: "Game is Under Maintenance" });
+    }
+  } catch (error) {
+    res.status(500).send({ message: "Internal Server Error", error });
   }
 };
