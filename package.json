@@ -25,7 +25,7 @@
     "typescript": "^5.4.5"
   },
   "scripts": {
-    "start": "node Dist/app.js",
+    "start": "node dist/app.js",
     "dev": "tsc-watch --onSuccess \"nodemon dist/app.js\"",
     "build": "tsc"
   }
