@@ -92,6 +92,7 @@ export interface GameSettings {
     stopIndex: number;
     // maxPay: number
   };
+  reels:string[][];
   currentBet: number;
   startGame: boolean;
   initiate: (arg: string, arg2: string) => void;
@@ -150,6 +151,16 @@ export function generateMatrix(n_Rows: number, n_Columns: number): any[][] {
   }
   // console.log(matrix);
   return matrix;
+}
+
+export function shuffleArray(array:any[]) {
+  for (let i = array.length -1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i+1));
+    let k = array[i];
+    array[i] = array[j];
+    array[j] = k;
+  }
+
 }
 
 export function convertData(data: string[][]): string[] {
