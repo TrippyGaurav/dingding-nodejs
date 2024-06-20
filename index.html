@@ -18,46 +18,42 @@
       const socket = io("http://localhost:5000", {
         auth: {
           token:
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImdhdXJhdiIsImRlc2lnbmF0aW9uIjoiY29tcGFueSIsImlhdCI6MTcxNzY3NDAyNiwiZXhwIjoxNzE3NzYwNDI2fQ._DgHo-YpNwtbDE55nMOERjZ3VEL167VvcRGzSU41qyo",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImdhdXJhdiIsImRlc2lnbmF0aW9uIjoiY29tcGFueSIsImlhdCI6MTcxODg2NTQwMSwiZXhwIjoxNzE5NDcwMjAxfQ.UjdM-6gRZKYQJfsUgOLG4ZBYVlCgyKK56npZG96evS4",
         },
       });
       socket.on("connect_error", (error) => {
         console.error("Connection Error:", error.message);
+        socket.emit(
+          "AUTH",
+          JSON.stringify({
+            data: {},
+          })
+        );
       });
 
       socket.on("connect", () => {
         console.log("Connected to the server");
 
-        socket.emit(
-          "AUTH",
-          JSON.stringify({
-            id: "AUTH",
-            Data: {
-              GameID: "SL-VIK",
-            },
-          })
-        );
-
         socket.on("message", (message) => {
           console.log(message);
         });
-      });
 
-      socket.on("InternalError", (errorMessage) => {
-        console.log(errorMessage);
-      });
+        socket.on("InternalError", (errorMessage) => {
+          console.log(errorMessage);
+        });
 
-      const spinHanlder = () => {
-        socket.emit(
-          "message",
-          JSON.stringify({
-            id: "SPIN",
-            data: {
-              currentBet: 1,
-            },
-          })
-        );
-      };
+        const spinHanlder = () => {
+          socket.emit(
+            "message",
+            JSON.stringify({
+              id: "SPIN",
+              data: {
+                currentBet: 1,
+              },
+            })
+          );
+        };
+      });
 
       const button = document.getElementById("spin");
       button.addEventListener("click", spinHanlder);
