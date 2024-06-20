@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import jwt from "jsonwebtoken";
-import User from "../dashboard/user/userModel";
+
 interface DecodedToken {
   username: string;
   designation?: string;
@@ -19,7 +19,7 @@ export const verifySocketToken = (socket: Socket): Promise<DecodedToken> => {
             reject(new Error("You are not authenticated"));
           } else {
             resolve(decoded!);
-            console.log('authenticated player')
+            console.log("authenticated player");
           }
         }
       );

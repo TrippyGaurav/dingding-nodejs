@@ -6,7 +6,10 @@ import socketController from "./socket/controller";
 import userRoutes from "./dashboard/user/userRoutes";
 import transactionRoutes from "./dashboard/transaction/transactionRoutes";
 import Games from "./dashboard/casinoGames/gamesRoutes";
+import globalErrorHandler from "./middleware/globalHandler";
+
 const app = express();
+
 //Cloudinary configs
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ limit: "25mb", extended: true }));
@@ -14,6 +17,7 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   next();
 });
+
 //cors config
 const corsOptions = {
   origin: [
@@ -54,5 +58,7 @@ const io = new Server(server, {
 });
 
 socketController(io);
+
+app.use(globalErrorHandler);
 
 export default server;

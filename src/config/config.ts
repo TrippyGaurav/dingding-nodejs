@@ -9,6 +9,7 @@ const _config = {
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
   api_secret: process.env.API_SECRET,
+  companyApiKey: process.env.COMPANY_API_KEY,
 };
 
 export const config = Object.freeze(_config);

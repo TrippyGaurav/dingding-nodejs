@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import { User } from "./userType";
+import mongoose, { Schema } from "mongoose";
+import { IBaseUser, IPlayer, User } from "./userType";
 
 const userSchema = new mongoose.Schema<User>(
   {
@@ -69,5 +69,29 @@ const userSchema = new mongoose.Schema<User>(
   }
 );
 
+const BaseUserSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
+  status: { type: String, required: true },
+  password: { type: String, required: true },
+  role: { type: String, required: true },
+  clients: { type: [String], required: true },
+  transactions: { type: [Schema.Types.Mixed], required: true },
+  lastLogin: { type: Date, required: true },
+  loginTimes: { type: Number, required: true },
+  totalRecharged: { type: Number, required: true },
+  totalRedeemed: { type: Number, required: true },
+  credits: { type: Number, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const PlayerSchema: Schema = new Schema({
+  favouriteGames: { type: [String], required: true },
+});
+
+const BaseUser = mongoose.model<IBaseUser>("BaseUser", BaseUserSchema);
+const Player = BaseUser.discriminator<IPlayer>("Player", PlayerSchema);
 const User = mongoose.model<User>("User", userSchema);
+
+export { BaseUser, Player };
 export default User;

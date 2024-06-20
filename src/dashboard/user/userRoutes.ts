@@ -5,12 +5,14 @@ import {
   addClient,
   clientData,
   companyCreation,
+  createUser,
   deleteClient,
   getClientList,
   loginUser,
   updateClientPassword,
   updateClientStatus,
 } from "./userController";
+import { extractRoleFromCookie } from "../../middleware/middlware";
 const userRoutes = express.Router();
 
 //ALL USERS POST REQUEST
@@ -36,5 +38,11 @@ userRoutes.put(
 
 //ALL GET REQ FOR USERS
 userRoutes.get("/userData", verifyToken, clientData);
+
+// NEW
+userRoutes.post("/", extractRoleFromCookie, createUser);
+userRoutes.get("/", (req, res) => {
+  res.json({ message: "Hi" });
+});
 
 export default userRoutes;
