@@ -17,6 +17,7 @@ export const verifyToken = (
     ?.split("; ")
     .find((row) => row.startsWith("userToken="))
     ?.split("=")[1];
+  console.log("COOKIES : " + cookie);
 
   if (cookie) {
     jwt.verify(

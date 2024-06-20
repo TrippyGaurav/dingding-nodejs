@@ -6,4 +6,11 @@ export interface Games {
   category: string;
   status: Boolean;
   tagName: string;
+  payout: Payout[];
+}
+
+export interface Payout {
+  gameName: string;
+
+  data: object;
 }

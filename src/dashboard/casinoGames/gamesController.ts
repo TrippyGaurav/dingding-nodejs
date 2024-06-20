@@ -1,8 +1,10 @@
-import Game from "./gamesModel";
+import { Game, Payouts } from "./gamesModel";
 import { NextFunction, Request, Response } from "express";
 import { v2 as cloudinary } from "cloudinary";
 import { config } from "../../config/config";
 import User from "../user/userModel";
+import Games from "./gamesRoutes";
+
 cloudinary.config({
   cloud_name: config.cloud_name,
   api_key: config.api_key,
@@ -277,5 +279,43 @@ export const getGameById = async (req: Request, res: Response) => {
     }
   } catch (error) {
     res.status(500).send({ message: "Internal Server Error", error });
+  }
+};
+
+//payout files api
+export const payoutFiles = async (req: Request, res: Response) => {
+  const { filename } = req.body;
+
+  if (!filename) {
+    return res.status(400).send("File name is required in headers.");
+  }
+
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).send("No file uploaded.");
+    }
+
+    const jsonData = JSON.parse(file.buffer.toString("utf-8"));
+
+    const newFile = new Payouts({
+      gameName: filename,
+      data: jsonData,
+    });
+
+    await newFile.save();
+    const pushGame = await Game.findOneAndUpdate(
+      { tagName: filename },
+      { $push: { payout: newFile._id } },
+      { new: true }
+    );
+
+    if (!pushGame) {
+      return res.status(404).send("Game with the specified tagName not found.");
+    }
+
+    res.status(201).send(newFile);
+  } catch (error) {
+    res.status(400).send(error.message);
   }
 };

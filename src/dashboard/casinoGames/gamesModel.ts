@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import { Games } from "./gamestype";
+import { Games, Payout } from "./gamestype";
+import { json } from "body-parser";
 const GameSchema = new mongoose.Schema<Games>(
   {
     gameName: { type: String, required: true, unique: true },
@@ -21,12 +22,23 @@ const GameSchema = new mongoose.Schema<Games>(
       type: String,
       require: true,
     },
+    payout: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Payouts",
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-const Game = mongoose.model<Games>("casinoGames", GameSchema);
+const PayoutSchema = new mongoose.Schema<Payout>({
+  gameName: { type: String, required: true },
+  data: { type: mongoose.Schema.Types.Mixed, required: true },
+});
 
-export default Game;
+export const Game = mongoose.model<Games>("casinoGames", GameSchema);
+export const Payouts = mongoose.model<Payout>("GamesPayout", PayoutSchema);
+// export default { Game, Payouts };

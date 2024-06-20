@@ -94,7 +94,7 @@ export interface GameSettings {
   };
   currentBet: number;
   startGame: boolean;
-  initiate: (arg: string, arg2: string) => void;
+  initiate: (arg: {}, arg2: string) => void;
   gamble: {
     game: GambleGame;
     maxCount: number;
