@@ -1,10 +1,10 @@
-import exp from "constants";
-import Game from "./gamesModel";
+import { Game, Payouts } from "./gamesModel";
 import { NextFunction, Request, Response } from "express";
 import { v2 as cloudinary } from "cloudinary";
 import { config } from "../../config/config";
 import User from "../user/userModel";
-import mongoose from "mongoose";
+import Games from "./gamesRoutes";
+
 cloudinary.config({
   cloud_name: config.cloud_name,
   api_key: config.api_key,
@@ -32,7 +32,9 @@ export const sendGames = async (req: Request, res: Response) => {
   try {
     const game = new Game({
       gameName,
-      gameThumbnailUrl,
+      gameThumbnailUrl:
+        gameThumbnailUrl ||
+        "https://res.cloudinary.com/dhl5hifpz/image/upload/v1718447154/casinoGames/jiddczkc9oxak77h88kg.png",
       gameHostLink,
       type,
       category,
@@ -47,10 +49,12 @@ export const sendGames = async (req: Request, res: Response) => {
 
 export const getGames = async (req: Request, res: Response) => {
   const { category } = req.query;
-  const { username } = req.body;
-
+  const { username, creatorDesignation } = req.body;
   try {
-    let query: any = { status: true };
+    let query: any = {};
+    if (creatorDesignation === "player") {
+      query.status = true;
+    }
     if (category && category !== "all") {
       if (category === "fav") {
         if (!username) {
@@ -62,27 +66,97 @@ export const getGames = async (req: Request, res: Response) => {
         if (!user) {
           return res.status(404).json({ error: "User not found" });
         }
-
-        // Find games that are in the user's favourite list
-        res.status(200).json(user.favourite);
+        query._id = { $in: user.favourite };
       } else {
-        // For other categories, add category filter to the query
-        query["category"] = category;
+        query.category = category;
       }
     }
 
-    // Find games based on the constructed query
-    const games = await Game.find(query);
-    res.status(200).json(games);
+    const games = await Game.aggregate([
+      { $match: query },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: null,
+          featured: {
+            $push: { $cond: [{ $eq: ["$type", "featured"] }, "$$ROOT", null] },
+          },
+          otherGames: {
+            $push: { $cond: [{ $ne: ["$type", "featured"] }, "$$ROOT", null] },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          featured: {
+            $filter: {
+              input: "$featured",
+              as: "game",
+              cond: { $ne: ["$$game", null] },
+            },
+          },
+          otherGames: {
+            $filter: {
+              input: "$otherGames",
+              as: "game",
+              cond: { $ne: ["$$game", null] },
+            },
+          },
+        },
+      },
+    ]);
+
+    if (games.length > 0) {
+      if (creatorDesignation === "player" && Array.isArray(games)) {
+        const formatGames = (gameList) =>
+          gameList.map(({ _id, gameName, gameThumbnailUrl }) => ({
+            _id,
+            gameName,
+            gameThumbnailUrl,
+          }));
+
+        return res.status(200).json({
+          featured: formatGames(games[0].featured),
+          otherGames: formatGames(games[0].otherGames),
+        });
+      } else if (creatorDesignation !== "player") {
+        return res.status(200).json(games[0]);
+      }
+    }
+
+    return res.status(200).json({ featured: [], otherGames: [] });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
+
 export const changeGames = async (req: Request, res: Response) => {
   try {
-    const { _id, status, type } = req.body;
-    if (type === "updateStatus") {
-      const updatedGame = await updateGame(_id, status);
+    const {
+      _id,
+      status,
+      type,
+      gameName,
+      gameThumbnailUrl,
+      gameHostLink,
+      category,
+      tagName,
+      updateType,
+    } = req.body;
+
+    if (updateType === "updateGame") {
+      const updatedFields = {
+        status,
+        gameName,
+        gameThumbnailUrl,
+        gameHostLink,
+        type,
+        category,
+        tagName,
+      };
+
+      const updatedGame = await updateGame(_id, updatedFields);
       if (!updatedGame) {
         return res.status(404).json({ message: "Game not found" });
       }
@@ -92,7 +166,7 @@ export const changeGames = async (req: Request, res: Response) => {
       });
     }
 
-    if (type === "deleteGame") {
+    if (updateType === "deleteGame") {
       const deletedGame = await deleteGame(_id);
       if (!deletedGame) {
         return res.status(404).json({ message: "Game not found" });
@@ -107,13 +181,9 @@ export const changeGames = async (req: Request, res: Response) => {
   }
 };
 
-async function updateGame(_id: string, status: string) {
-  return await Game.findOneAndUpdate(
-    { _id },
-    { $set: { status } },
-    { new: true }
-  );
-}
+const updateGame = async (_id, updatedFields) => {
+  return await Game.findByIdAndUpdate(_id, updatedFields, { new: true });
+};
 
 async function deleteGame(_id: string) {
   return await Game.findOneAndDelete({ _id });
@@ -136,18 +206,16 @@ export const favourite = async (req: Request, res: Response) => {
         return res.status(400).send({ message: "Game already selected" });
       }
       // Add the game to the user's favourites
-      const updatedPlayer = await User.findOneAndUpdate(
+      await User.findOneAndUpdate(
         { username: player.username },
         { $push: { favourite: gameId } },
         { new: true }
       );
 
-      res
-        .status(200)
-        .send({ message: "Game added to favourites", player: updatedPlayer });
+      res.status(200).send({ message: "Game added to favourites" });
     } else if (type === "remove") {
       // Remove the game from the user's favourites
-      const updatedPlayer = await User.findOneAndUpdate(
+      await User.findOneAndUpdate(
         { username: player.username },
         { $pull: { favourite: gameId } },
         { new: true }
@@ -155,14 +223,12 @@ export const favourite = async (req: Request, res: Response) => {
 
       return res.status(200).send({
         message: "Game removed from favourites",
-        player: updatedPlayer,
       });
     }
   } catch (error) {
     res.status(500).send({ message: "Internal Server Error", error });
   }
 };
-
 //
 const uploadImage = (image) => {
   return new Promise((resolve, reject) => {
@@ -171,7 +237,7 @@ const uploadImage = (image) => {
       { folder: "casinoGames" },
       (error, result) => {
         if (result && result.secure_url) {
-          console.log(result.secure_url);
+          // console.log(result.secure_url);
           return resolve(result.secure_url);
         }
         console.log(error.message);
@@ -195,5 +261,61 @@ export const image = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to upload file" });
+  }
+};
+//GET INDIVITUAL GAMES URL AND CHECK STATUS
+export const getGameById = async (req: Request, res: Response) => {
+  const { creatorDesignation } = req.body;
+  const { id } = req.params;
+  try {
+    // if (creatorDesignation !== "player") {
+    //   return res.status(401).json({ message: "You are not a player" });
+    // }
+    const GameAndStatus = await Game.findOne({ _id: id, status: true });
+    if (GameAndStatus) {
+      return res.status(200).json({ url: GameAndStatus.gameHostLink });
+    } else {
+      return res.status(404).json({ message: "Game is Under Maintenance" });
+    }
+  } catch (error) {
+    res.status(500).send({ message: "Internal Server Error", error });
+  }
+};
+
+//payout files api
+export const payoutFiles = async (req: Request, res: Response) => {
+  const { filename } = req.body;
+
+  if (!filename) {
+    return res.status(400).send("File name is required in headers.");
+  }
+
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).send("No file uploaded.");
+    }
+
+    const jsonData = JSON.parse(file.buffer.toString("utf-8"));
+
+    const newFile = new Payouts({
+      gameName: filename,
+      data: jsonData,
+    });
+
+    await newFile.save();
+    const pushGame = await Game.findOneAndUpdate(
+      { tagName: filename },
+      { $push: { payout: newFile._id } },
+      { new: true }
+    );
+
+    if (!pushGame) {
+      return res.status(404).send("Game with the specified tagName not found.");
+    }
+
+    res.status(201).send(newFile);
+  } catch (error) {
+    res.status(400).send(error.message);
   }
 };

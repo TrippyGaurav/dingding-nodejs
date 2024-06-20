@@ -57,7 +57,9 @@ export const gameSettings: GameSettings = {
     start: false,
   },
   reels:[[]],
-  initiate: async (GameID: string, clientID: string) => {
+
+  initiate: async (GameData: any, clientID: string) => {
+
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
@@ -80,8 +82,11 @@ export const gameSettings: GameSettings = {
     //   return;
     // }
 
-    const currentGameData=gameData.filter((element)=>element.id==GameID)
-    gameSettings.currentGamedata=currentGameData[0];
+
+    // const currentGameData=gameData.filter((element)=>element.id==GameID)
+    
+    gameSettings.currentGamedata=GameData;
+
 
     initSymbols();
     UiInitData.paylines = convertSymbols(gameSettings.currentGamedata.Symbols);

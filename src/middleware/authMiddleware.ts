@@ -9,6 +9,7 @@ interface DecodedToken {
 export const verifySocketToken = (socket: Socket): Promise<DecodedToken> => {
   return new Promise((resolve, reject) => {
     const token = socket.handshake.auth.token;
+    console.log(token, "Token player");
     if (token) {
       jwt.verify(
         token,
@@ -19,7 +20,7 @@ export const verifySocketToken = (socket: Socket): Promise<DecodedToken> => {
             reject(new Error("You are not authenticated"));
           } else {
             resolve(decoded!);
-            console.log('authenticated player')
+            console.log("authenticated player");
           }
         }
       );

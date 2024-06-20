@@ -52,7 +52,7 @@ const companyCreation = async (req: Request, res: Response) => {
     const company = await User.create({
       username,
       password: hashedPassword,
-      credits: 1000000,
+      credits: "Infinity",
       designation: "company",
       activeStatus: true,
     });
@@ -107,11 +107,11 @@ const loginUser = async (req: Request, res: Response) => {
         designation: user.designation,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "24h" }
+      { expiresIn: "7d" }
     );
 
     res.cookie("userToken", token, {
-      maxAge: 1000 * 60 * 60 * 24,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
       httpOnly: true,
       // secure: true,
       sameSite: "none",
@@ -168,8 +168,7 @@ const addClient = async (req, res) => {
       finalDesignation = clientDesignation[creatorDesignation];
     }
 
-    // console.log("Received designation:", req.body.designation);
-    // console.log("Final designation:", finalDesignation);
+
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -298,7 +297,6 @@ const deleteClient = async (req, res) => {
 const updateClientPassword = async (req, res) => {
   const { changedPassword } = req.body;
   const { clientUserName } = req.params;
-  // console.log(username);
   try {
     if (!clientUserName) {
       return res.status(400).json({ error: "Username is required." });
@@ -329,6 +327,7 @@ const updateClientPassword = async (req, res) => {
     });
   }
 };
+
 const updateClientStatus = async (req, res) => {
   try {
     const { clientUserName } = req.params;

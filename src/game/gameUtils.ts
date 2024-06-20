@@ -95,7 +95,7 @@ export interface GameSettings {
   reels:string[][];
   currentBet: number;
   startGame: boolean;
-  initiate: (arg: string, arg2: string) => void;
+  initiate: (arg: any, arg2: string) => void;
   gamble: {
     game: GambleGame;
     maxCount: number;

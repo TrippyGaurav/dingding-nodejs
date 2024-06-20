@@ -7,7 +7,7 @@ const _config = {
   env: process.env.NODE_ENV,
   jwtSecret: process.env.JWT_SECRET,
   cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.API_KEYS,
+  api_key: process.env.API_KEY,
   api_secret: process.env.API_SECRET,
 };
 
