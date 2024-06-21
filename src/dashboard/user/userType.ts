@@ -24,7 +24,7 @@ export interface IBaseUser {
   status: string;
   password: string;
   role: string;
-  clients: string[];
+  clients: IBaseUser[];
   transactions: any[];
   lastLogin: Date;
   loginTimes: number;
@@ -37,5 +37,3 @@ export interface IBaseUser {
 export interface IPlayer extends IBaseUser {
   favouriteGames: string[];
 }
-
-export interface Company extends IBaseUser {}

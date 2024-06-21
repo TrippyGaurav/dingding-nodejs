@@ -42,8 +42,8 @@ export function extractRoleFromCookie(
         } else {
           req.body = {
             ...req.body,
-            username: decoded!.username,
-            creatorDesignation: decoded!.role,
+            creatorUsername: decoded!.username,
+            creatorRole: decoded!.role,
           };
           console.log("Authenticated successfully");
           next();
@@ -51,6 +51,6 @@ export function extractRoleFromCookie(
       }
     );
   } else {
-    next(createHttpError(401, "No authentication token provided"));
+    next(createHttpError(401, "Unauthorized: No role found in cookies"));
   }
 }
