@@ -1,14 +1,21 @@
-import { sendInitdata } from "./slotDataInit";
+import { RandomResultGenerator, sendInitdata } from "./slotDataInit";
 import { gameData } from "./testData";
 import {
   GameSettings,
   PlayerData,
   WildSymbol,
+  bonusGameType,
+  combineUniqueSymbols,
   convertSymbols,
+  removeRecurringIndexSymbols,
   specialIcons,
   winning,
 } from "./gameUtils";
 import { getClient } from "../user/user";
+import exp from "constants";
+import { CheckResult, WinData } from "./slotResults";
+import { bonusGame } from "./bonusResults";
+import { middleware } from "../utils/middleware";
 
 export const gameSettings: GameSettings = {
   currentGamedata: {
@@ -24,6 +31,7 @@ export const gameSettings: GameSettings = {
       },
     ],
   },
+  tempReels: [[]],
   matrix: { x: 5, y: 3 },
   payLine: [],
   scatterPayTable: [],
@@ -36,6 +44,7 @@ export const gameSettings: GameSettings = {
   resultSymbolMatrix: [],
   lineData: [],
   fullPayTable: [],
+  _winData: undefined,
   jackpot: {
     symbolName: "",
     symbolsCount: 0,
@@ -56,10 +65,9 @@ export const gameSettings: GameSettings = {
     maxCount: 1,
     start: false,
   },
-  reels:[[]],
+  reels: [[]],
 
   initiate: async (GameData: any, clientID: string) => {
-
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
@@ -82,11 +90,9 @@ export const gameSettings: GameSettings = {
     //   return;
     // }
 
-
     // const currentGameData=gameData.filter((element)=>element.id==GameID)
-    
-    gameSettings.currentGamedata=GameData;
 
+    gameSettings.currentGamedata = gameData[0];
 
     initSymbols();
     UiInitData.paylines = convertSymbols(gameSettings.currentGamedata.Symbols);
@@ -208,4 +214,69 @@ function handleSpecialSymbols(symbol) {
     default:
       break;
   }
+}
+
+//CHECKMOOLAH
+export function spinResult(clientID: string) {
+  console.log(gameSettings._winData, ":gameSettings._winData");
+
+  if (
+    gameSettings.currentGamedata.bonus.isEnabled &&
+    gameSettings.currentGamedata.bonus.type == bonusGameType.tap
+  )
+    gameSettings.bonus.game = new bonusGame(
+      gameSettings.currentGamedata.bonus.noOfItem,
+      clientID
+    );
+  // if(playerData.Balance < gameWining.currentBet)
+  if (playerData.Balance < gameSettings.currentBet) {
+    // Alerts(clientID, "Low Balance");
+    return;
+  }
+
+  // TODO : Middle ware goes here
+  (async () => {
+    await middleware();
+  })();
+  //minus the balance
+
+  //TODO:To get the user information
+
+  console.log("CurrentBet : " + gameSettings.currentBet);
+
+  playerData.Balance -= gameSettings.currentBet;
+  gameSettings.tempReels = [[]];
+  console.log("player balance:", playerData.Balance);
+  console.log("player havewon:", playerData.haveWon);
+  gameSettings._winData = new WinData(clientID);
+  gameSettings.bonus.start = false;
+  new RandomResultGenerator();
+  new CheckResult(clientID);
+}
+export function checkforMoolah(clientID: string) {
+  gameSettings.tempReels = gameSettings.reels;
+  const lastWinData = gameSettings._winData;
+  lastWinData.winningSymbols = combineUniqueSymbols(
+    removeRecurringIndexSymbols(lastWinData.winningSymbols)
+  );
+  const yValues = lastWinData.winningSymbols.map((str) => {
+    const [, y] = str.split(",").map(Number);
+    return y;
+  });
+  console.log(yValues);
+
+  // new CheckResult(clientID);
+}
+function recursionCheck(xIndex: number) {
+  for (let i = gameSettings.matrix.y - 2; i > 0; i--) {
+    {
+      if (gameSettings.resultSymbolMatrix[xIndex][i] == "") {
+      }
+    }
+  }
+}
+function getLastindex(reelIndex: number, index: number, reel: number[][]) {
+  if (index - 1 < 0)
+    return reel[reelIndex][gameSettings.tempReels[reelIndex].length - 1];
+  else return gameSettings.tempReels[reelIndex][index - 1];
 }

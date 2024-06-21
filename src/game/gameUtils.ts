@@ -1,6 +1,7 @@
 import { bonusGame } from "./bonusResults";
 import { GambleGame } from "./gambleResults";
 import { gameSettings } from "./global";
+import { WinData } from "./slotResults";
 
 export interface SymbolData {
   symbolName: string;
@@ -86,13 +87,15 @@ export interface GameSettings {
     defaultAmount: number;
     increaseValue: number;
   };
+  _winData: WinData;
   bonus: {
     game: bonusGame;
     start: boolean;
     stopIndex: number;
     // maxPay: number
   };
-  reels:string[][];
+  tempReels: string[][];
+  reels: string[][];
   currentBet: number;
   startGame: boolean;
   initiate: (arg: any, arg2: string) => void;
@@ -153,14 +156,13 @@ export function generateMatrix(n_Rows: number, n_Columns: number): any[][] {
   return matrix;
 }
 
-export function shuffleArray(array:any[]) {
-  for (let i = array.length -1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i+1));
+export function shuffleArray(array: any[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
     let k = array[i];
     array[i] = array[j];
     array[j] = k;
   }
-
 }
 
 export function convertData(data: string[][]): string[] {
@@ -214,3 +216,41 @@ export function convertSymbols(data) {
   // return { symbols: convertedData };
   return uiData;
 }
+export function removeRecurringIndexSymbols(
+  symbolsToEmit: string[][]
+): string[][] {
+  const seen = new Set<string>();
+  const result: string[][] = [];
+
+  symbolsToEmit.forEach((subArray) => {
+    const uniqueSubArray: string[] = [];
+    subArray.forEach((symbol) => {
+      if (!seen.has(symbol)) {
+        seen.add(symbol);
+        uniqueSubArray.push(symbol);
+      }
+    });
+    if (uniqueSubArray.length > 0) {
+      result.push(uniqueSubArray);
+    }
+  });
+
+  return result;
+}
+export function combineUniqueSymbols(symbolsToEmit: string[][]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  symbolsToEmit.forEach((subArray) => {
+    subArray.forEach((symbol) => {
+      if (!seen.has(symbol)) {
+        seen.add(symbol);
+        result.push(symbol);
+      }
+    });
+  });
+
+  return result;
+}
+
+// Test the function
