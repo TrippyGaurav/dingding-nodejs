@@ -30,7 +30,7 @@ export function extractRoleFromCookie(
     ?.split("; ")
     .find((row) => row.startsWith("userToken="))
     ?.split("=")[1];
-
+  console.log(cookie);
   if (cookie) {
     jwt.verify(
       cookie,
@@ -42,8 +42,8 @@ export function extractRoleFromCookie(
         } else {
           req.body = {
             ...req.body,
-            creatorUsername: decoded!.username,
-            creatorRole: decoded!.role,
+            username: decoded!.username,
+            role: decoded!.role,
           };
           console.log("Authenticated successfully");
           next();

@@ -24,8 +24,8 @@ export async function authenticateToken(
 
     const _req = req as AuthRequest;
     _req.userId = decoded.userId;
-    _req.userRole = decoded.role;
-
+    _req.userRole = decoded.designation;
+    _req.userName = decoded.username;
     next();
   } catch (error) {
     console.log("Error : ", error);

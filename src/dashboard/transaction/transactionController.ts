@@ -2,371 +2,163 @@ import Transaction from "./transactionModel";
 import User from "../user/userModel";
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
-
-
-
-//{GET THE DETAILS OF USERS CREDITS}
-export const getRealTimeCredits = async (req: Request, res: Response) => {
-  const { clientUserName } = req.params;
-  if (!clientUserName) {
-    return res.status(400).json({ error: "username is required." });
-  }
-  try {
-    const user = await User.findOne({ username: clientUserName }, "credits");
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
-    }
-    return res.status(200).json({ credits: user.credits });
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ error: "An error occurred while retrieving user credits." });
-  }
-};
-
+import createHttpError from "http-errors";
+import {
+  AuthRequest,
+  validatePaginationParams,
+  getPaginationMetadata,
+} from "../../utils/utils";
 //{UPDATE THE USER CREDITS}
-export const updateClientCredits = async (req: Request, res: Response) => {
-  const { clientUserName } = req.params;
-  const { credits, username, creatorDesignation } = req.body;
+export const transferCredits = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { to_updateClient, credits } = req.body;
+  const { userName, userRole } = req as AuthRequest;
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  const TransactionSession = await mongoose.startSession();
+  TransactionSession.startTransaction();
+
+  // Validate request data
+  if (!to_updateClient || !credits || !userName || !userRole) {
+    const missingFields = [
+      "to_updateClient",
+      "credits",
+      "userName",
+      "userRole",
+    ].filter((field) => !req.body[field] && !(req as AuthRequest)[field]);
+    const errorMessage = `All fields are required to make a transaction. Missing: ${missingFields.join(
+      ", "
+    )}`;
+    return next(createHttpError(400, errorMessage));
+  }
+
+  const creditsNumber = Number(credits);
+  if (isNaN(creditsNumber) || creditsNumber < 0) {
+    return next(
+      createHttpError(400, "Credits must be a valid non-negative number")
+    );
+  }
 
   try {
-    const user = await User.findOne({ username: username }).session(session);
-    const clientUser = await User.findOne({ username: clientUserName }).session(
-      session
+    const Creditor = await User.findOne({ username: userName }).session(
+      TransactionSession
+    );
+    const Debitor = await User.findOne({ username: to_updateClient }).session(
+      TransactionSession
     );
 
-    if (!user) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "User not found." });
-    }
-    if (!clientUser) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Client user not found." });
-    }
-    if (typeof credits !== "number" || isNaN(credits)) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: "Invalid credits value." });
+    if (!Creditor || !Debitor) {
+      const missingUsers = [];
+      if (!Creditor) missingUsers.push("Creditor");
+      if (!Debitor) missingUsers.push("Debitor");
+      throw createHttpError(
+        400,
+        `${missingUsers.join(" and ")} user${
+          missingUsers.length > 1 ? "s" : ""
+        } not found.`
+      );
     }
 
-    const creditValue = credits;
-    let userCredits = user.credits;
-    const clientUserCredits = clientUser.credits + creditValue;
-
-    // Handle the company with infinite credits
-    if (user.designation === "company") {
-      // Do nothing; infinite credits case
-    } else if (typeof userCredits === "number") {
-      userCredits -= creditValue;
-      if (userCredits < 0) {
-        await session.abortTransaction();
-        session.endSession();
-        return res
-          .status(400)
-          .json({ error: "Insufficient credits for this transaction." });
-      }
+    if (Creditor.credits === undefined || Creditor.credits < creditsNumber) {
+      throw createHttpError(400, "Insufficient credits for this transaction.");
     }
 
-    if (clientUserCredits < 0) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        error: "Invalid credit update. Client's credits would become negative.",
-      });
-    }
+    const transactionData = {
+      credit: creditsNumber,
+      creditorDesignation: userRole,
+      debitorDesignation: Debitor.designation,
+      creditor: userName,
+      debitor: to_updateClient,
+    };
 
-    const [transaction] = await Transaction.create(
-      [
+    const [transaction] = await Transaction.create([transactionData], {
+      session: TransactionSession,
+    });
+
+    // Update Debitor credits
+    const updatedDebitor = await User.findOneAndUpdate(
+      { username: to_updateClient },
+      {
+        $inc: { credits: creditsNumber },
+        ...(creditsNumber > 0 && { $inc: { totalRecharged: creditsNumber } }),
+        ...(creditsNumber < 0 && {
+          $inc: { totalRedeemed: Math.abs(creditsNumber) },
+        }),
+      },
+      { new: true, session: TransactionSession }
+    );
+
+    if (!updatedDebitor)
+      throw createHttpError(500, "Failed to update Debitor credits.");
+
+    // Update Creditor credits and transactions if Creditor is not a company
+    if (Creditor.designation !== "company") {
+      const updatedCreditor = await User.findOneAndUpdate(
+        { username: userName },
         {
-          credit: creditValue,
-          creditorDesignation: creatorDesignation,
-          debitorDesignation: clientUser.designation,
-          creditor: username,
-          debitor: clientUserName,
+          $inc: { credits: -creditsNumber },
+          $push: { transactions: transaction._id },
         },
-      ],
-      { session }
-    );
+        { new: true, session: TransactionSession }
+      );
 
-    // Update client user credits without updating their transactions list
-    await User.findOneAndUpdate(
-      { username: clientUserName },
-      {
-        credits: clientUserCredits,
-        ...(creditValue > 0 && {
-          totalRecharged: (clientUser.totalRecharged || 0) + creditValue,
-        }),
-        ...(creditValue < 0 && {
-          totalRedeemed:
-            (clientUser.totalRedeemed || 0) + Math.abs(creditValue),
-        }),
-      },
-      { new: true, session }
-    );
+      if (!updatedCreditor)
+        throw createHttpError(500, "Failed to update Creditor credits.");
+    }
 
-    // Update user (creditor)
-    await User.findOneAndUpdate(
-      { username: username },
-      {
-        $push: { transactions: transaction._id },
-        credits: userCredits,
-      },
-      { new: true, session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-    return res.status(200).json({ message: "Credits updated successfully." });
-  } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-    console.error(err);
-    return res
-      .status(500)
-      .json({ error: "Internal Server Error", details: err.message });
+    await TransactionSession.commitTransaction();
+    res.status(200).json({ message: "Credits updated successfully." });
+  } catch (error) {
+    await TransactionSession.abortTransaction();
+    next(error);
+  } finally {
+    TransactionSession.endSession();
   }
 };
+//All Transaction of the currect user
+export const transactions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { userName } = req as AuthRequest;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 5;
 
-//{getTransanctionOnBasisOfDatePeriod OF USER}
-// export const getTransanctionOnBasisOfDatePeriod = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   const {
-//     pageNumber = 1,
-//     limit = 20,
-//     designation,
-//     hierarchyName,
-//     startDate,
-//     endDate,
-//   } = req.body;
-
-//   const page = parseInt(pageNumber);
-//   const limitValue = parseInt(limit);
-
-//   const startIndex = (page - 1) * limitValue;
-//   const endIndex = page * limitValue;
-
-//   const results = {};
-
-//   var totalPageCount = await Transaction.countDocuments().exec();
-
-//   if (endIndex < totalPageCount) {
-//     results.next = {
-//       page: page + 1,
-//       limit: limitValue,
-//     };
-//   }
-
-//   if (startIndex > 0) {
-//     results.previous = {
-//       page: page - 1,
-//       limit: limitValue,
-//     };
-//   }
-
-//   try {
-//     if (designation === "company") {
-//       if (hierarchyName !== "all") {
-//         const transactions = await Transaction.find({
-//           $and: [
-//             {
-//               $or: [
-//                 { creditorDesignation: hierarchyName },
-//                 { debitorDesignation: hierarchyName },
-//               ],
-//             },
-//             {
-//               createdAtDate: {
-//                 $gte: startDate,
-//                 $lte: endDate,
-//               },
-//             },
-//           ],
-//         })
-//           .limit(limitValue)
-//           .skip(startIndex)
-//           .exec();
-//         totalPageCount = await Transaction.find({
-//           $and: [
-//             {
-//               $or: [
-//                 { creditorDesignation: hierarchyName },
-//                 { debitorDesignation: hierarchyName },
-//               ],
-//             },
-//             {
-//               createdAtDate: {
-//                 $gte: startDate,
-//                 $lte: endDate,
-//               },
-//             },
-//           ],
-//         })
-//           .countDocuments()
-//           .exec();
-
-//         const transactionsFiltered = transactions.map((items) => {
-//           if (items.creditor === clientUserName)
-//             return { ...items.toObject(), creditor: "COMPANY" };
-//           return items.toObject();
-//         });
-
-//         if (transactionsFiltered)
-//           return res.status(200).json({ transactionsFiltered, totalPageCount });
-//         return res
-//           .status(201)
-//           .json({ error: "unable to find transactions try again" });
-//       } else {
-//         const transactions = await Transaction.find({
-//           createdAtDate: { $gte: startDate, $lte: endDate },
-//         })
-//           .limit(limitValue)
-//           .skip(startIndex)
-//           .exec();
-//         totalPageCount = await Transaction.find({
-//           createdAtDate: { $gte: startDate, $lte: endDate },
-//         })
-//           .countDocuments()
-//           .exec();
-
-//         const transactionsFiltered = transactions.map((items) => {
-//           if (items.creditor === clientUserName)
-//             return { ...items.toObject(), creditor: "COMPANY" };
-//           return items.toObject();
-//         });
-
-//         if (transactionsFiltered)
-//           return res.status(200).json({ transactionsFiltered, totalPageCount });
-//         return res
-//           .status(201)
-//           .json({ error: "unable to find transactions try again" });
-//       }
-//     } else {
-//       const transactions = await Transaction.find({
-//         $and: [
-//           {
-//             $or: [{ creditor: clientUserName }, { debitor: clientUserName }],
-//           },
-//           {
-//             createdAtDate: { $gte: startDate, $lte: endDate },
-//           },
-//         ],
-//       })
-//         .limit(limitValue)
-//         .skip(startIndex)
-//         .exec();
-//       const transactionsFiltered = transactions.map((items) => {
-//         if (items.creditor === clientUserName)
-//           return { ...items.toObject(), creditor: "Me" };
-//         if (items.debitor === clientUserName)
-//           return { ...items.toObject(), creditor: "YourOwner", debitor: "Me" };
-//         return items.toObject();
-//       });
-
-//       if (transactionsFiltered)
-//         return res.status(200).json({ transactionsFiltered });
-//       return res
-//         .status(201)
-//         .json({ error: "unable to find transactions try again" });
-//     }
-//   } catch (err) {
-//     return res.status(500).json(err);
-//   }
-// };
-
-//{UPDATE PLAYER CREDITS}
-// export const updatePlayerCredits = async (req: Request, res: Response) => {
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-
-//   try {
-//     const { playerUserName, newCredits } = req.body;
-//     const player = await User.findOne({ username: playerUserName }).session(
-//       session
-//     );
-
-//     if (!player) {
-//       await session.abortTransaction();
-//       session.endSession();
-//       return res.status(404).json({ error: "Player not found" });
-//     }
-
-//     const newCreditsValue = parseFloat(newCredits);
-//     if (isNaN(newCreditsValue)) {
-//       await session.abortTransaction();
-//       session.endSession();
-//       return res.status(400).json({ error: "Invalid newCredits value" });
-//     }
-
-//     const playerUserCredits = player.credits + newCreditsValue;
-
-//     const transaction = await Transaction.create(
-//       [
-//         {
-//           credit: newCreditsValue,
-//           creditor: "game",
-//           creditorDesignation: "game",
-//           debitor: playerUserName,
-//         },
-//       ],
-//       { session }
-//     );
-
-//     await User.findOneAndUpdate(
-//       { username: playerUserName },
-//       { $push: { transactions: transaction[0]._id } },
-//       { session }
-//     );
-
-//     const updatedPlayer = await User.findOneAndUpdate(
-//       { username: playerUserName },
-//       { credits: playerUserCredits },
-//       { new: true, session }
-//     );
-
-//     await session.commitTransaction();
-//     session.endSession();
-
-//     if (updatedPlayer) {
-//       return res
-//         .status(200)
-//         .json({ message: "Player credits updated successfully" });
-//     } else {
-//       return res
-//         .status(500)
-//         .json({ error: "Unable to update player credits, please try again" });
-//     }
-//   } catch (err) {
-//     await session.abortTransaction();
-//     session.endSession();
-//     console.error(err);
-//     return res
-//       .status(500)
-//       .json({ error: "Internal server error", details: err.message });
-//   }
-// };
-
-//{GET TRANSACTIONS OF USERS}
-export const transactions = async (req: Request, res: Response) => {
-  const { clientUserName } = req.params;
   try {
-    const user = await User.findOne({ username: clientUserName });
+    const { page: validatedPage, limit: validatedLimit } =
+      validatePaginationParams({ page, limit });
+
+    const user = await User.findOne({ username: userName }).populate({
+      path: "transactions",
+      options: {
+        skip: (validatedPage - 1) * validatedLimit,
+        limit: validatedLimit,
+      },
+    });
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return next(createHttpError(404, "User Not Found"));
     }
 
-    await user.populate("transactions");
-    return res.status(200).json(user.transactions);
+    const totalTransactions = user.transactions.length;
+    const transactions = user.transactions;
+
+    const paginationMetadata = getPaginationMetadata(
+      validatedPage,
+      validatedLimit,
+      totalTransactions
+    );
+
+    return res.status(200).json({
+      message: "Transactions fetched successfully",
+      data: transactions,
+      pagination: paginationMetadata,
+    });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("Error fetching transactions", err);
+    return next(err); // Forward the error to the next middleware
   }
 };
