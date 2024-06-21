@@ -56,7 +56,10 @@ export const gameSettings: GameSettings = {
     maxCount: 1,
     start: false,
   },
-  initiate: async (GameData: {}, clientID: string) => {
+  reels:[[]],
+
+  initiate: async (GameData: any, clientID: string) => {
+
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
@@ -79,11 +82,11 @@ export const gameSettings: GameSettings = {
     //   return;
     // }
 
-    // const currentGameData=gameData.filter((element)=>element.id==GameID)
-    // console.log(gameData);
 
-    gameSettings.currentGamedata = GameData;
-    // console.log(gameData);
+    // const currentGameData=gameData.filter((element)=>element.id==GameID)
+    
+    gameSettings.currentGamedata=GameData;
+
 
     initSymbols();
     UiInitData.paylines = convertSymbols(gameSettings.currentGamedata.Symbols);

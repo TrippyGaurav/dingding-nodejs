@@ -38,7 +38,7 @@ export class SocketUser {
   isAlive: boolean = false;
   username: string;
   designation: string;
-  constructor(socket: Socket, public GameData: {}) {
+  constructor(socket: Socket, public GameData: any) {
     this.isAlive = true;
     this.socket = socket;
     this.username = socket?.data?.username;
@@ -51,10 +51,30 @@ export class SocketUser {
     // );
 
     this.handleAuth();
-    socket.on("pong", this.heartbeat);
-    socket.on("message", this.messageHandler());
-    // socket.on(MESSAGEID.AUTH);
-    socket.on("disconnect", () => this.deleteUserFromMap());
+    this.socket.on("pong", this.heartbeat);
+    this.socket.on("message", this.messageHandler());
+    this.socket.on(MESSAGEID.AUTH,this.initGameData);
+    this.socket.on("disconnect", () => this.deleteUserFromMap());
+  }
+
+  initGameData = async(message : any) =>
+  {
+    const messageData = JSON.parse(message);
+    console.log(messageData.Data.GameID);
+    const game = await Game.findOne({ tagName:messageData.Data.GameID });
+    console.log(game);
+    
+    if (!game.payout.length) {
+      this.sendError("404","Game with the specified tagName not found.");
+      this.socket.disconnect();
+      return;
+    }
+    // Retrieve the payout JSON data
+    const payoutData = await Payouts.find({ _id: { $in: game.payout } });
+    // console.log(payoutData[0].data);
+    // console.log(socket);
+    gameSettings.initiate(payoutData[0].data, this.socket.id);
+
   }
 
   sendError(errorCode: string, message: any) {
@@ -62,6 +82,7 @@ export class SocketUser {
       errorCode: errorCode,
       message: message,
     };
+    console.log("ERROR " + errorCode+  "  :  " +message);
     this.socket.emit(MESSAGETYPE.ERROR, params);
   }
 
@@ -102,13 +123,10 @@ export class SocketUser {
       const CurrentUser = await User.findOne({
         username: this.username,
       }).exec();
-      console.log("FIRSTTT");
       if (CurrentUser) {
         playerData.Balance = CurrentUser.credits;
         console.log(playerData.Balance);
         console.log(this.username);
-
-        gameSettings.initiate(this.GameData, this.socket.id);
         console.log("Player Balance users", CurrentUser.credits);
         this.sendMessage(MESSAGEID.AUTH, CurrentUser.credits);
       } else {
@@ -148,18 +166,9 @@ export async function initializeUser(socket: Socket) {
     socket.data.username = decoded.username;
     socket.data.designation = decoded.designation;
 
-    const game = await Game.findOne({ tagName: "SL-VIK" });
-    if (!game) {
-      console.error("Game with the specified tagName not found.");
-      socket.disconnect();
-      return;
-    }
-    // Retrieve the payout JSON data
-    const payoutData = await Payouts.find({ _id: { $in: game.payout } });
-    // console.log(payoutData[0].data);
-    // console.log(socket);
+ 
 
-    const user = new SocketUser(socket, payoutData[0].data);
+    const user = new SocketUser(socket,socket);
     users.set(user.socket.id, user);
 
     // Send the game and payout data to the client

@@ -18,7 +18,11 @@
       const socket = io("http://localhost:5000", {
         auth: {
           token:
+<<<<<<< HEAD
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ik1rUGxheWVyIiwiZGVzaWduYXRpb24iOiJwbGF5ZXIiLCJpYXQiOjE3MTg2OTM5MDMsImV4cCI6MTcxOTI5ODcwM30.toJOl000w-u6atHgZbtezv4nPqV8-6mqzJkMo3ZfuAg"
+=======
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImdhdXJhdiIsImRlc2lnbmF0aW9uIjoiY29tcGFueSIsImlhdCI6MTcxODg2NTQwMSwiZXhwIjoxNzE5NDcwMjAxfQ.UjdM-6gRZKYQJfsUgOLG4ZBYVlCgyKK56npZG96evS4",
+>>>>>>> dev-r
         },
       });
       socket.on("connect_error", (error) => {
