@@ -7,6 +7,8 @@ import userRoutes from "./dashboard/user/userRoutes";
 import transactionRoutes from "./dashboard/transaction/transactionRoutes";
 import Games from "./dashboard/casinoGames/gamesRoutes";
 import globalErrorHandler from "./middleware/globalHandler";
+import companyRoutes from "./company/companyRoutes";
+import clientRoutes from "./client/clientRoutes";
 
 const app = express();
 
@@ -49,6 +51,10 @@ app.get("/", (req, res, next) => {
 app.use("/api/users", userRoutes);
 app.use("/api/transaction", transactionRoutes);
 app.use("/api/games", Games);
+
+// NEW
+app.use("/api/company", companyRoutes);
+app.use("/api/clients", clientRoutes);
 
 const io = new Server(server, {
   cors: {
