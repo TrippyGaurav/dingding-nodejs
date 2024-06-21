@@ -2,7 +2,8 @@ import Game from "./gamesModel";
 import { NextFunction, Request, Response } from "express";
 import { v2 as cloudinary } from "cloudinary";
 import { config } from "../../config/config";
-import User from "../user/userModel";
+import Player from "../../player/playerModel";
+
 cloudinary.config({
   cloud_name: config.cloud_name,
   api_key: config.api_key,
@@ -60,11 +61,11 @@ export const getGames = async (req: Request, res: Response) => {
             .status(400)
             .json({ error: "Username is required for fav category" });
         }
-        const user = await User.findOne({ username: username });
+        const user = await Player.findOne({ username: username });
         if (!user) {
           return res.status(404).json({ error: "User not found" });
         }
-        query._id = { $in: user.favourite };
+        query._id = { $in: user.favouriteGames };
       } else {
         query.category = category;
       }
@@ -193,18 +194,18 @@ export const favourite = async (req: Request, res: Response) => {
 
   try {
     // Find the user by username
-    const player = await User.findOne({ username: username });
+    const player = await Player.findOne({ username: username });
     if (!player) {
       return res.status(404).send({ message: "User not found" });
     }
 
     if (type === "Add") {
       // Check if the game is already in the user's favourites
-      if (player.favourite.includes(gameId)) {
+      if (player.favouriteGames.includes(gameId)) {
         return res.status(400).send({ message: "Game already selected" });
       }
       // Add the game to the user's favourites
-      await User.findOneAndUpdate(
+      await Player.findOneAndUpdate(
         { username: player.username },
         { $push: { favourite: gameId } },
         { new: true }
@@ -213,7 +214,7 @@ export const favourite = async (req: Request, res: Response) => {
       res.status(200).send({ message: "Game added to favourites" });
     } else if (type === "remove") {
       // Remove the game from the user's favourites
-      await User.findOneAndUpdate(
+      await Player.findOneAndUpdate(
         { username: player.username },
         { $pull: { favourite: gameId } },
         { new: true }

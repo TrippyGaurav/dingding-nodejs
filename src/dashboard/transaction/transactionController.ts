@@ -1,9 +1,7 @@
 import Transaction from "./transactionModel";
-import User from "../user/userModel";
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
-
-
+import User from "../../users/userModel";
 
 //{GET THE DETAILS OF USERS CREDITS}
 export const getRealTimeCredits = async (req: Request, res: Response) => {
@@ -59,7 +57,7 @@ export const updateClientCredits = async (req: Request, res: Response) => {
     const clientUserCredits = clientUser.credits + creditValue;
 
     // Handle the company with infinite credits
-    if (user.designation === "company") {
+    if (user.role === "company") {
       // Do nothing; infinite credits case
     } else if (typeof userCredits === "number") {
       userCredits -= creditValue;
@@ -85,7 +83,7 @@ export const updateClientCredits = async (req: Request, res: Response) => {
         {
           credit: creditValue,
           creditorDesignation: creatorDesignation,
-          debitorDesignation: clientUser.designation,
+          debitorDesignation: clientUser.role,
           creditor: username,
           debitor: clientUserName,
         },

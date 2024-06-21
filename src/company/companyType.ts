@@ -1,3 +1,3 @@
-import { IBaseUser } from "../dashboard/user/userType";
+import { IUser } from "../users/userType";
 
-export interface Company extends IBaseUser {}
+export interface Company extends IUser {}

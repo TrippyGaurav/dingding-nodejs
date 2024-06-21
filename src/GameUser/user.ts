@@ -4,9 +4,10 @@ import { gameSettings, gameWining, playerData } from "../game/global";
 import { CheckResult } from "../game/slotResults";
 import { getRTP } from "../game/rtpgenerator";
 import { verifySocketToken } from "../utils/playerAuth";
-import User from "../dashboard/user/userModel";
+
 import Transaction from "../dashboard/transaction/transactionModel";
 import { GambleGame } from "../game/gambleResults";
+import User from "../users/userModel";
 export let users: Map<string, SocketUser> = new Map();
 
 export class SocketUser {
@@ -65,7 +66,6 @@ export class SocketUser {
       }
 
       if (messageData.id === MESSAGEID.GAMBLE) {
-    
         if (!gameSettings.currentGamedata.gamble.isEnabled) return;
 
         if (playerData.currentWining > 1) {
