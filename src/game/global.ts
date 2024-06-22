@@ -74,7 +74,6 @@ export const gameSettings: GameSettings = {
     gameSettings.Symbols = [];
     gameSettings.Weights = [];
     gameSettings._winData = new WinData(clientID);
-    gameSettings._winData.freeSpins  = 5;
     // try {
     //   const resp = await fetch(
     //     "https://664c355635bbda10987f44ff.mockapi.io/api/gameId/" + GameID
