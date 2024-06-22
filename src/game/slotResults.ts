@@ -1,6 +1,6 @@
 // import { Alerts } from "./Alerts";
 // import { sendMessageToClient } from "./App";
-import { gameSettings, gameWining, getCurrentRTP, playerData } from "./global";
+import { gameSettings, gameWining, getCurrentRTP, playerData, startFreeSpin } from "./global";
 import { RandomResultGenerator } from "./slotDataInit";
 import {
   ScatterPayEntry,
@@ -32,7 +32,7 @@ export class CheckResult {
 
   bonusResult: string[];
 
-  constructor(public clientID: string) {
+  constructor() {
     this.scatter = specialIcons.scatter;
     this.useScatter = gameSettings.useScatter && this.scatter !== null;
     this.jackpot = gameSettings.jackpot;
@@ -96,6 +96,8 @@ export class CheckResult {
     console.log("win data", gameSettings._winData);
     console.log("Bonus start", gameSettings.bonus.start);
     this.makeResultJson();
+    if(!gameSettings.freeSpinStarted && gameSettings._winData.freeSpins != 0)
+        startFreeSpin();
 
     // Math.round(num * 100) / 100).toFixed(2)
     console.log("TOTAL WINING : " + gameSettings._winData.totalWinningAmount);
@@ -109,7 +111,7 @@ export class CheckResult {
       } 
       Current RTP : ${winRate.toFixed(2)}% `
     );
-    getClient(this.clientID).updateCreditsInDb(playerData.Balance);
+ 
     console.log("_____________RESULT_END________________");
   }
 
@@ -366,7 +368,7 @@ export class CheckResult {
       },
       PlayerData: playerData,
     };
-    getClient(this.clientID).sendMessage("ResultData", ResultData);
+    getClient(playerData.playerId).sendMessage("ResultData", ResultData);
     // sendMessageToClient(this.clientID, "ResultData", ResultData);
   }
 
@@ -562,6 +564,8 @@ export class WinData {
     playerData.currentWining = this.totalWinningAmount;
 
     getCurrentRTP.playerWon += this.totalWinningAmount;
+
+    if(!gameSettings.freeSpinStarted )
     getCurrentRTP.playerTotalBets += gameSettings.currentBet;
   }
 }

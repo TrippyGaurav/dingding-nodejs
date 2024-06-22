@@ -7,7 +7,9 @@ import { shuffleArray } from "./gameUtils";
 
 export function sendInitdata(clientID: string) {
   // const matrix = generateMatrix(gameSettings.matrix.x, 18);
+  gameDataInit();
   gameSettings.reels = generateInitialreel();
+  playerData.playerId  = clientID;
   if (
     gameSettings.currentGamedata.bonus.isEnabled &&
     gameSettings.currentGamedata.bonus.type == bonusGameType.spin
@@ -80,15 +82,14 @@ export class RandomResultGenerator {
     }
     console.log("indexs", randomIndexArray);
 
-    matrix.pop();
-    matrix.pop();
-    matrix.pop();
-    matrix.push(["11", "11", "11", "11", "11"]);
-    matrix.push(["11", "11", "11", "11", "11"]);
-    matrix.push(["3", "0", "4", "4", "3"]);
+   // matrix.pop();
+  // matrix.pop();
+  // matrix.pop();
+  // matrix.push([ '4', '0', '0', '0', '4' ])
+  // matrix.push([ '6', '4', '8', '4', '2' ])
+  // matrix.push([ '1', '8', '4', '4', '8' ])
 
     gameSettings.resultSymbolMatrix = matrix;
-    gameDataInit();
   }
 
   // export class RandomResultGenerator {

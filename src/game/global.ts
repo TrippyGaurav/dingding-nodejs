@@ -45,6 +45,7 @@ export const gameSettings: GameSettings = {
   lineData: [],
   fullPayTable: [],
   _winData: undefined,
+  freeSpinStarted : false,
   jackpot: {
     symbolName: "",
     symbolsCount: 0,
@@ -72,6 +73,8 @@ export const gameSettings: GameSettings = {
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
     gameSettings.Weights = [];
+    gameSettings._winData = new WinData(clientID);
+    gameSettings._winData.freeSpins  = 5;
     // try {
     //   const resp = await fetch(
     //     "https://664c355635bbda10987f44ff.mockapi.io/api/gameId/" + GameID
@@ -118,6 +121,7 @@ export const playerData: PlayerData = {
   Balance: 100000,
   haveWon: 0,
   currentWining: 5,
+  playerId : "",
   // haveUsed: 0
 };
 
@@ -241,17 +245,39 @@ export function spinResult(clientID: string) {
   //minus the balance
 
   //TODO:To get the user information
-
+  
   console.log("CurrentBet : " + gameSettings.currentBet);
+ 
+    playerData.Balance -= gameSettings.currentBet;
+    gameSettings.tempReels = [[]];
+    console.log("player balance:", playerData.Balance);
+    console.log("player havewon:", playerData.haveWon);
+    gameSettings.bonus.start = false;
+    new RandomResultGenerator();
+    new CheckResult();
+   
+}
 
-  playerData.Balance -= gameSettings.currentBet;
-  gameSettings.tempReels = [[]];
-  console.log("player balance:", playerData.Balance);
-  console.log("player havewon:", playerData.haveWon);
-  gameSettings._winData = new WinData(clientID);
-  gameSettings.bonus.start = false;
-  new RandomResultGenerator();
-  new CheckResult(clientID);
+export function startFreeSpin()
+{
+  console.log("____----Started FREE SPIN ----_____" + " :::  FREE SPINSS ::::" , gameSettings._winData.freeSpins);
+  getClient(playerData.playerId).sendMessage("StartedFreeSpin", {});
+  gameSettings.freeSpinStarted = true;
+  for(let i = 0 ; i <= gameSettings._winData.freeSpins; i++ )
+    {
+      gameSettings.bonus.start = false;
+      new RandomResultGenerator();
+      new CheckResult();
+      console.log("FREE SPINS LEFTTT ::::" + (gameSettings._winData.freeSpins -i));
+    }
+    gameSettings._winData.freeSpins = 0;
+
+  getClient(playerData.playerId).sendMessage("StoppedFreeSpins", {});
+  gameSettings.freeSpinStarted = false;
+
+  console.log("____----Stopped FREE SPIN ----_____");
+
+
 }
 export function checkforMoolah(clientID: string) {
   gameSettings.tempReels = gameSettings.reels;

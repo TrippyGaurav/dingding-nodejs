@@ -28,6 +28,7 @@ export interface PlayerData {
   Balance: number;
   haveWon: number;
   currentWining: number;
+  playerId : string,
   // haveUsed: number
 }
 export interface PayLine {
@@ -80,6 +81,7 @@ export interface GameSettings {
   resultSymbolMatrix: string[][] | undefined;
   lineData: number[][];
   fullPayTable: PayLine[];
+  freeSpinStarted : boolean;
   jackpot: {
     symbolName: string;
     symbolId: number;
