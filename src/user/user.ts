@@ -6,8 +6,8 @@ import { getRTP } from "../game/rtpgenerator";
 import { verifySocketToken } from "../middleware/authMiddleware";
 
 import { gameData } from "../game/testData";
-import Transaction from "../dashboard/transaction/transactionModel";
 import User from "../users/userModel";
+import Transaction from "../transactions/transactionModel";
 export let users: Map<string, SocketUser> = new Map();
 
 export class SocketUser {

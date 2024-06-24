@@ -151,7 +151,78 @@ export const createUser = async (
   }
 };
 
-export const getUsers = async (
+export const getCurrentUserDetails = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { creatorUsername } = req.body;
+
+    if (!creatorUsername) {
+      throw createHttpError(400, "Please login first");
+    }
+
+    // check if user exists
+    const user = await User.findOne({ username: creatorUsername }).select(
+      "_id name username status role clients transactions"
+    );
+    if (!user) {
+      throw createHttpError(404, "User not found");
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getClientDetails = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { clientId } = req.params;
+    const { creatorUsername, creatorRole } = req.body;
+
+    if (!creatorUsername || !creatorRole) {
+      throw createHttpError(403, "Unable to verify the creator");
+    }
+
+    // Convert clientId to ObjectId
+    const clientObjectId = new mongoose.Types.ObjectId(clientId);
+
+    // Check if creator exists
+    const creator = await User.findOne({ username: creatorUsername });
+    if (!creator) {
+      throw createHttpError(404, "Creator not found");
+    }
+
+    // Check if client exists
+    const client = await User.findById(clientObjectId).select(
+      "_id name username status role clients transactions"
+    );
+    if (!client) {
+      throw createHttpError(404, "Client not found");
+    }
+
+    // Check if client is in creator's clients list or creator has role 'company'
+    if (
+      creatorRole !== "company" &&
+      !creator.clients.includes(clientObjectId)
+    ) {
+      throw createHttpError(
+        403,
+        "Access denied: Client is not in your clients list"
+      );
+    }
+    res.status(200).json(client);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllClients = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -173,31 +244,48 @@ export const getUsers = async (
   }
 };
 
-export const getClientsOfUser = async (
+// GET CLIENT OF ANY USER : Accessible to company only
+export const getClientsOfClient = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { creatorRole } = req.body;
+    const { creatorRole, creatorUsername } = req.body;
+    const { clientId } = req.params;
 
-    if (creatorRole != "company") {
+    // Validate input
+    if (!clientId) {
+      throw createHttpError(400, "User ID is required");
+    }
+
+    // Check if creator exists
+    const creator = await User.findOne({ username: creatorUsername });
+    if (!creator) {
+      throw createHttpError(404, "Creator not found");
+    }
+
+    // Convert clientId to ObjectId
+    const clientObjectId = new mongoose.Types.ObjectId(clientId);
+
+    // Check if the creatorRole is company or the clientId is in the creator's clients list
+    if (
+      creatorRole !== "company" &&
+      !creator.clients.includes(clientObjectId)
+    ) {
       throw createHttpError(
         403,
-        `Forbidden: You do not have the necessary permissions to access this resource.`
+        "Forbidden: You do not have the necessary permissions to access this resource."
       );
     }
 
-    const { username } = req.params;
-    const creator = await User.findOne({
-      username: username,
-    }).populate("clients");
-
-    if (!creator) {
-      throw createHttpError(404, `${username} not found`);
+    // Check if client exists
+    const client = await User.findById(clientObjectId).populate("clients");
+    if (!client) {
+      throw createHttpError(404, "Client not found");
     }
 
-    res.status(200).json(creator.clients);
+    res.status(200).json(client.clients);
   } catch (error) {
     next(error);
   }
@@ -336,17 +424,5 @@ export const updateClient = async (
     res.status(200).json({ message: "Client updated successfully", client });
   } catch (error) {
     next(error);
-  }
-};
-
-export const getCredits = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    
-  } catch (error) {
-    
   }
 };
