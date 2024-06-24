@@ -57,6 +57,7 @@ export const gameSettings: GameSettings = {
     start: false,
     stopIndex: -1,
     game: null,
+    id: -1,
     // game: new bonusGame(5),
   },
   currentBet: 0,
@@ -95,6 +96,13 @@ export const gameSettings: GameSettings = {
     // const currentGameData=gameData.filter((element)=>element.id==GameID)
 
     gameSettings.currentGamedata = gameData[0];
+
+    gameSettings.currentGamedata.Symbols.forEach((element)=>{
+      if(element.Name=="Bonus"){
+          gameSettings.bonus.id=element.Id
+      }
+
+  })
 
     initSymbols();
     UiInitData.paylines = convertSymbols(gameSettings.currentGamedata.Symbols);
@@ -170,7 +178,7 @@ export function addPayLineSymbols(
 
 export function makePayLines() {
   gameSettings.currentGamedata.Symbols.forEach((element) => {
-    if (element.useWildSub || element.multiplier?.length > 0) {
+    if (element.useWildSub || (element.useWildSub && element.multiplier?.length > 0) || element.Name=="Bonus") {
       element.multiplier?.forEach((item, index) => {
         addPayLineSymbols(element.Id?.toString(), 5 - index, item[0], item[1]);
       });

@@ -282,5 +282,5 @@ export const gameData = [
         increaseValue: 5,
       },
     ],
-  },
+  }
 ];

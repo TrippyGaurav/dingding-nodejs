@@ -68,8 +68,8 @@ export class CheckResult {
     // gameWining.TotalWinningAmount = 0;
 
     this.checkForWin();
-    this.checkForScatter();
-    this.checkForBonus();
+    // this.checkForScatter();
+    // this.checkForBonus();
     this.checkForJackpot();
 
     // let excludeindex: number[] = [];
@@ -171,14 +171,34 @@ export class CheckResult {
     });
 
     const filteredArray = this.checkforDuplicate(allComboWin);
-
+    let BonusArray=[];
     filteredArray.forEach((element) => {
       gameSettings._winData.winningSymbols.push(element.pos);
+      if(gameSettings.bonus.id>=0 && element.symbol==gameSettings.bonus.id.toString())
+        BonusArray.push(element)
+
       gameSettings._winData.totalWinningAmount +=
         element.pay * gameSettings.currentBet;
       gameSettings._winData.freeSpins += element.freeSpin;
     });
     
+
+  
+  //check for bonus
+  if(BonusArray.length>0){
+      if (!gameSettings.currentGamedata.bonus.isEnabled)
+          return;
+      gameSettings.bonus.start = true;
+
+   if (gameSettings.currentGamedata.bonus.type == bonusGameType.tap)
+      this.bonusResult = gameSettings.bonus.game.generateData(gameSettings.bonusPayTable[0]?.pay);
+      else if(gameSettings.currentGamedata.bonus.type=="slot")
+      this.bonusResult = gameSettings.bonus.game.generateSlotData();
+
+      gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
+      console.log("stop index2",gameSettings.bonus.stopIndex);
+  }
+
   }
 
   checkforDuplicate(allComboWin: any[]): any[] {
