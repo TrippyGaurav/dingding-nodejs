@@ -13,7 +13,7 @@ import {
 } from "./gameUtils";
 import { getClient } from "../user/user";
 import exp from "constants";
-import { CheckResult, WinData } from "./slotResults";
+import { CheckResult, ResultType, WinData } from "./slotResults";
 import { bonusGame } from "./bonusResults";
 import { middleware } from "../utils/middleware";
 
@@ -253,7 +253,8 @@ export function spinResult(clientID: string) {
     console.log("player havewon:", playerData.haveWon);
     gameSettings.bonus.start = false;
     new RandomResultGenerator();
-    new CheckResult();
+    const result = new CheckResult();
+    result.makeResultJson(ResultType.normal);
    
 }
 
@@ -306,7 +307,8 @@ export function checkforMoolah() {
     console.log("SYMBOL After changing " +gameSettings.resultSymbolMatrix[element[1]][element[0]]);
   });
 
-  new CheckResult();
+  const result = new CheckResult();
+    result.makeResultJson(ResultType.moolah);
 }
 
 function getLastindex(reelIndex: number, index: number) {

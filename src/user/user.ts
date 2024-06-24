@@ -77,6 +77,8 @@ export class SocketUser {
         spinResult(this.socket.id);
       }
       if (messageData.id == MESSAGEID.GENRTP) {
+        console.log();
+        
         gameSettings.currentBet = messageData.data.currentBet;
         getRTP(this.socket.id, messageData.data.spins);
       }
