@@ -59,7 +59,7 @@ export const gameSettings: GameSettings = {
     game: null,
     // game: new bonusGame(5),
   },
-  currentBet: 5,
+  currentBet: 0,
   startGame: false,
   gamble: {
     game: null,
@@ -119,7 +119,7 @@ function initSymbols() {
 export const playerData: PlayerData = {
   Balance: 100000,
   haveWon: 0,
-  currentWining: 5,
+  currentWining: 0,
   playerId : "",
   // haveUsed: 0
 };
@@ -278,7 +278,7 @@ export function startFreeSpin()
 
 
 }
-export function checkforMoolah(ClientID : string) {
+export function checkforMoolah() {
   console.log("_______-------CALLED FOR CHECK FOR MOOLAHHHH-------_______");
   
   gameSettings.tempReels = gameSettings.reels;
@@ -306,7 +306,7 @@ export function checkforMoolah(ClientID : string) {
     console.log("SYMBOL After changing " +gameSettings.resultSymbolMatrix[element[1]][element[0]]);
   });
 
-  new CheckResult(ClientID);
+  new CheckResult();
 }
 
 function getLastindex(reelIndex: number, index: number) {

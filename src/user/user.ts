@@ -70,7 +70,7 @@ export class SocketUser {
     return (message: any) => {
       const messageData = JSON.parse(message);
       if (messageData.id === "checkMoolah") {
-        checkforMoolah(this.socket.id);
+        checkforMoolah();
       }
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
         gameSettings.currentBet = messageData.data.currentBet;

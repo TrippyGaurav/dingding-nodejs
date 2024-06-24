@@ -33,6 +33,7 @@ export class CheckResult {
   bonusResult: string[];
 
   constructor() {
+    gameSettings._winData = new WinData(playerData.playerId);
     this.scatter = specialIcons.scatter;
     this.useScatter = gameSettings.useScatter && this.scatter !== null;
     this.jackpot = gameSettings.jackpot;
@@ -91,6 +92,8 @@ export class CheckResult {
       gameSettings._winData.winningLines.filter(
         (value, index, array) => array.indexOf(value) === index
       );
+      console.log("winning symbols", gameSettings._winData.winningSymbols);
+      
     gameSettings._winData.updateBalance();
     console.log("result :", gameSettings.resultSymbolMatrix);
     console.log("win data", gameSettings._winData);
@@ -103,6 +106,8 @@ export class CheckResult {
     console.log("TOTAL WINING : " + gameSettings._winData.totalWinningAmount);
     // console.log(gameWining.WinningLines);
     // console.log(gameWining.winningSymbols);
+    console.log("PT BETS :" + getCurrentRTP.playerTotalBets);
+    
     const winRate: number =
       (getCurrentRTP.playerWon / getCurrentRTP.playerTotalBets) * 100;
     console.log(
@@ -564,8 +569,12 @@ export class WinData {
     playerData.currentWining = this.totalWinningAmount;
 
     getCurrentRTP.playerWon += this.totalWinningAmount;
-
-    if(!gameSettings.freeSpinStarted )
-    getCurrentRTP.playerTotalBets += gameSettings.currentBet;
+    console.log("BETS "+ gameSettings.currentBet);
+    
+    // if(!gameSettings.freeSpinStarted )
+    // getCurrentRTP.playerTotalBets += gameSettings.currentBet;
+    // else
+    // getCurrentRTP.playerTotalBets += 0;
+  
   }
 }
