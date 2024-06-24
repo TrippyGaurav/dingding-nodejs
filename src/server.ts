@@ -3,12 +3,12 @@ import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import socketController from "./socket/controller";
-import transactionRoutes from "./dashboard/transaction/transactionRoutes";
 import Games from "./dashboard/casinoGames/gamesRoutes";
 import globalErrorHandler from "./middleware/globalHandler";
 import companyRoutes from "./company/companyRoutes";
-import clientRoutes from "./users/userRoutes";
 import userRoutes from "./users/userRoutes";
+import transactionRoutes from "./transactions/transactionRoutes";
+transactionRoutes;
 
 const app = express();
 
@@ -55,6 +55,7 @@ app.use("/api/games", Games);
 // NEW
 app.use("/api/company", companyRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/transactions", transactionRoutes);
 
 const io = new Server(server, {
   cors: {

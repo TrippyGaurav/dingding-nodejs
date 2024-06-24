@@ -13,6 +13,7 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import User from "./userModel";
 import Player from "../player/playerModel";
+import { createTransaction } from "../transactions/transactionController";
 
 export const loginUser = async (
   req: Request,
@@ -64,6 +65,8 @@ export const createUser = async (
   res: Response,
   next: NextFunction
 ) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { creatorRole, creatorUsername } = req.body;
 
@@ -75,11 +78,14 @@ export const createUser = async (
     }
 
     // Validate input
-    if (!user || !user.username || !user.password || !user.role) {
-      throw createHttpError(
-        400,
-        "All required fields (creatorRole, creatorUsername, user.username, user.password, user.role) must be provided"
-      );
+    if (
+      !user ||
+      !user.username ||
+      !user.password ||
+      !user.role ||
+      user.credits === undefined
+    ) {
+      throw createHttpError(400, "All required fields must be provided");
     }
 
     if (
@@ -113,12 +119,34 @@ export const createUser = async (
       newUser = new User({ ...user, password: hashedPassword });
     }
 
-    await newUser.save();
+    await newUser.save({ session });
     creator.clients.push(newUser._id);
-    await creator.save();
+    await creator.save({ session });
+
+    if (user.credits > 0) {
+      const transaction = await createTransaction(
+        "recharge",
+        creator,
+        newUser,
+        user.credits,
+        session
+      );
+
+      // Add the transaction to both users' transactions arrays
+      newUser.transactions.push(transaction._id as mongoose.Types.ObjectId);
+      creator.transactions.push(transaction._id as mongoose.Types.ObjectId);
+
+      await newUser.save({ session });
+      await creator.save({ session });
+    }
+
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(201).json(newUser);
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     next(error);
   }
 };
@@ -308,5 +336,17 @@ export const updateClient = async (
     res.status(200).json({ message: "Client updated successfully", client });
   } catch (error) {
     next(error);
+  }
+};
+
+export const getCredits = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    
+  } catch (error) {
+    
   }
 };

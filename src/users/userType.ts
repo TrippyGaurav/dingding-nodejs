@@ -1,4 +1,4 @@
-import mongoose, { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 
 export interface IUser extends Document {
   name: string;
@@ -6,8 +6,8 @@ export interface IUser extends Document {
   status: string;
   password: string;
   role: string;
-  clients: mongoose.Types.ObjectId[];
-  transactions: any[];
+  clients: Types.ObjectId[];
+  transactions: Types.ObjectId[];
   lastLogin: Date;
   loginTimes: number;
   totalRecharged: number;

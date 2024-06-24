@@ -3,6 +3,8 @@ import { JwtPayload } from "jsonwebtoken";
 import { IUser } from "../users/userType";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
+import Transaction from "../transactions/transactionModel";
+import { createTransaction } from "../transactions/transactionController";
 
 export const clients: Map<string, WebSocket> = new Map();
 
@@ -102,6 +104,18 @@ export const updateCredits = async (
       client.totalRedeemed += amount; // Update total redeemed
       creator.credits += amount;
     }
+
+    const transaction = await createTransaction(
+      type,
+      creator,
+      client,
+      amount,
+      session
+    );
+
+    // Add the transaction to both users' transactions arrays
+    client.transactions.push(transaction._id as mongoose.Types.ObjectId);
+    creator.transactions.push(transaction._id as mongoose.Types.ObjectId);
 
     await client.save({ session });
     await creator.save({ session });
