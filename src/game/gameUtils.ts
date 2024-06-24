@@ -94,6 +94,7 @@ export interface GameSettings {
     game: bonusGame;
     start: boolean;
     stopIndex: number;
+    id: number;
     // maxPay: number
   };
   tempReels: string[][];
