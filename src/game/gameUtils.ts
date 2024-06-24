@@ -225,6 +225,10 @@ export function removeRecurringIndexSymbols(
   const result: string[][] = [];
 
   symbolsToEmit.forEach((subArray) => {
+    if (!Array.isArray(subArray)) {
+      console.warn('Expected an array but got', subArray);
+      return;
+    }
     const uniqueSubArray: string[] = [];
     subArray.forEach((symbol) => {
       if (!seen.has(symbol)) {
