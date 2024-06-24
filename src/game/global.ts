@@ -253,30 +253,76 @@ export function spinResult(clientID: string) {
   new RandomResultGenerator();
   new CheckResult(clientID);
 }
-export function checkforMoolah(clientID: string) {
+export function checkforMoolah(ClientID : string) {
+  console.log("_______-------CALLED FOR CHECK FOR MOOLAHHHH-------_______");
+  
   gameSettings.tempReels = gameSettings.reels;
   const lastWinData = gameSettings._winData;
   lastWinData.winningSymbols = combineUniqueSymbols(
     removeRecurringIndexSymbols(lastWinData.winningSymbols)
   );
-  const yValues = lastWinData.winningSymbols.map((str) => {
-    const [, y] = str.split(",").map(Number);
-    return y;
+  const index = lastWinData.winningSymbols.map((str) => {
+    const index : {x, y} = str.split(",").map(Number);
+    return index;
   });
-  console.log(yValues);
+  console.log("Winning Indexes " + index);
 
-  // new CheckResult(clientID);
+  index.forEach(element => {
+    console.log("X : " + element[0] + " Y : " + element[1]);
+    console.log("REEL LENGTH " +gameSettings.tempReels[element[0]].length);
+
+    console.log("SYMBOL before  changing" +gameSettings.resultSymbolMatrix[element[1]][element[0]]);
+    
+    gameSettings.resultSymbolMatrix[element[1]][element[0]] =  getLastindex(element[0],(gameSettings._winData.resultReelIndex[element[0]]+element[1]));;
+    console.log( "reel Lenght" + gameSettings.tempReels[element[0]].length+ "  Changing Reel Index " + (gameSettings._winData.resultReelIndex[element[0]]+element[1]));
+    
+    removeElement(gameSettings.tempReels,element[0],gameSettings._winData.resultReelIndex[element[0]]);
+    
+    console.log("SYMBOL After changing " +gameSettings.resultSymbolMatrix[element[1]][element[0]]);
+  });
+
+  new CheckResult(ClientID);
 }
-function recursionCheck(xIndex: number) {
-  for (let i = gameSettings.matrix.y - 2; i > 0; i--) {
+
+function getLastindex(reelIndex: number, index: number) {
+  if(index >= gameSettings.tempReels[reelIndex].length)
+    index = index - gameSettings.tempReels[reelIndex].length;
+  
+  console.log(index);
+
+
+  let Index = index -1;
+  console.log("Changed Index " + Index);
+  if (Index < 0)
     {
-      if (gameSettings.resultSymbolMatrix[xIndex][i] == "") {
-      }
+      Index = gameSettings.tempReels[reelIndex].length - 1;
+      console.log("Reel Lenght " +  gameSettings.tempReels[reelIndex].length + " Changed value below Zero " + Index);
+      return gameSettings.tempReels[reelIndex][Index]
     }
-  }
+  else return gameSettings.tempReels[reelIndex][Index];
 }
-function getLastindex(reelIndex: number, index: number, reel: number[][]) {
-  if (index - 1 < 0)
-    return reel[reelIndex][gameSettings.tempReels[reelIndex].length - 1];
-  else return gameSettings.tempReels[reelIndex][index - 1];
+function removeElement(arr: string[][], rowIndex: number, colIndex: number): void {
+  console.log("row : " + rowIndex + " col : " + colIndex);
+  console.log("temp Reel " + gameSettings.tempReels[rowIndex]);
+  console.log(arr[rowIndex].length);
+  
+  
+  // if (rowIndex < 0 || rowIndex >= arr.length || colIndex < 0 || colIndex >= arr[rowIndex].length) {
+  //     throw new Error('Invalid indices provided '+ rowIndex + " " + colIndex);
+  // }
+
+  // Remove the element at the specified indices
+  arr[rowIndex].splice(colIndex, 1);
+
+  // Shift elements to the left to fill the removed position
+  for (let i = rowIndex; i < arr.length; i++) {
+      for (let j = colIndex; j < arr[i].length; j++) {
+          if (j + 1 < arr[i].length) {
+              arr[i][j] = arr[i][j + 1];
+          } else {
+              // If we are at the last column, remove the last element
+              arr[i].pop();
+          }
+      }
+  }
 }
