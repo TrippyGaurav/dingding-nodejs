@@ -1,11 +1,13 @@
-import { gameSettings, spinResult } from "./global";
+import { gameSettings, getCurrentRTP, spinResult } from "./global";
 import { CheckResult } from "./slotResults";
 
 export function getRTP(client: string, spins: number) {
   let moneySpend: number = 0;
   let moneyWon: number = 0;
-
+  getCurrentRTP.playerWon = 0;
+  getCurrentRTP.playerTotalBets = 0;
   for (let i = 0; i < spins; i++) {
+
     spinResult(client);
     moneySpend += gameSettings.currentBet;
     moneyWon += gameSettings._winData.totalWinningAmount;
