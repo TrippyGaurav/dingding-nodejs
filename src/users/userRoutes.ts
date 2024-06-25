@@ -20,23 +20,23 @@ userRoutes.post("/login", determineOrigin, loginUser);
 // ADD User
 userRoutes.post("/", extractRoleFromCookie, createUser);
 
-// GET all details about the current user
-userRoutes.get("/", extractRoleFromCookie, getCurrentUserDetails);
-
-// GET all details of a particular user
-userRoutes.get("/:clientId", extractRoleFromCookie, getClientDetails);
-
-// GET all clients
+// // GET all clients
 userRoutes.get("/all", extractRoleFromCookie, getAllClients);
 
-// DELETE A Client
+// // GET all details about the current user
+userRoutes.get("/", extractRoleFromCookie, getCurrentUserDetails);
+
+// // GET all details of a particular user
+userRoutes.get("/:clientId", extractRoleFromCookie, getClientDetails);
+
+// // DELETE A Client
 userRoutes.delete("/:clientId", extractRoleFromCookie, deleteClient);
 
-// UPDATE a client
+// // UPDATE a client
 userRoutes.put("/:clientId", extractRoleFromCookie, updateClient);
 
-// FOR COMPANY
-// GET clients of user by userId
+// // FOR COMPANY
+// // GET clients of user by userId
 userRoutes.get("/:clientId/clients", extractRoleFromCookie, getClientsOfClient);
 
 export default userRoutes;

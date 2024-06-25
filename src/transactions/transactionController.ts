@@ -6,12 +6,29 @@ import mongoose from "mongoose";
 
 // create transaction
 export const createTransaction = async (
-  type,
-  creator,
-  client,
-  amount,
-  session
+  type: string,
+  creator: any,
+  client: any,
+  amount: number,
+  session: mongoose.ClientSession
 ) => {
+  if (type === "recharge") {
+    if (creator.credits < amount) {
+      throw createHttpError(400, "Insufficient credits to recharge");
+    }
+
+    client.credits += amount;
+    client.totalRecharged += amount;
+    creator.credits -= amount;
+  } else if (type === "redeem") {
+    if (client.credits < amount) {
+      throw createHttpError(400, "Client has insufficient credits to redeem");
+    }
+    client.credits -= amount;
+    client.totalRedeemed += amount;
+    creator.credits += amount;
+  }
+
   const transaction = new Transaction({
     debtor: type === "recharge" ? creator._id : client._id,
     creditor: type === "recharge" ? client._id : creator._id,
@@ -87,7 +104,7 @@ export const getTransactionsByClientId = async (
     }
 
     // Check if client is in creator's clients list
-    if (!creator.clients.includes(clientObjectId)) {
+    if (!creator.subordinates.includes(clientObjectId)) {
       throw createHttpError(
         403,
         "Access denied: Client is not in your clients list"

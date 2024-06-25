@@ -89,22 +89,6 @@ export const updateCredits = async (
       );
     }
 
-    if (type === "recharge") {
-      if (creator.credits < amount) {
-        throw createHttpError(400, "Insufficient credits to recharge");
-      }
-      client.credits += amount;
-      client.totalRecharged += amount; // Update total recharged
-      creator.credits -= amount;
-    } else if (type === "redeem") {
-      if (client.credits < amount) {
-        throw createHttpError(400, "Client has insufficient credits to redeem");
-      }
-      client.credits -= amount;
-      client.totalRedeemed += amount; // Update total redeemed
-      creator.credits += amount;
-    }
-
     const transaction = await createTransaction(
       type,
       creator,

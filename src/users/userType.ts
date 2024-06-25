@@ -6,7 +6,7 @@ export interface IUser extends Document {
   status: string;
   password: string;
   role: string;
-  clients: Types.ObjectId[];
+  subordinates: Types.ObjectId[];
   transactions: Types.ObjectId[];
   lastLogin: Date;
   loginTimes: number;

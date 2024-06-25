@@ -15,6 +15,7 @@ import User from "./userModel";
 import Player from "../player/playerModel";
 import { createTransaction } from "../transactions/transactionController";
 
+// DONE
 export const loginUser = async (
   req: Request,
   res: Response,
@@ -66,6 +67,7 @@ export const loginUser = async (
   }
 };
 
+// DONE
 export const createUser = async (
   req: Request,
   res: Response,
@@ -73,9 +75,9 @@ export const createUser = async (
 ) => {
   const session = await mongoose.startSession();
   session.startTransaction();
+
   try {
     const { creatorRole, creatorUsername } = req.body;
-
     const user = req.body.user;
 
     // Validate Creator
@@ -86,6 +88,7 @@ export const createUser = async (
     // Validate input
     if (
       !user ||
+      !user.name ||
       !user.username ||
       !user.password ||
       !user.role ||
@@ -105,13 +108,17 @@ export const createUser = async (
     }
 
     // Check if creator exists
-    const creator = await User.findOne({ username: creatorUsername });
+    const creator = await User.findOne({ username: creatorUsername }).session(
+      session
+    );
     if (!creator) {
       throw createHttpError(404, "Creator not found");
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ username: user.username });
+    const existingUser = await User.findOne({
+      username: user.username,
+    }).session(session);
     if (existingUser) {
       throw createHttpError(409, "User already exists");
     }
@@ -120,14 +127,22 @@ export const createUser = async (
 
     let newUser;
     if (user.role === "player") {
-      newUser = new Player({ ...user, password: hashedPassword });
+      newUser = new Player({
+        name: user.name,
+        username: user.username,
+        password: hashedPassword,
+        role: user.role,
+        credits: 0,
+      });
     } else {
-      newUser = new User({ ...user, password: hashedPassword });
+      newUser = new User({
+        name: user.name,
+        username: user.username,
+        password: hashedPassword,
+        role: user.role,
+        credits: 0,
+      });
     }
-
-    await newUser.save({ session });
-    creator.clients.push(newUser._id);
-    await creator.save({ session });
 
     if (user.credits > 0) {
       const transaction = await createTransaction(
@@ -141,24 +156,25 @@ export const createUser = async (
       // Add the transaction to both users' transactions arrays
       newUser.transactions.push(transaction._id as mongoose.Types.ObjectId);
       creator.transactions.push(transaction._id as mongoose.Types.ObjectId);
-
-      await newUser.save({ session });
-      await creator.save({ session });
     }
 
-    await session.commitTransaction();
-    session.endSession();
+    // Save the new user and update the creator's clients within the transaction session
+    await newUser.save({ session });
+    creator.subordinates.push(newUser._id);
+    await creator.save({ session });
 
+    await session.commitTransaction();
     res.status(201).json(newUser);
   } catch (error) {
     console.log(error);
-
     await session.abortTransaction();
-    session.endSession();
     next(error);
+  } finally {
+    session.endSession();
   }
 };
 
+// DONE
 export const getCurrentUserDetails = async (
   req: Request,
   res: Response,
@@ -171,19 +187,25 @@ export const getCurrentUserDetails = async (
       throw createHttpError(400, "Please login first");
     }
 
-    // check if user exists
-    const user = await User.findOne({ username: creatorUsername }).select(
-      "_id name username status role clients transactions"
-    );
+    // Check if user exists
+    const user = await User.findOne({ username: creatorUsername });
+
     if (!user) {
       throw createHttpError(404, "User not found");
     }
-    res.status(200).json(user);
+
+    // Populate subordinates based on the user's role
+    const populatedUser = await User.findOne({
+      username: creatorUsername,
+    });
+
+    res.status(200).json(populatedUser);
   } catch (error) {
     next(error);
   }
 };
 
+// DONE
 export const getClientDetails = async (
   req: Request,
   res: Response,
@@ -206,30 +228,52 @@ export const getClientDetails = async (
       throw createHttpError(404, "Creator not found");
     }
 
-    // Check if client exists
-    const client = await User.findById(clientObjectId).select(
-      "_id name username status role clients transactions"
-    );
+    // Determine the subordinate model based on the creator's role
+    const rolesHierarchy = {
+      company: "User",
+      master: "User",
+      distributor: "User",
+      subdistributor: "User",
+      store: "Player",
+    };
+
+    const subordinateModel = rolesHierarchy[creatorRole];
+
+    // Check if client exists and populate its subordinates if it's a User
+    let client;
+    if (subordinateModel === "User") {
+      client = await User.findById(clientObjectId)
+        .select("_id name username status role subordinates transactions")
+        .populate("subordinates");
+    } else {
+      client = await mongoose
+        .model("Player")
+        .findById(clientObjectId)
+        .select("_id name username status role transactions");
+    }
+
     if (!client) {
       throw createHttpError(404, "Client not found");
     }
 
-    // Check if client is in creator's clients list or creator has role 'company'
+    // Check if client is in creator's subordinates list or creator has role 'company'
     if (
       creatorRole !== "company" &&
-      !creator.clients.includes(clientObjectId)
+      !creator.subordinates.includes(clientObjectId)
     ) {
       throw createHttpError(
         403,
-        "Access denied: Client is not in your clients list"
+        "Access denied: Client is not in your subordinates list"
       );
     }
+
     res.status(200).json(client);
   } catch (error) {
     next(error);
   }
 };
 
+// DONE
 export const getAllClients = async (
   req: Request,
   res: Response,
@@ -240,13 +284,32 @@ export const getAllClients = async (
 
     const user = await User.findOne({
       username: creatorUsername,
-    }).populate("clients");
+    });
+
+    console.log(user);
 
     if (!user) {
       throw createHttpError(404, "User not found");
     }
 
-    res.status(200).json(user.clients);
+    const rolesHierarchy = {
+      company: "User",
+      master: "User",
+      distributor: "User",
+      subdistributor: "User",
+      store: "Player",
+    };
+
+    const subordinateModel = rolesHierarchy[user.role];
+
+    const populatedUser = await User.findOne({
+      username: creatorUsername,
+    }).populate({
+      path: "subordinates",
+      model: subordinateModel,
+    });
+
+    res.status(200).json(populatedUser.subordinates);
   } catch (error) {
     next(error);
   }
@@ -279,7 +342,7 @@ export const getClientsOfClient = async (
     // Check if the creatorRole is company or the clientId is in the creator's clients list
     if (
       creatorRole !== "company" &&
-      !creator.clients.includes(clientObjectId)
+      !creator.subordinates.includes(clientObjectId)
     ) {
       throw createHttpError(
         403,
@@ -293,7 +356,7 @@ export const getClientsOfClient = async (
       throw createHttpError(404, "Client not found");
     }
 
-    res.status(200).json(client.clients);
+    res.status(200).json(client.subordinates);
   } catch (error) {
     next(error);
   }
@@ -336,7 +399,7 @@ export const deleteClient = async (
     }
 
     // Check if client is in creator's clients list
-    if (!creator.clients.some((id) => id.equals(clientObjectId))) {
+    if (!creator.subordinates.some((id) => id.equals(clientObjectId))) {
       throw createHttpError(403, "Client does not belong to the creator");
     }
 
@@ -360,7 +423,7 @@ export const deleteClient = async (
     }
 
     // Update creator's clients list
-    creator.clients = creator.clients.filter(
+    creator.subordinates = creator.subordinates.filter(
       (id) => !id.equals(clientObjectId)
     );
     await creator.save();
@@ -409,7 +472,7 @@ export const updateClient = async (
     }
 
     // Check if client is in creator's clients list
-    if (!creator.clients.some((id) => id.equals(clientObjectId))) {
+    if (!creator.subordinates.some((id) => id.equals(clientObjectId))) {
       throw createHttpError(403, "Client does not belong to the creator");
     }
 

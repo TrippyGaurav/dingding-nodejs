@@ -49,7 +49,7 @@ app.get("/", (req, res, next) => {
 
 //OTHER ROUTES
 // app.use("/api/users", userRoutes);
-app.use("/api/transaction", transactionRoutes);
+// app.use("/api/transaction", transactionRoutes);
 // app.use("/api/games", Games);
 
 // NEW
