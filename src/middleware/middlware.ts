@@ -45,6 +45,9 @@ export function extractRoleFromCookie(
             creatorUsername: decoded!.username,
             creatorRole: decoded!.role,
           };
+
+          console.log(decoded!.username);
+
           console.log("Authenticated successfully");
           next();
         }

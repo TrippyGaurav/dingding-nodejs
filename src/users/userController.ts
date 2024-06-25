@@ -29,7 +29,13 @@ export const loginUser = async (
     }
 
     // Check if user exists
-    const user = await User.findOne({ username });
+    let user;
+
+    if (req.isPlayer) {
+      user = await Player.findOne({ username });
+    } else {
+      user = await User.findOne({ username });
+    }
 
     if (!user) {
       throw createHttpError(401, "Invalid username or password");
@@ -145,6 +151,8 @@ export const createUser = async (
 
     res.status(201).json(newUser);
   } catch (error) {
+    console.log(error);
+
     await session.abortTransaction();
     session.endSession();
     next(error);

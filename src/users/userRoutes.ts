@@ -10,11 +10,12 @@ import {
   getClientDetails,
   getAllClients,
 } from "./userController";
+import determineOrigin from "../middleware/determineOrigin";
 
 const userRoutes = express.Router();
 
 // LOGIN
-userRoutes.post("/login", loginUser);
+userRoutes.post("/login", determineOrigin, loginUser);
 
 // ADD User
 userRoutes.post("/", extractRoleFromCookie, createUser);

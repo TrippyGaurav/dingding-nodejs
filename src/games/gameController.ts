@@ -8,86 +8,50 @@ export const getAllGames = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { category } = req.query;
-  const { username, creatorDesignation } = req.body;
   try {
-    let query: any = {};
-    if (creatorDesignation === "player") {
-      query.status = true;
-    }
-    if (category && category !== "all") {
-      if (category === "fav") {
-        if (!username) {
-          return res
-            .status(400)
-            .json({ error: "Username is required for fav category" });
-        }
-        const user = await Player.findOne({ username: username });
-        if (!user) {
-          return res.status(404).json({ error: "User not found" });
-        }
-        query._id = { $in: user.favouriteGames };
-      } else {
-        query.category = category;
-      }
+    const { category } = req.query;
+    const { creatorRole, creatorUsername } = req.body;
+
+    // Base match stage
+    let matchStage = {};
+    if (category) {
+      matchStage = { category };
     }
 
-    const games = await Game.aggregate([
-      { $match: query },
-      { $sort: { createdAt: -1 } },
-      {
-        $group: {
-          _id: null,
-          featured: {
-            $push: { $cond: [{ $eq: ["$type", "featured"] }, "$$ROOT", null] },
-          },
-          otherGames: {
-            $push: { $cond: [{ $ne: ["$type", "featured"] }, "$$ROOT", null] },
+    // Determine the type of response based on the user's role
+    if (creatorRole === "company") {
+      // Company: send all games in a single array
+      const games = await Game.aggregate([{ $match: matchStage }]);
+      return res.status(200).json(games);
+    } else if (creatorRole === "player") {
+      // Player: send games split into featured and others
+      const games = await Game.aggregate([
+        { $match: matchStage },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $group: {
+            _id: null,
+            allGames: { $push: "$$ROOT" },
           },
         },
-      },
-      {
-        $project: {
-          _id: 0,
-          featured: {
-            $filter: {
-              input: "$featured",
-              as: "game",
-              cond: { $ne: ["$$game", null] },
-            },
-          },
-          otherGames: {
-            $filter: {
-              input: "$otherGames",
-              as: "game",
-              cond: { $ne: ["$$game", null] },
-            },
+        {
+          $project: {
+            _id: 0,
+            featured: { $slice: ["$allGames", 5] }, // Top 5 latest games
+            others: { $slice: ["$allGames", 5, { $size: "$allGames" }] }, // All other games
           },
         },
-      },
-    ]);
+      ]);
 
-    if (games.length > 0) {
-      if (creatorDesignation === "player" && Array.isArray(games)) {
-        const formatGames = (gameList) =>
-          gameList.map(({ _id, gameName, gameThumbnailUrl }) => ({
-            _id,
-            gameName,
-            gameThumbnailUrl,
-          }));
-
-        return res.status(200).json({
-          featured: formatGames(games[0].featured),
-          otherGames: formatGames(games[0].otherGames),
-        });
-      } else if (creatorDesignation !== "player") {
-        return res.status(200).json(games[0]);
-      }
+      return res.status(200).json(games[0] || { featured: [], others: [] });
+    } else {
+      return res.status(400).json({ error: "Invalid creatorRole" });
     }
-
-    return res.status(200).json({ featured: [], otherGames: [] });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error("Error fetching games:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -123,10 +87,18 @@ export const addGame = async (
       throw createHttpError(400, "All required fields must be provided");
     }
 
-    if (creatorRole != "company") {
+    if (creatorRole !== "company") {
       throw createHttpError(
         401,
-        "Access denied : You dont have Permission to add Games"
+        "Access denied: You don't have permission to add games"
+      );
+    }
+
+    const existingGame = await Game.findOne({ $or: [{ name }, { slug }] });
+    if (existingGame) {
+      throw createHttpError(
+        409,
+        "Game with the same name or slug already exists"
       );
     }
 
@@ -167,11 +139,61 @@ export const updateGame = async (
         "Access denied: You don't have permission to update games"
       );
     }
-  } catch (error) {}
+
+    // Ensure only existing fields in the document are updated
+    const game = await Game.findById(gameId);
+    if (!game) {
+      throw createHttpError(404, "Game not found");
+    }
+
+    // Filter out fields that do not exist in the original document
+    const fieldsToUpdate = Object.keys(updateFields).reduce((acc, key) => {
+      if (game[key] !== undefined) {
+        acc[key] = updateFields[key];
+      }
+      return acc;
+    }, {});
+
+    const updatedGame = await Game.findByIdAndUpdate(
+      gameId,
+      { $set: fieldsToUpdate },
+      { new: true }
+    );
+
+    res.status(200).json(updatedGame);
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const deleteGame = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+) => {
+  try {
+    const { gameId } = req.params;
+    const { creatorRole } = req.body;
+
+    if (!gameId) {
+      throw createHttpError(400, "Game ID is required");
+    }
+
+    if (creatorRole !== "company") {
+      throw createHttpError(
+        401,
+        "Access denied: You don't have permission to delete games"
+      );
+    }
+
+    const deletedGame = await Game.findByIdAndDelete(gameId);
+
+    if (!deletedGame) {
+      throw createHttpError(404, "Game not found");
+    }
+
+    res.status(200).json({ message: "Game deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
