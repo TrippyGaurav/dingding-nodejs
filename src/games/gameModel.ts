@@ -36,6 +36,7 @@ const GameSchema = new Schema<IGame>(
     slug: {
       type: String,
       required: true,
+      unique: true, // Ensure slug is unique
     },
   },
   { timestamps: true }

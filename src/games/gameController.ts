@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import Game from "./gameModel";
-import Player from "../player/playerModel";
 import createHttpError from "http-errors";
+import mongoose from "mongoose";
 
+// DONE
 export const getAllGames = async (
   req: Request,
   res: Response,
@@ -13,9 +14,9 @@ export const getAllGames = async (
     const { creatorRole, creatorUsername } = req.body;
 
     // Base match stage
-    let matchStage = {};
+    let matchStage: any = {};
     if (category) {
-      matchStage = { category };
+      matchStage.category = category;
     }
 
     // Determine the type of response based on the user's role
@@ -31,16 +32,9 @@ export const getAllGames = async (
           $sort: { createdAt: -1 },
         },
         {
-          $group: {
-            _id: null,
-            allGames: { $push: "$$ROOT" },
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            featured: { $slice: ["$allGames", 5] }, // Top 5 latest games
-            others: { $slice: ["$allGames", 5, { $size: "$allGames" }] }, // All other games
+          $facet: {
+            featured: [{ $limit: 5 }],
+            others: [{ $skip: 5 }],
           },
         },
       ]);
@@ -55,6 +49,7 @@ export const getAllGames = async (
   }
 };
 
+// DONE
 export const addGame = async (
   req: Request,
   res: Response,
@@ -120,6 +115,7 @@ export const addGame = async (
   }
 };
 
+// DONE
 export const updateGame = async (
   req: Request,
   res: Response,
@@ -127,10 +123,14 @@ export const updateGame = async (
 ) => {
   try {
     const { gameId } = req.params;
-    const { creatorRole, ...updateFields } = req.body;
+    const { creatorRole, status, slug, ...updateFields } = req.body;
 
     if (!gameId) {
       throw createHttpError(400, "Game ID is required");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(gameId)) {
+      throw createHttpError(400, "Invalid Game ID format");
     }
 
     if (creatorRole !== "company") {
@@ -140,19 +140,48 @@ export const updateGame = async (
       );
     }
 
-    // Ensure only existing fields in the document are updated
+    // Check if the game exists
     const game = await Game.findById(gameId);
     if (!game) {
       throw createHttpError(404, "Game not found");
     }
 
-    // Filter out fields that do not exist in the original document
-    const fieldsToUpdate = Object.keys(updateFields).reduce((acc, key) => {
+    // Validate the status field
+    if (status && !["active", "inactive"].includes(status)) {
+      throw createHttpError(
+        400,
+        "Invalid status value. It should be either 'active' or 'inactive'"
+      );
+    }
+
+    // Ensure slug is unique if it is being updated
+    if (slug && slug !== game.slug) {
+      const existingGameWithSlug = await Game.findOne({ slug });
+      if (existingGameWithSlug) {
+        throw createHttpError(400, "Slug must be unique");
+      }
+    }
+
+    // Ensure only existing fields in the document are updated
+    const fieldsToUpdate = Object.keys(updateFields).reduce((acc: any, key) => {
       if (game[key] !== undefined) {
         acc[key] = updateFields[key];
       }
       return acc;
-    }, {});
+    }, {} as { [key: string]: any });
+
+    // Include status and slug fields if they are valid
+    if (status) {
+      fieldsToUpdate.status = status;
+    }
+    if (slug) {
+      fieldsToUpdate.slug = slug;
+    }
+
+    // If no valid fields to update, return an error
+    if (Object.keys(fieldsToUpdate).length === 0) {
+      throw createHttpError(400, "No valid fields to update");
+    }
 
     const updatedGame = await Game.findByIdAndUpdate(
       gameId,
@@ -162,10 +191,15 @@ export const updateGame = async (
 
     res.status(200).json(updatedGame);
   } catch (error) {
-    next(error);
+    if (error instanceof mongoose.Error.CastError) {
+      next(createHttpError(400, "Invalid Game ID"));
+    } else {
+      next(error);
+    }
   }
 };
 
+// DONE
 export const deleteGame = async (
   req: Request,
   res: Response,
