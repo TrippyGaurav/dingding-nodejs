@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import createHttpError from "http-errors";
-import User from "../users/userModel";
+import { User } from "../users/userModel";
 
 export const createCompany = async (
   req: Request,

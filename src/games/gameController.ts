@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from "express";
 import Game from "./gameModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
+import { uploadImage } from "../utils/utils";
+import { Player } from "../users/userModel";
 
 // DONE
 export const getAllGames = async (
@@ -227,6 +229,102 @@ export const deleteGame = async (
     }
 
     res.status(200).json({ message: "Game deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// DONE
+export const getGameById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { gameId } = req.params;
+
+    if (!gameId) {
+      throw createHttpError(400, "Game ID is required");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(gameId)) {
+      throw createHttpError(400, "Invalid Game ID format");
+    }
+
+    const game = await Game.findById(gameId);
+
+    if (!game) {
+      throw createHttpError(404, "Game not found");
+    }
+
+    if (game.status === "active") {
+      res.status(200).json({ url: game.url });
+    } else {
+      res
+        .status(200)
+        .json({ message: "This game is currently under maintenance" });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadThubnail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.body.image) {
+    return res.status(400).json({ error: "Please upload the image" });
+  }
+  try {
+    const image = req.body.image;
+    const imageUrl = await uploadImage(image);
+    res.json({
+      message: "File uploaded successfully",
+      imageUrl: imageUrl,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to upload file" });
+  }
+};
+
+export const addFavouriteGame = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { playerId, gameId } = req.params;
+
+    if (!req.isPlayer) {
+      throw createHttpError(
+        403,
+        "Access denied: You don't have permission to perform this action"
+      );
+    }
+
+    if (!playerId || !gameId) {
+      throw createHttpError(400, "Player ID and Game ID are required");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(playerId)) {
+      throw createHttpError(400, "Invalid Player ID format");
+    }
+
+    const player = await Player.findById(playerId);
+
+    if (!player) {
+      throw createHttpError(404, "Player not found");
+    }
+
+    if (!player.favouriteGames.includes(gameId)) {
+      player.favouriteGames.push(gameId);
+      await player.save();
+    }
+
+    res.status(200).json(player);
   } catch (error) {
     next(error);
   }

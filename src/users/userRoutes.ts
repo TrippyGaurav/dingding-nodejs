@@ -24,7 +24,12 @@ userRoutes.post("/", extractRoleFromCookie, createUser);
 userRoutes.get("/all", extractRoleFromCookie, getAllClients);
 
 // // GET all details about the current user
-userRoutes.get("/", extractRoleFromCookie, getCurrentUserDetails);
+userRoutes.get(
+  "/",
+  determineOrigin,
+  extractRoleFromCookie,
+  getCurrentUserDetails
+);
 
 // // GET all details of a particular user
 userRoutes.get("/:clientId", extractRoleFromCookie, getClientDetails);

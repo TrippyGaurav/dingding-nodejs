@@ -1,4 +1,4 @@
-import { initializeUser } from "../user/user";
+import { initializeUser } from "../users/userSocket";
 
 const socketController = (io) => {
   io.use((socket, next) => {

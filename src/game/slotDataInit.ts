@@ -3,7 +3,7 @@ import { bonusGame } from "./bonusResults";
 import { UiInitData, gameSettings, playerData } from "./global";
 import { bonusGameType, generateMatrix } from "./gameUtils";
 import { PayLines } from "./slotResults";
-import { getClient } from "../user/user";
+import { getClient } from "../users/userSocket";
 
 export function sendInitdata(clientID: string) {
   const matrix = generateMatrix(gameSettings.matrix.x, 18);

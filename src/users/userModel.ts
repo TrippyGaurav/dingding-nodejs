@@ -1,5 +1,5 @@
 import mongoose, { Model, Schema } from "mongoose";
-import { IUser } from "./userType";
+import { IPlayer, IUser } from "./userType";
 
 const UserSchema: Schema = new Schema<IUser>(
   {
@@ -34,5 +34,22 @@ UserSchema.virtual("subordinateModel").get(function (this: IUser) {
   return rolesHierarchy[this.role];
 });
 
+const PlayerSchema = new Schema<IPlayer>(
+  {
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, default: "player", immutable: true },
+    status: { type: String, default: "active" },
+    lastLogin: { type: Date, default: null },
+    loginTimes: { type: Number, default: 0 },
+    credits: { type: Number, default: 0 },
+    favouriteGames: { type: [String], default: [] },
+    transactions: [{ type: mongoose.Types.ObjectId, ref: "Transaction" }],
+  },
+  { timestamps: true }
+);
+
 const User: Model<IUser> = mongoose.model<IUser>("User", UserSchema);
-export default User;
+const Player = mongoose.model<IPlayer>("Player", PlayerSchema);
+
+export { User, Player };

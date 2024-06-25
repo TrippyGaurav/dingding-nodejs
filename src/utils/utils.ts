@@ -3,8 +3,9 @@ import { JwtPayload } from "jsonwebtoken";
 import { IUser } from "../users/userType";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
-import Transaction from "../transactions/transactionModel";
 import { createTransaction } from "../transactions/transactionController";
+import { v2 as cloudinary } from "cloudinary";
+import { config } from "../config/config";
 
 export const clients: Map<string, WebSocket> = new Map();
 
@@ -15,6 +16,12 @@ export const rolesHierarchy = {
   subdistributor: ["store"],
   store: ["player"],
 };
+
+cloudinary.config({
+  cloud_name: config.cloud_name,
+  api_key: config.api_key,
+  api_secret: config.api_secret,
+});
 
 export enum MESSAGEID {
   AUTH = "AUTH",
@@ -111,4 +118,21 @@ export const updateCredits = async (
     session.endSession();
     throw error;
   }
+};
+
+export const uploadImage = (image) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload(
+      image,
+      { folder: "casinoGames" },
+      (error, result) => {
+        if (result && result.secure_url) {
+          // console.log(result.secure_url);
+          return resolve(result.secure_url);
+        }
+        console.log(error.message);
+        return reject({ message: error.message });
+      }
+    );
+  });
 };

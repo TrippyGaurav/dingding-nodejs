@@ -9,7 +9,7 @@ import {
   bonusGameType,
 } from "./gameUtils";
 import { bonusGame } from "./bonusResults";
-import { getClient } from "../user/user";
+import { getClient } from "../users/userSocket";
 import { middleware } from "../utils/middleware";
 import { startInfiniteSpins } from "./reel";
 import { verifyToken } from "../middleware/tokenAuth";

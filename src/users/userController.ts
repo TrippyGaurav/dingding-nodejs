@@ -11,8 +11,7 @@ import { config } from "../config/config";
 import bcrypt from "bcrypt";
 
 import mongoose from "mongoose";
-import User from "./userModel";
-import Player from "../player/playerModel";
+import { User, Player } from "./userModel";
 import { createTransaction } from "../transactions/transactionController";
 
 // DONE
@@ -187,19 +186,18 @@ export const getCurrentUserDetails = async (
       throw createHttpError(400, "Please login first");
     }
 
-    // Check if user exists
-    const user = await User.findOne({ username: creatorUsername });
+    let user;
+    if (req.isPlayer) {
+      user = await Player.findOne({ username: creatorUsername });
+    } else {
+      user = await User.findOne({ username: creatorUsername });
+    }
 
     if (!user) {
       throw createHttpError(404, "User not found");
     }
 
-    // Populate subordinates based on the user's role
-    const populatedUser = await User.findOne({
-      username: creatorUsername,
-    });
-
-    res.status(200).json(populatedUser);
+    res.status(200).json(user);
   } catch (error) {
     next(error);
   }
@@ -497,3 +495,4 @@ export const updateClient = async (
     next(error);
   }
 };
+

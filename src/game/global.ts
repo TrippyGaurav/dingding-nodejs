@@ -8,7 +8,7 @@ import {
   specialIcons,
   winning,
 } from "./gameUtils";
-import { getClient } from "../user/user";
+import { getClient } from "../users/userSocket";
 
 export const gameSettings: GameSettings = {
   currentGamedata: {
