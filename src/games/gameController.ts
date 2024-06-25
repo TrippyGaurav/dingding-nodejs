@@ -296,7 +296,8 @@ export const addFavouriteGame = async (
   next: NextFunction
 ) => {
   try {
-    const { playerId, gameId } = req.params;
+    const { playerId } = req.params;
+    const { gameId, type } = req.body;
 
     if (!req.isPlayer) {
       throw createHttpError(
@@ -313,16 +314,30 @@ export const addFavouriteGame = async (
       throw createHttpError(400, "Invalid Player ID format");
     }
 
+    if (type !== "add" && type !== "remove") {
+      throw createHttpError(
+        400,
+        "Invalid type value. It should be either 'add' or 'remove'"
+      );
+    }
+
     const player = await Player.findById(playerId);
 
     if (!player) {
       throw createHttpError(404, "Player not found");
     }
 
-    if (!player.favouriteGames.includes(gameId)) {
-      player.favouriteGames.push(gameId);
-      await player.save();
+    if (type === "add") {
+      if (!player.favouriteGames.includes(gameId)) {
+        player.favouriteGames.push(gameId);
+      }
+    } else if (type === "remove") {
+      player.favouriteGames = player.favouriteGames.filter(
+        (id) => id !== gameId
+      );
     }
+
+    await player.save();
 
     res.status(200).json(player);
   } catch (error) {

@@ -20,7 +20,7 @@ gameRoutes.delete("/:gameId", extractRoleFromCookie, deleteGame);
 gameRoutes.get("/:gameId", extractRoleFromCookie, getGameById);
 gameRoutes.post("/thumbnail", extractRoleFromCookie, uploadThubnail);
 gameRoutes.put(
-  "/:playerId/:gameId",
+  "/favourite/:playerId",
   determineOrigin,
   extractRoleFromCookie,
   addFavouriteGame
