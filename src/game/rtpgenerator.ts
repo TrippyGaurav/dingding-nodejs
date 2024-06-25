@@ -11,15 +11,22 @@ export function getRTP(client: string, spins: number) {
     moneyWon += gameSettings._winData.totalWinningAmount;
   }
 
+  // Calculate RTP only if moneySpend is not zero to avoid division by zero
+  let rtp = 0;
+
+
   console.log(
     "Bet : ",
     gameSettings.currentBet,
-    " Players Total bet  : ",
+    "Players Total bet  : ",
     moneySpend,
-    " Player Won : ",
+    "Player Won : ",
     moneyWon
   );
+  if (moneySpend > 0) {
+    rtp = (moneyWon / moneySpend); // Use toFixed to limit decimal places
+  }
+  console.log("GENERATED RTP : ", rtp);
 
-  console.log("GENERATED RTP : ", (moneyWon / moneySpend) * 100);
   return;
 }

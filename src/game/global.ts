@@ -16,6 +16,7 @@ import exp from "constants";
 import { CheckResult, ResultType, WinData } from "./slotResults";
 import { bonusGame } from "./bonusResults";
 import { middleware } from "../utils/middleware";
+import { log } from "console";
 
 export const gameSettings: GameSettings = {
   currentGamedata: {
@@ -96,6 +97,7 @@ export const gameSettings: GameSettings = {
     // const currentGameData=gameData.filter((element)=>element.id==GameID)
 
     gameSettings.currentGamedata = gameData[0];
+    
 
     gameSettings.currentGamedata.Symbols.forEach((element)=>{
       if(element.Name=="Bonus"){
@@ -239,12 +241,17 @@ export function spinResult(clientID: string) {
       gameSettings.currentGamedata.bonus.noOfItem,
       clientID
     );
+
   // if(playerData.Balance < gameWining.currentBet)
   if (playerData.Balance < gameSettings.currentBet) {
     // Alerts(clientID, "Low Balance");
+    console.warn("LOW BALANCE ALErt");
+    console.error("Low Balance ALErt");
     return;
   }
 
+  console.log("CALLED SPINNN" + playerData.Balance);
+  
   // TODO : Middle ware goes here
   (async () => {
     await middleware();
@@ -260,6 +267,8 @@ export function spinResult(clientID: string) {
     console.log("player balance:", playerData.Balance);
     console.log("player havewon:", playerData.haveWon);
     gameSettings.bonus.start = false;
+    console.log("CALLEDD");
+    
     new RandomResultGenerator();
     const result = new CheckResult();
     result.makeResultJson(ResultType.normal);

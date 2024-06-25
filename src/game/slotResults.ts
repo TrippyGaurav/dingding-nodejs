@@ -595,10 +595,10 @@ export class WinData {
     getCurrentRTP.playerWon += this.totalWinningAmount;
     console.log("BETS "+ gameSettings.currentBet);
     
-    // if(!gameSettings.freeSpinStarted )
-    // getCurrentRTP.playerTotalBets += gameSettings.currentBet;
-    // else
-    // getCurrentRTP.playerTotalBets += 0;
+    if(!gameSettings.freeSpinStarted )
+    getCurrentRTP.playerTotalBets += gameSettings.currentBet;
+    else
+    getCurrentRTP.playerTotalBets += 0;
   
   }
 }

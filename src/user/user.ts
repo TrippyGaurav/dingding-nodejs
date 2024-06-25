@@ -74,6 +74,7 @@ export class SocketUser {
       }
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
         gameSettings.currentBet = messageData.data.currentBet;
+        
         spinResult(this.socket.id);
       }
       if (messageData.id == MESSAGEID.GENRTP) {
@@ -97,7 +98,7 @@ export class SocketUser {
       }).exec();
       if (CurrentUser) {
         playerData.Balance = CurrentUser.credits;
-        // console.log(playerData.Balance);
+        console.log("BALANCE " + playerData.Balance);
         // console.log(this.username);
         // console.log("Player Balance users", CurrentUser.credits);
         this.sendMessage(MESSAGEID.AUTH, CurrentUser.credits);

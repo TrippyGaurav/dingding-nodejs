@@ -90,6 +90,8 @@ export class RandomResultGenerator {
   // matrix.push([ '1', '8', '4', '4', '8' ])
 
     gameSettings.resultSymbolMatrix = matrix;
+    console.log("MATRIX " + matrix);
+    
   }
 
   // export class RandomResultGenerator {
