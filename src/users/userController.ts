@@ -59,7 +59,12 @@ export const loginUser = async (
       { expiresIn: "1h" }
     );
 
-    res.cookie("userToken", token, { httpOnly: true, secure: true });
+    res.cookie("userToken", token, {
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      httpOnly: true,
+      // secure: true,
+      sameSite: "none",
+    });
     res.status(200).json({ message: "Login successful" });
   } catch (error) {
     next(error);
@@ -495,4 +500,3 @@ export const updateClient = async (
     next(error);
   }
 };
-
