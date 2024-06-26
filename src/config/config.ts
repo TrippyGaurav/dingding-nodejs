@@ -10,8 +10,14 @@ const _config = {
   api_key: process.env.API_KEY,
   api_secret: process.env.API_SECRET,
   companyApiKey: process.env.COMPANY_API_KEY,
-  platform_url: process.env.PLATFORM_URL,
-  crm_url: process.env.CRM_URL,
+  platform_url:
+    process.env.NODE_ENV === "development"
+      ? process.env.LOCAL_PLATFORM_URL
+      : process.env.PLATFORM_URL,
+  crm_url:
+    process.env.NODE_ENV === "development"
+      ? process.env.LOCAL_CRM_URL
+      : process.env.CRM_URL,
 };
 
 export const config = Object.freeze(_config);
