@@ -8,12 +8,13 @@ export interface IUser extends Document {
   role: string;
   subordinates: Types.ObjectId[];
   transactions: Types.ObjectId[];
-  lastLogin: Date;
+  lastLogin: Date | null;
   loginTimes: number;
   totalRecharged: number;
   totalRedeemed: number;
   credits: number;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IPlayer extends Document {
@@ -26,4 +27,6 @@ export interface IPlayer extends Document {
   credits: number;
   favouriteGames: string[];
   transactions: Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
 }

@@ -23,8 +23,7 @@ const UserSchema: Schema = new Schema<IUser>(
 );
 
 UserSchema.virtual("subordinateModel").get(function (this: IUser) {
-  // Determine the subordinate model based on the role
-  const rolesHierarchy = {
+  const rolesHierarchy: Record<string, string> = {
     company: "User",
     master: "User",
     distributor: "User",

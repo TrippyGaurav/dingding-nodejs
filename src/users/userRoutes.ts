@@ -15,7 +15,7 @@ import determineOrigin from "../middleware/determineOrigin";
 const userRoutes = express.Router();
 
 // LOGIN
-userRoutes.post("/login", determineOrigin, loginUser);
+userRoutes.post("/login", loginUser);
 
 // ADD User
 userRoutes.post("/", extractRoleFromCookie, createUser);

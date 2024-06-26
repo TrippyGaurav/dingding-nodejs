@@ -8,11 +8,18 @@ import {
 import createHttpError from "http-errors";
 import jwt from "jsonwebtoken";
 import { config } from "../config/config";
+
 import bcrypt from "bcrypt";
 
 import mongoose from "mongoose";
 import { User, Player } from "./userModel";
 import { createTransaction } from "../transactions/transactionController";
+import {
+  generateJwtToken,
+  getUserByUsername,
+  sendJwtToken,
+  updateUserLoginInfo,
+} from "./userHelper";
 
 // DONE
 export const loginUser = async (
@@ -28,33 +35,41 @@ export const loginUser = async (
       throw createHttpError(400, "Username and password are required");
     }
 
-    // Check if user exists
-    let user;
+    // Check if user exists in either User or Player model
+    const user = await User.findOne({ username });
+    const player = await Player.findOne({ username });
 
-    if (req.isPlayer) {
-      user = await Player.findOne({ username });
-    } else {
-      user = await User.findOne({ username });
+    // Handle the case where the username exists in both models
+    if (user && player) {
+      throw createHttpError(
+        400,
+        "Some went wrong. Please contact manger for assistance. "
+      );
     }
 
-    if (!user) {
+    // Determine the user's role
+    let role: string;
+    if (user) {
+      role = "user";
+    } else if (player) {
+      role = "player";
+    } else {
       throw createHttpError(401, "Invalid username or password");
     }
 
-    // Validate password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // validate password
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user ? user.password : player.password
+    );
 
     if (!isPasswordValid) {
       throw createHttpError(401, "Invalid username or password");
     }
 
-    // Update lastLogin and loginTimes
-    user.lastLogin = new Date();
-    user.loginTimes = (user.loginTimes || 0) + 1;
-    await user.save();
-
+    // Generate and send JWT token
     const token = jwt.sign(
-      { username: user.username, role: user.role },
+      { username: user ? user.username : player.username, role },
       config.jwtSecret!,
       { expiresIn: "1h" }
     );
@@ -65,7 +80,8 @@ export const loginUser = async (
       // secure: true,
       sameSite: "none",
     });
-    res.status(200).json({ message: "Login successful", token: token });
+
+    res.status(200).json({ message: "Login successful", token: token, role });
   } catch (error) {
     next(error);
   }
