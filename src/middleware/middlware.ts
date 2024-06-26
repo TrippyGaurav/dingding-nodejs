@@ -2,11 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { config } from "../config/config";
 import createHttpError from "http-errors";
 import jwt from "jsonwebtoken";
-
-interface DecodedToken {
-  username: string;
-  role: string;
-}
+import { DecodedToken } from "../utils/utils";
 
 export function validateApiKey(
   req: Request,

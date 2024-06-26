@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import {
+  AuthRequest,
+  getSubordinateModel,
   rolesHierarchy,
   updateCredits,
   updatePassword,
@@ -14,12 +16,6 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import { User, Player } from "./userModel";
 import { createTransaction } from "../transactions/transactionController";
-import {
-  generateJwtToken,
-  getUserByUsername,
-  sendJwtToken,
-  updateUserLoginInfo,
-} from "./userHelper";
 
 // DONE
 export const loginUser = async (
@@ -67,9 +63,16 @@ export const loginUser = async (
       throw createHttpError(401, "Invalid username or password");
     }
 
+    user.lastLogin = new Date();
+    user.loginTimes = (user.loginTimes || 0) + 1;
+    await user.save();
+
     // Generate and send JWT token
     const token = jwt.sign(
-      { username: user ? user.username : player.username, role },
+      {
+        username: user ? user.username : player.username,
+        role: user ? user.role : player.role,
+      },
       config.jwtSecret!,
       { expiresIn: "1h" }
     );
@@ -81,7 +84,11 @@ export const loginUser = async (
       sameSite: "none",
     });
 
-    res.status(200).json({ message: "Login successful", token: token, role });
+    res.status(200).json({
+      message: "Login successful",
+      token: token,
+      role: user ? user.role : player.role,
+    });
   } catch (error) {
     next(error);
   }
@@ -97,13 +104,9 @@ export const createUser = async (
   session.startTransaction();
 
   try {
-    const { creatorRole, creatorUsername } = req.body;
-    const user = req.body.user;
-
-    // Validate Creator
-    if (!creatorRole || !creatorUsername) {
-      throw createHttpError(403, "Unable to verify the creator");
-    }
+    const _req = req as AuthRequest;
+    const { user } = req.body;
+    const { username, role } = _req.user;
 
     // Validate input
     if (
@@ -117,20 +120,12 @@ export const createUser = async (
       throw createHttpError(400, "All required fields must be provided");
     }
 
-    if (
-      !rolesHierarchy[creatorRole] ||
-      !rolesHierarchy[creatorRole].includes(user.role)
-    ) {
-      throw createHttpError(
-        403,
-        `A ${creatorRole} cannot create a ${user.role}`
-      );
+    if (!rolesHierarchy[role] || !rolesHierarchy[role].includes(user.role)) {
+      throw createHttpError(403, `A ${role} cannot create a ${user.role}`);
     }
 
     // Check if creator exists
-    const creator = await User.findOne({ username: creatorUsername }).session(
-      session
-    );
+    const creator = await User.findOne({ username }).session(session);
     if (!creator) {
       throw createHttpError(404, "Creator not found");
     }
@@ -195,23 +190,21 @@ export const createUser = async (
 };
 
 // DONE
-export const getCurrentUserDetails = async (
+export const getCurrentUser = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { creatorUsername } = req.body;
-
-    if (!creatorUsername) {
-      throw createHttpError(400, "Please login first");
-    }
+    const _req = req as AuthRequest;
+    const { username, role } = _req.user;
 
     let user;
-    if (req.isPlayer) {
-      user = await Player.findOne({ username: creatorUsername });
+
+    if (role === "player") {
+      user = await Player.findOne({ username });
     } else {
-      user = await User.findOne({ username: creatorUsername });
+      user = await User.findOne({ username });
     }
 
     if (!user) {
@@ -225,75 +218,7 @@ export const getCurrentUserDetails = async (
 };
 
 // DONE
-export const getClientDetails = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { clientId } = req.params;
-    const { creatorUsername, creatorRole } = req.body;
-
-    if (!creatorUsername || !creatorRole) {
-      throw createHttpError(403, "Unable to verify the creator");
-    }
-
-    // Convert clientId to ObjectId
-    const clientObjectId = new mongoose.Types.ObjectId(clientId);
-
-    // Check if creator exists
-    const creator = await User.findOne({ username: creatorUsername });
-    if (!creator) {
-      throw createHttpError(404, "Creator not found");
-    }
-
-    // Determine the subordinate model based on the creator's role
-    const rolesHierarchy = {
-      company: "User",
-      master: "User",
-      distributor: "User",
-      subdistributor: "User",
-      store: "Player",
-    };
-
-    const subordinateModel = rolesHierarchy[creatorRole];
-
-    // Check if client exists and populate its subordinates if it's a User
-    let client;
-    if (subordinateModel === "User") {
-      client = await User.findById(clientObjectId)
-        .select("_id name username status role subordinates transactions")
-        .populate("subordinates");
-    } else {
-      client = await mongoose
-        .model("Player")
-        .findById(clientObjectId)
-        .select("_id name username status role transactions");
-    }
-
-    if (!client) {
-      throw createHttpError(404, "Client not found");
-    }
-
-    // Check if client is in creator's subordinates list or creator has role 'company'
-    if (
-      creatorRole !== "company" &&
-      !creator.subordinates.includes(clientObjectId)
-    ) {
-      throw createHttpError(
-        403,
-        "Access denied: Client is not in your subordinates list"
-      );
-    }
-
-    res.status(200).json(client);
-  } catch (error) {
-    next(error);
-  }
-};
-
-// DONE
-export const getAllClients = async (
+export const getAllSubordinates = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -329,6 +254,60 @@ export const getAllClients = async (
     });
 
     res.status(200).json(populatedUser.subordinates);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// DONE
+export const getSubordinateById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const _req = req as AuthRequest;
+    const { subordinateId } = req.params;
+    const { username, role } = _req.user;
+
+    // Convert clientId to ObjectId
+    const clientObjectId = new mongoose.Types.ObjectId(subordinateId);
+
+    // Check if creator exists
+    const creator = await User.findOne({ username });
+    if (!creator) {
+      throw createHttpError(404, "Creator not found");
+    }
+
+    // Determine the subordinate model based on the creator's role
+    const subordinateModel = getSubordinateModel(role);
+
+    // Check if client exists and populate its subordinates if it's a User
+    let client;
+    if (subordinateModel === "User") {
+      client = await User.findById(clientObjectId)
+        .select("_id name username status role subordinates transactions")
+        .populate("subordinates");
+    } else {
+      client = await mongoose
+        .model("Player")
+        .findById(clientObjectId)
+        .select("_id name username status role transactions");
+    }
+
+    if (!client) {
+      throw createHttpError(404, "Client not found");
+    }
+
+    // Check if client is in creator's subordinates list or creator has role 'company'
+    if (role !== "company" && !creator.subordinates.includes(clientObjectId)) {
+      throw createHttpError(
+        403,
+        "Access denied: Client is not in your subordinates list"
+      );
+    }
+
+    res.status(200).json(client);
   } catch (error) {
     next(error);
   }

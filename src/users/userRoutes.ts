@@ -6,11 +6,11 @@ import {
   deleteClient,
   updateClient,
   getClientsOfClient,
-  getCurrentUserDetails,
-  getClientDetails,
-  getAllClients,
+  getAllSubordinates,
+  getSubordinateById,
+  getCurrentUser,
 } from "./userController";
-import determineOrigin from "../middleware/determineOrigin";
+import { checkUser } from "../middleware/checkUser";
 
 const userRoutes = express.Router();
 
@@ -18,21 +18,16 @@ const userRoutes = express.Router();
 userRoutes.post("/login", loginUser);
 
 // ADD User
-userRoutes.post("/", extractRoleFromCookie, createUser);
-
-// // GET all clients
-userRoutes.get("/all", extractRoleFromCookie, getAllClients);
+userRoutes.post("/", checkUser, createUser);
 
 // // GET all details about the current user
-userRoutes.get(
-  "/",
-  determineOrigin,
-  extractRoleFromCookie,
-  getCurrentUserDetails
-);
+userRoutes.get("/", checkUser, getCurrentUser);
+
+// // GET all subordinates
+userRoutes.get("/all", extractRoleFromCookie, getAllSubordinates);
 
 // // GET all details of a particular user
-userRoutes.get("/:clientId", extractRoleFromCookie, getClientDetails);
+userRoutes.get("/:subordinateId", checkUser, getSubordinateById);
 
 // // DELETE A Client
 userRoutes.delete("/:clientId", extractRoleFromCookie, deleteClient);

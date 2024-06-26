@@ -36,6 +36,18 @@ export const enum MESSAGETYPE {
   ERROR = "internalError",
 }
 
+export interface DecodedToken {
+  username: string;
+  role: string;
+}
+
+export interface AuthRequest extends Request {
+  user: {
+    username: string;
+    role: string;
+  };
+}
+
 export interface AuthRequest extends Request {
   userId: string;
   userRole: string;
@@ -135,4 +147,15 @@ export const uploadImage = (image) => {
       }
     );
   });
+};
+
+export const getSubordinateModel = (role: string) => {
+  const rolesHierarchy: Record<string, string> = {
+    company: "User",
+    master: "User",
+    distributor: "User",
+    subdistributor: "User",
+    store: "Player",
+  };
+  return rolesHierarchy[role];
 };
