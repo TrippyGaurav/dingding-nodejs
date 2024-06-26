@@ -69,20 +69,20 @@ export class SocketUser {
   messageHandler = () => {
     return (message: any) => {
       const messageData = JSON.parse(message);
-      console.log("message "+ JSON.stringify(messageData));
-      
+      console.log("message " + JSON.stringify(messageData));
+
       if (messageData.id === "checkMoolah") {
         checkforMoolah();
       }
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
+        gameSettings.currentBet =
+          messageData.data.currentBet / messageData.data.lines;
 
-        
-        gameSettings.currentBet = messageData.data.currentBet/messageData.data.lines;
-        
         spinResult(this.socket.id);
       }
       if (messageData.id == MESSAGEID.GENRTP) {
-        gameSettings.currentBet = messageData.data.currentBet/messageData.data.lines;
+        gameSettings.currentBet =
+          messageData.data.currentBet / messageData.data.lines;
         getRTP(this.socket.id, messageData.data.spins);
       }
 
