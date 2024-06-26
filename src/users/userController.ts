@@ -65,7 +65,7 @@ export const loginUser = async (
       // secure: true,
       sameSite: "none",
     });
-    res.status(200).json({ message: "Login successful" });
+    res.status(200).json({ message: "Login successful", token: token });
   } catch (error) {
     next(error);
   }
