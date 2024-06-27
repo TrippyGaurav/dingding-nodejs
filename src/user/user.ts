@@ -75,14 +75,12 @@ export class SocketUser {
         checkforMoolah();
       }
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
-        gameSettings.currentBet =
-          messageData.data.currentBet / messageData.data.lines;
+        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet];
 
         spinResult(this.socket.id);
       }
       if (messageData.id == MESSAGEID.GENRTP) {
-        gameSettings.currentBet =
-          messageData.data.currentBet / messageData.data.lines;
+        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet];
         getRTP(this.socket.id, messageData.data.spins);
       }
 
@@ -154,3 +152,4 @@ export function getClient(clientId: string) {
   const user = users.get(clientId);
   return user;
 }
+export const betMultiplier = [0.1,0.5,0.7,1]

@@ -78,14 +78,7 @@ export const gameSettings: GameSettings = {
     gameSettings._winData = new WinData(clientID);
 
     gameSettings.currentGamedata = GameData;
-    gameSettings.currentBet =
-      gameSettings.currentGamedata.linesApiData[
-        gameSettings.currentGamedata.linesCount /
-          gameSettings.currentGamedata.bets[
-            gameSettings.currentGamedata.bets.length
-          ]
-      ];
-
+    // gameSettings.currentBet = 
     gameSettings.currentGamedata.Symbols.forEach((element) => {
       if (element.Name == "Bonus") {
         gameSettings.bonus.id = element.Id;
