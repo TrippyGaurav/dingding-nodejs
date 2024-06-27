@@ -34,7 +34,7 @@ export class SocketUser {
   initGameData = async (message: any) => {
     const messageData = JSON.parse(message);
     const game = await Game.findOne({ tagName: messageData.Data.GameID });
-
+console.log(messageData.Data.GameID,"Game")
     if(!game || !game.payout || !game.payout.length) {
       // this.sendError("404","Game with the specified tagName not found.");
       // this.socket.disconnect();
