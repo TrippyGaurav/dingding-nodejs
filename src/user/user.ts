@@ -13,7 +13,7 @@ import User from "../dashboard/user/userModel";
 export let users: Map<string, SocketUser> = new Map();
 import { Game, Payouts } from "../dashboard/casinoGames/gamesModel";
 import { clientData } from "../dashboard/user/userController";
-
+import { gameData } from "../game/testData";
 export class SocketUser {
   socket: Socket;
   isAlive: boolean = false;
@@ -35,9 +35,11 @@ export class SocketUser {
     const messageData = JSON.parse(message);
     const game = await Game.findOne({ tagName: messageData.Data.GameID });
 
-    if (!game.payout.length) {
-      this.sendError("404", "Game with the specified tagName not found.");
-      this.socket.disconnect();
+    if(!game || !game.payout || !game.payout.length) {
+      // this.sendError("404","Game with the specified tagName not found.");
+      // this.socket.disconnect();
+      console.log('NO GAME FOUND WITH THIS GAME ID SWIFTING PAYOUTS TO SL-VIK')
+      gameSettings.initiate(gameData[0],this.socket.id)
       return;
     }
     // Retrieve the payout JSON data

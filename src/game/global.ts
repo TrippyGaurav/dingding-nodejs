@@ -70,41 +70,21 @@ export const gameSettings: GameSettings = {
   },
   reels: [[]],
 
-  initiate: async (GameData: any, clientID: string) => {
+  initiate: async (GameData: {}, clientID: string) => {
+    console.log(GameData)
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
     gameSettings.Weights = [];
     gameSettings._winData = new WinData(clientID);
-    // try {
-    //   const resp = await fetch(
-    //     "https://664c355635bbda10987f44ff.mockapi.io/api/gameId/" + GameID
-    //   );
-    //   const data = await resp.json();
-    //   if (data == "Not found") {
-    //     // Alerts(clientID, "Invalid Game ID");
-    //     getClient(clientID).sendError("404", "GAMENOTFOUND");
-    //     gameSettings.startGame = false;
-    //     return;
-    //   }
-    //   gameSettings.currentGamedata = data;
-    //   // const currentGameData=gameData.filter((element)=>element.id==GameID)
-    // } catch (error) {
-    //   getClient(clientID).sendError("404", "NETWORK ERROR");
-    //   return;
-    // }
 
-    // const currentGameData=gameData.filter((element)=>element.id==GameID)
-
-    gameSettings.currentGamedata = gameData[0];
-    
-
-    gameSettings.currentGamedata.Symbols.forEach((element)=>{
-      if(element.Name=="Bonus"){
-          gameSettings.bonus.id=element.Id
+    gameSettings.currentGamedata = GameData;
+    // gameSettings.currentBet = 
+    gameSettings.currentGamedata.Symbols.forEach((element) => {
+      if (element.Name == "Bonus") {
+        gameSettings.bonus.id = element.Id;
       }
-
-  })
+    });
 
     initSymbols();
     UiInitData.paylines = convertSymbols(gameSettings.currentGamedata.Symbols);
