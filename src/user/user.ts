@@ -75,12 +75,17 @@ export class SocketUser {
         checkforMoolah();
       }
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
-        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet];
-
+        gameSettings.currentLines =  messageData.data.currentLines;
+        gameSettings.BetPerLines = betMultiplier[ messageData.data.currentBet];
+        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet] * gameSettings.currentLines;
+        
         spinResult(this.socket.id);
       }
       if (messageData.id == MESSAGEID.GENRTP) {
-        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet];
+        gameSettings.currentLines =  messageData.data.currentLines;
+        gameSettings.BetPerLines = betMultiplier[ messageData.data.currentBet];
+        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet] * gameSettings.currentLines;
+
         getRTP(this.socket.id, messageData.data.spins);
       }
 

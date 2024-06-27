@@ -62,6 +62,8 @@ export const gameSettings: GameSettings = {
     // game: new bonusGame(5),
   },
   currentBet: 0,
+  currentLines : 0 ,
+  BetPerLines : 0,
   startGame: false,
   gamble: {
     game: null,
