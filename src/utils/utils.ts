@@ -102,10 +102,15 @@ export const updateCredits = async (
   try {
     const { type, amount } = credits;
 
-    if (!type || !amount || !["recharge", "redeem"].includes(type)) {
+    // Validate credits
+    if (
+      !type ||
+      typeof amount !== "number" ||
+      !["recharge", "redeem"].includes(type)
+    ) {
       throw createHttpError(
         400,
-        "Credits must include a valid type ('recharge' or 'redeem') and amount"
+        "Credits must include a valid type ('recharge' or 'redeem') and a numeric amount"
       );
     }
 

@@ -442,6 +442,8 @@ export const updateClient = async (
     const { clientId } = req.params;
     const { status, credits, password, existingPassword } = req.body;
 
+    console.log("Credit to be updated : ", credits);
+
     // Validate creator
     if (!creatorUsername || !creatorRole) {
       throw createHttpError(403, "Forbidden: Access Denied");
@@ -484,6 +486,8 @@ export const updateClient = async (
     }
 
     if (credits) {
+      // Convert credits amount to number
+      credits.amount = Number(credits.amount);
       await updateCredits(client, creator, credits);
     }
 
