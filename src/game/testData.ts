@@ -235,7 +235,7 @@ export const gameData = [
       },
       {
         Name: "Wild",
-        Id: 12,
+        Id: 13,
         reelInstance: {
           "0": 0,
           "1": 2,
@@ -267,7 +267,7 @@ export const gameData = [
       },
       {
         Name: "Jackpot",
-        Id: 13,
+        Id: 12,
         reelInstance: {
           "0": 2,
           "1": 2,

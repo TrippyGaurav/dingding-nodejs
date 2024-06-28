@@ -82,6 +82,7 @@ export interface GameSettings {
   lineData: number[][];
   fullPayTable: PayLine[];
   freeSpinStarted : boolean;
+  resultReelIndex: number[],
   jackpot: {
     symbolName: string;
     symbolId: number;

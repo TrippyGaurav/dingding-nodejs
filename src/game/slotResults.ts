@@ -371,7 +371,7 @@ export class CheckResult {
     return foundArray;
   }
 
-  makeResultJson(isResult : ResultType) {
+  makeResultJson(isResult : ResultType, iconsToFill: number[][]=[]) {
     //TODO : Try to send the jackpot win data without initializie a variable;
     gameSettings._winData.totalWinningAmount =
       Math.round(gameSettings._winData.totalWinningAmount * 100) / 100;
@@ -383,7 +383,6 @@ export class CheckResult {
         symbolsToEmit: removeRecurringIndexSymbols(
           gameSettings._winData.winningSymbols
         ),
-
         // symbolsToEmit: gameWining.winningSymbols,
         WinAmout: gameSettings._winData.totalWinningAmount,
         // WinAmout: gameWining.TotalWinningAmount,
@@ -398,8 +397,10 @@ export class CheckResult {
     };
     if(isResult == ResultType.normal)
     getClient(playerData.playerId).sendMessage("ResultData", ResultData);
-    if(isResult == ResultType.moolah)
-    getClient(playerData.playerId).sendMessage("MoolahResultData", ResultData);
+    if(isResult == ResultType.moolah){
+      ResultData.GameData['iconstoFill']=iconsToFill;
+      getClient(playerData.playerId).sendMessage("MoolahResultData", ResultData);
+    }
 
     // sendMessageToClient(this.clientID, "ResultData", ResultData);
   }

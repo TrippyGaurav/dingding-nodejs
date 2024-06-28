@@ -33,16 +33,16 @@ export class SocketUser {
 
   initGameData = async (message: any) => {
     const messageData = JSON.parse(message);
-    const game = await Game.findOne({ tagName: messageData.Data.GameID });
+    // const game = await Game.findOne({ tagName: messageData.Data.GameID });
 
-    if (!game.payout.length) {
-      this.sendError("404", "Game with the specified tagName not found.");
-      this.socket.disconnect();
-      return;
-    }
-    // Retrieve the payout JSON data
-    const payoutData = await Payouts.find({ _id: { $in: game.payout } });
-    gameSettings.initiate(payoutData[0].data, this.socket.id);
+    // if (!game.payout.length) {
+    //   this.sendError("404", "Game with the specified tagName not found.");
+    //   this.socket.disconnect();
+    //   return;
+    // }
+    // // Retrieve the payout JSON data
+    // const payoutData = await Payouts.find({ _id: { $in: game.payout } });
+    gameSettings.initiate(null, this.socket.id);
   };
 
   sendError(errorCode: string, message: any) {

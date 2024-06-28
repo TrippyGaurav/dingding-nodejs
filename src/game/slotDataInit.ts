@@ -55,7 +55,7 @@ export function sendInitdata(clientID: string) {
 export class RandomResultGenerator {
   constructor() {
     let matrix: string[][] = [];
-    let randomIndexArray = [];
+    let randomIndexArray:number[] = [];
     for (let j = 0; j < gameSettings.matrix.y; j++) {
       let row: string[] = [];
       for (let i = 0; i < gameSettings.matrix.x; i++) {
@@ -66,28 +66,32 @@ export class RandomResultGenerator {
           randomIndexArray.push(rowrandomIndex);
           row.push(gameSettings.reels[i][rowrandomIndex].toString());
         } else {
-          if (randomIndexArray[i] == 0)
-            row.push(gameSettings.reels[i][randomIndexArray[i] + j].toString());
-          else if (randomIndexArray[i] == gameSettings.reels[i].length - 1)
-            row.push(gameSettings.reels[i][randomIndexArray[i] - j].toString());
-          else if (randomIndexArray[i] <= gameSettings.matrix.y)
-            row.push(gameSettings.reels[i][randomIndexArray[i] + j].toString());
-          else if (randomIndexArray[i] > gameSettings.matrix.y)
-            row.push(gameSettings.reels[i][randomIndexArray[i] - j].toString());
+          // if (randomIndexArray[i] == 0)
+          //   row.push(gameSettings.reels[i][randomIndexArray[i] + j].toString());
+          // else if (randomIndexArray[i] == gameSettings.reels[i].length - 1)
+          //   row.push(gameSettings.reels[i][randomIndexArray[i] - j].toString());
+          // else if (randomIndexArray[i] <= gameSettings.matrix.y)
+          //   row.push(gameSettings.reels[i][randomIndexArray[i] + j].toString());
+          // else if (randomIndexArray[i] > gameSettings.matrix.y)
+          //   row.push(gameSettings.reels[i][randomIndexArray[i] - j].toString());
+          let initialRandomIndex = randomIndexArray[i];
+          let adjustedIndex = (initialRandomIndex + j) % gameSettings.reels[i].length;
+          row.push(gameSettings.reels[i][adjustedIndex].toString());
         }
       }
       matrix.push(row);
 
-      gameSettings._winData.resultReelIndex = randomIndexArray;
     }
+    gameSettings.resultReelIndex = randomIndexArray;
     console.log("indexs", randomIndexArray);
+    console.log("gameSettings._winData.resultReelIndex", gameSettings.resultReelIndex);
 
-   // matrix.pop();
+  //  matrix.pop();
   // matrix.pop();
   // matrix.pop();
-  // matrix.push([ '4', '0', '0', '0', '4' ])
-  // matrix.push([ '6', '4', '8', '4', '2' ])
-  // matrix.push([ '1', '8', '4', '4', '8' ])
+  // matrix.push([ '1', '2', '3', '4', '5' ])
+  // matrix.push([ '2', '13', '13', '13', '13' ])
+  // matrix.push([ '1', '1', '1', '1', '6' ])
 
     gameSettings.resultSymbolMatrix = matrix;
     console.log("MATRIX " + matrix);
