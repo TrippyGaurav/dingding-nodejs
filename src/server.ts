@@ -47,12 +47,7 @@ app.get("/", (req, res, next) => {
   res.status(200).json(health);
 });
 
-//OTHER ROUTES
-// app.use("/api/users", userRoutes);
-// app.use("/api/transaction", transactionRoutes);
-// app.use("/api/games", Games);
 
-// NEW
 app.use("/api/company", companyRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/transactions", transactionRoutes);

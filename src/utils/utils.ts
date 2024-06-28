@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { createTransaction } from "../transactions/transactionController";
 import { v2 as cloudinary } from "cloudinary";
 import { config } from "../config/config";
+import bcrypt from "bcrypt";
 
 export const clients: Map<string, WebSocket> = new Map();
 

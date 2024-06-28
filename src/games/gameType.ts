@@ -1,4 +1,4 @@
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 
 export interface IGame extends Document {
   name: string;
@@ -9,4 +9,5 @@ export interface IGame extends Document {
   status: string;
   tagName: string;
   slug: string;
+  payout: Types.ObjectId;
 }

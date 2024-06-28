@@ -1,9 +1,13 @@
 import { NextFunction, Request, Response } from "express";
-import Game from "./gameModel";
+import Game, { Payouts } from "./gameModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import { uploadImage } from "../utils/utils";
 import { Player } from "../users/userModel";
+
+interface GameRequest extends Request {
+  file: Express.Multer.File;
+}
 
 // DONE
 export const getAllGames = async (
@@ -53,7 +57,7 @@ export const getAllGames = async (
 
 // DONE
 export const addGame = async (
-  req: Request,
+  req: GameRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -79,9 +83,17 @@ export const addGame = async (
       !category ||
       !status ||
       !tagName ||
-      !slug
+      !slug ||
+      !req.file
     ) {
-      throw createHttpError(400, "All required fields must be provided");
+      throw createHttpError(
+        400,
+        "All required fields must be provided, including the payout file"
+      );
+    }
+
+    if (req.file) {
+      console.log("Receiced payout file");
     }
 
     if (creatorRole !== "company") {
@@ -99,6 +111,17 @@ export const addGame = async (
       );
     }
 
+    // Handle file for payout
+    const jsonData = JSON.parse(req.file.buffer.toString("utf-8"));
+    const newPayout = new Payouts({
+      gameName: tagName,
+      data: jsonData,
+    });
+
+    await newPayout.save();
+
+    console.log("JSON Data : ", jsonData);
+
     const game = new Game({
       name,
       thumbnail,
@@ -108,6 +131,7 @@ export const addGame = async (
       status,
       tagName,
       slug,
+      payout: newPayout._id,
     });
 
     const savedGame = await game.save();
@@ -178,6 +202,24 @@ export const updateGame = async (
     }
     if (slug) {
       fieldsToUpdate.slug = slug;
+    }
+
+    // Handle file for payout update
+    if (req.file) {
+      // Delete the old payout
+      if (game.payout) {
+        await Payouts.findByIdAndDelete(game.payout);
+      }
+
+      // Add the new payout
+      const jsonData = JSON.parse(req.file.buffer.toString("utf-8"));
+      const newPayout = new Payouts({
+        gameName: game.name,
+        data: jsonData,
+      });
+
+      await newPayout.save();
+      fieldsToUpdate.payout = newPayout._id;
     }
 
     // If no valid fields to update, return an error

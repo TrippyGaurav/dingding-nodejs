@@ -38,9 +38,31 @@ const GameSchema = new Schema<IGame>(
       required: true,
       unique: true, // Ensure slug is unique
     },
+    payout: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payouts",
+    },
+  },
+  { timestamps: true }
+);
+
+const PayoutsSchema = new Schema(
+  {
+    gameName: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    data: {
+      type: Schema.Types.Mixed,
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
 const Game = mongoose.model<IGame>("Game", GameSchema);
+const Payouts = mongoose.model("Payouts", PayoutsSchema);
+
+export { Payouts };
 export default Game;
