@@ -78,7 +78,7 @@ export const gameSettings: GameSettings = {
     gameSettings.Weights = [];
     gameSettings._winData = new WinData(clientID);
 
-    gameSettings.currentGamedata = GameData[0];
+    gameSettings.currentGamedata = GameData[0] ;
     // gameSettings.currentBet = 
     gameSettings.currentGamedata.Symbols.forEach((element) => {
       if (element.Name == "Bonus") {
