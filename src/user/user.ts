@@ -31,24 +31,31 @@ export class SocketUser {
     this.socket.on("disconnect", () => this.deleteUserFromMap());
   }
 
-  initGameData = async (message: any) => {
-    const messageData = JSON.parse(message);
-
-    const game = await Game.findOne({ tagName: messageData.Data.GameID || 'SL-VIK' });
-    console.log(messageData.Data.GameID,"Game")
-    if(!game || !game.payout || !game.payout.length) {
-      // this.sendError("404","Game with the specified tagName not found.");
-      // this.socket.disconnect();
-      console.log('NO GAME FOUND WITH THIS GAME ID SWIFTING PAYOUTS TO SL-VIK')
-      gameSettings.initiate(gameData[0],this.socket.id)
-      return;
+   initGameData = async (message: any) => {
+    try {
+      const messageData = JSON.parse(message);
+  
+      // Use "SL-VIK" as default tagName if messageData.Data.GameID is not present
+      const tagName = messageData.Data.GameID ;
+      
+      const game = await Game.findOne({ tagName: tagName  });
+      console.log(tagName, "Game");
+      
+      if (!game || !game.payout || !game.payout.length) {
+        console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
+        gameSettings.initiate(gameData[0], this.socket.id);
+        return;
+      }
+      
+      // Retrieve the payout JSON data
+      const payoutData = await Payouts.find({ _id: { $in: game.payout } });
+      gameSettings.initiate(payoutData[0].data, this.socket.id);
+    } catch (error) {
+      console.error('Error initializing game data:', error);
+      // Handle error (e.g., send error response, disconnect socket, etc.)
     }
-    // Retrieve the payout JSON data
-    const payoutData = await Payouts.find({ _id: { $in: game.payout } });
-    gameSettings.initiate(payoutData[0].data, this.socket.id);
-
   };
-
+  
   sendError(errorCode: string, message: any) {
     const params = {
       errorCode: errorCode,
