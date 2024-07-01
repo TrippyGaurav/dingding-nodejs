@@ -183,7 +183,7 @@ export function addPayLineSymbols(
 
 export function makePayLines() {
   gameSettings.currentGamedata.Symbols.forEach((element) => {
-    if (element.useWildSub || (element.useWildSub && element.multiplier?.length > 0) || element.Name == "Bonus") {
+    if (element.useWildSub || (element.Name=="FreeSpin") || (element.Name=="Scatter")) {
       element.multiplier?.forEach((item, index) => {
         addPayLineSymbols(element.Id?.toString(), 5 - index, item[0], item[1]);
       });

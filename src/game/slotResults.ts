@@ -70,7 +70,7 @@ export class CheckResult {
 
     this.checkForWin();
     // this.checkForScatter();
-    // this.checkForBonus();
+    this.checkForBonus();
     this.checkForJackpot();
 
     // let excludeindex: number[] = [];
@@ -131,19 +131,16 @@ export class CheckResult {
     this.bonusPaytable.forEach((element) => {
       if (
         element.symbolCount > 0 &&
-        element.symbolCount == bonusSymbols.length
+        bonusSymbols.length>=element.symbolCount
       ) {
         // bonuswin = new WinData(bonusSymbols, 0, 0);
         gameSettings._winData.winningSymbols.push(bonusSymbols);
         // gameSettings._winData.bonus=true;
         gameSettings.bonus.start = true;
-
         if (gameSettings.currentGamedata.bonus.type == bonusGameType.tap)
-          this.bonusResult = gameSettings.bonus.game.generateData(
-            gameSettings.bonusPayTable[0]?.pay
-          );
-
-        gameSettings.bonus.game.setRandomStopIndex();
+          this.bonusResult = gameSettings.bonus.game.generateData();
+        // gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
+        gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
       }
     });
   }
@@ -177,8 +174,8 @@ export class CheckResult {
     let BonusArray=[];
     filteredArray.forEach((element) => {
       gameSettings._winData.winningSymbols.push(element.pos);
-      if(gameSettings.bonus.id>=0 && element.symbol==gameSettings.bonus.id.toString())
-        BonusArray.push(element)
+      // if(gameSettings.bonus.id>=0 && element.symbol==gameSettings.bonus.id.toString())
+      //   BonusArray.push(element)
 
       gameSettings._winData.totalWinningAmount +=
         element.pay * gameSettings.BetPerLines;
@@ -188,19 +185,19 @@ export class CheckResult {
 
   
   //check for bonus
-  if(BonusArray.length>0){
-      if (!gameSettings.currentGamedata.bonus.isEnabled)
-          return;
-      gameSettings.bonus.start = true;
+  // if(BonusArray.length>0){
+  //     if (!gameSettings.currentGamedata.bonus.isEnabled)
+  //         return;
+  //     gameSettings.bonus.start = true;
 
-   if (gameSettings.currentGamedata.bonus.type == bonusGameType.tap)
-      this.bonusResult = gameSettings.bonus.game.generateData(gameSettings.bonusPayTable[0]?.pay);
-      else if(gameSettings.currentGamedata.bonus.type=="slot")
-      this.bonusResult = gameSettings.bonus.game.generateSlotData();
+  //  if (gameSettings.currentGamedata.bonus.type == bonusGameType.tap)
+  //     this.bonusResult = gameSettings.bonus.game.generateData(gameSettings.bonusPayTable[0]?.pay);
+  //     else if(gameSettings.currentGamedata.bonus.type=="slot")
+  //     this.bonusResult = gameSettings.bonus.game.generateSlotData();
 
-      gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
-      console.log("stop index2",gameSettings.bonus.stopIndex);
-  }
+  //     gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
+  //     console.log("stop index2",gameSettings.bonus.stopIndex);
+  // }
 
   }
 
