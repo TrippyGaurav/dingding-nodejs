@@ -82,6 +82,7 @@ export interface GameSettings {
   lineData: number[][];
   fullPayTable: PayLine[];
   freeSpinStarted : boolean;
+  resultReelIndex: number[],
   jackpot: {
     symbolName: string;
     symbolId: number;
@@ -100,6 +101,8 @@ export interface GameSettings {
   tempReels: string[][];
   reels: string[][];
   currentBet: number;
+  BetPerLines : number,
+  currentLines : number,
   startGame: boolean;
   initiate: (arg: any, arg2: string) => void;
   gamble: {

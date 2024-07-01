@@ -15,6 +15,7 @@ import { middleware } from "../utils/middleware";
 import { startInfiniteSpins } from "./reel";
 import { verifyToken } from "../middleware/tokenAuth";
 import { gameData } from "./testData";
+import { log } from "console";
 export class CheckResult {
   scatter: string;
   useScatter: boolean;
@@ -149,9 +150,11 @@ export class CheckResult {
 
   checkForWin() {
     let allComboWin = [];
-    gameSettings.lineData.forEach((lb, index) => {
+    
+    gameSettings.lineData.slice(0, gameSettings.currentLines).forEach((lb, index) => {
       let win = null;
-
+      console.log("Lines Index : :" + index);
+      
       gameSettings.fullPayTable.forEach((Payline: PayLines) => {
         //  find max win (or win with max symbols count)
         const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
@@ -178,7 +181,7 @@ export class CheckResult {
         BonusArray.push(element)
 
       gameSettings._winData.totalWinningAmount +=
-        element.pay * gameSettings.currentBet;
+        element.pay * gameSettings.BetPerLines;
       gameSettings._winData.freeSpins += element.freeSpin;
     });
     
@@ -368,7 +371,7 @@ export class CheckResult {
     return foundArray;
   }
 
-  makeResultJson(isResult : ResultType) {
+  makeResultJson(isResult : ResultType, iconsToFill: number[][]=[]) {
     //TODO : Try to send the jackpot win data without initializie a variable;
     gameSettings._winData.totalWinningAmount =
       Math.round(gameSettings._winData.totalWinningAmount * 100) / 100;
@@ -380,7 +383,6 @@ export class CheckResult {
         symbolsToEmit: removeRecurringIndexSymbols(
           gameSettings._winData.winningSymbols
         ),
-
         // symbolsToEmit: gameWining.winningSymbols,
         WinAmout: gameSettings._winData.totalWinningAmount,
         // WinAmout: gameWining.TotalWinningAmount,
@@ -395,8 +397,10 @@ export class CheckResult {
     };
     if(isResult == ResultType.normal)
     getClient(playerData.playerId).sendMessage("ResultData", ResultData);
-    if(isResult == ResultType.moolah)
-    getClient(playerData.playerId).sendMessage("MoolahResultData", ResultData);
+    if(isResult == ResultType.moolah){
+      ResultData.GameData['iconstoFill']=iconsToFill;
+      getClient(playerData.playerId).sendMessage("MoolahResultData", ResultData);
+    }
 
     // sendMessageToClient(this.clientID, "ResultData", ResultData);
   }
