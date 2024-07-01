@@ -28,6 +28,8 @@ export function getRTP(client: string, spins: number) {
   if (moneySpend > 0) {
     rtp = (moneyWon / moneySpend); // Use toFixed to limit decimal places
   }
+  console.log(gameSettings.noOfBonus, "bonus")
+  console.log(gameSettings.totalBonuWinAmount, "totalBonus")
   console.log("GENERATED RTP : ", rtp);
 
   return;

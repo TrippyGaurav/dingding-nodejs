@@ -28,7 +28,7 @@ export interface PlayerData {
   Balance: number;
   haveWon: number;
   currentWining: number;
-  playerId : string,
+  playerId: string,
   // haveUsed: number
 }
 export interface PayLine {
@@ -81,8 +81,11 @@ export interface GameSettings {
   resultSymbolMatrix: string[][] | undefined;
   lineData: number[][];
   fullPayTable: PayLine[];
-  freeSpinStarted : boolean;
+  freeSpinStarted: boolean;
   resultReelIndex: number[],
+  noOfBonus: number,
+  noOfFreeSpins: number,
+  totalBonuWinAmount: number[],
   jackpot: {
     symbolName: string;
     symbolId: number;
@@ -101,8 +104,8 @@ export interface GameSettings {
   tempReels: string[][];
   reels: string[][];
   currentBet: number;
-  BetPerLines : number,
-  currentLines : number,
+  BetPerLines: number,
+  currentLines: number,
   startGame: boolean;
   initiate: (arg: any, arg2: string) => void;
   gamble: {

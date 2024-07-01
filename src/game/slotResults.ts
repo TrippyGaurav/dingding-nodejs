@@ -120,27 +120,32 @@ export class CheckResult {
  
     console.log("_____________RESULT_END________________");
   }
-
   checkForBonus() {
     if (!gameSettings.currentGamedata.bonus.isEnabled) return;
 
     let bonusSymbols = [];
+    // gameSettings.totalBonuWinAmount=[];
     let temp = this.findSymbol(specialIcons.bonus);
     if (temp.length > 0) bonusSymbols.push(...temp);
     // console.log("paytable length",this.bonusPaytable.length);
     this.bonusPaytable.forEach((element) => {
       if (
         element.symbolCount > 0 &&
-        bonusSymbols.length>=element.symbolCount
+        bonusSymbols.length >=element.symbolCount 
       ) {
         // bonuswin = new WinData(bonusSymbols, 0, 0);
         gameSettings._winData.winningSymbols.push(bonusSymbols);
         // gameSettings._winData.bonus=true;
         gameSettings.bonus.start = true;
+        gameSettings.noOfBonus++;
         if (gameSettings.currentGamedata.bonus.type == bonusGameType.tap)
-          this.bonusResult = gameSettings.bonus.game.generateData();
-        // gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
-        gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
+          this.bonusResult = gameSettings.bonus.game.generateData(
+            gameSettings.bonusPayTable[0]?.pay
+          );
+          let temp=gameSettings.bonus.game.setRandomStopIndex();
+        gameSettings.totalBonuWinAmount.push(temp);
+        gameSettings._winData.totalWinningAmount+=temp;
+
       }
     });
   }

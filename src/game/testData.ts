@@ -1,5 +1,5 @@
 export const gameData = [
-    [
+    
         {
             "id": "SL-VIK",
             "matrix": {
@@ -506,5 +506,5 @@ export const gameData = [
                 }
             ]
         }
-    ]
+    
 ];

@@ -48,6 +48,10 @@ export const gameSettings: GameSettings = {
   _winData: undefined,
   freeSpinStarted: false,
   resultReelIndex: [],
+  //The two variables are just for simulation.
+  noOfBonus: 0,
+  noOfFreeSpins: 0,
+  totalBonuWinAmount: [],
   jackpot: {
     symbolName: "",
     symbolsCount: 0,
@@ -63,8 +67,8 @@ export const gameSettings: GameSettings = {
     // game: new bonusGame(5),
   },
   currentBet: 0,
-  currentLines : 0 ,
-  BetPerLines : 0,
+  currentLines: 0,
+  BetPerLines: 0,
   startGame: false,
   gamble: {
     game: null,
@@ -74,23 +78,40 @@ export const gameSettings: GameSettings = {
   reels: [[]],
 
   initiate: async (GameData: {}, clientID: string) => {
-console.log(GameData)
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
     gameSettings.Weights = [];
     gameSettings._winData = new WinData(clientID);
+    // try {
+    //   const resp = await fetch(
+    //     "https://664c355635bbda10987f44ff.mockapi.io/api/gameId/" + GameID
+    //   );
+    //   const data = await resp.json();
+    //   if (data == "Not found") {
+    //     // Alerts(clientID, "Invalid Game ID");
+    //     getClient(clientID).sendError("404", "GAMENOTFOUND");
+    //     gameSettings.startGame = false;
+    //     return;
+    //   }
+    //   gameSettings.currentGamedata = data;
+    //   // const currentGameData=gameData.filter((element)=>element.id==GameID)
+    // } catch (error) {
+    //   getClient(clientID).sendError("404", "NETWORK ERROR");
+    //   return;
+    // }
+
+    // const currentGameData=gameData.filter((element)=>element.id==GameID)
+
+    gameSettings.currentGamedata = gameData[0];
 
 
-    gameSettings.currentGamedata = GameData[0] || GameData;
-
-    // gameSettings.currentBet = 
     gameSettings.currentGamedata.Symbols.forEach((element) => {
       if (element.Name == "Bonus") {
-        gameSettings.bonus.id = element.Id;
+        gameSettings.bonus.id = element.Id
       }
-    });
 
+    })
 
     initSymbols();
     UiInitData.paylines = convertSymbols(gameSettings.currentGamedata.Symbols);
@@ -166,7 +187,7 @@ export function addPayLineSymbols(
 
 export function makePayLines() {
   gameSettings.currentGamedata.Symbols.forEach((element) => {
-    if (element.useWildSub || (element.Name=="FreeSpin") || (element.Name=="Scatter")) {
+    if (element.useWildSub || (element.Name == "FreeSpin") || (element.Name == "Scatter")) {
       element.multiplier?.forEach((item, index) => {
         addPayLineSymbols(element.Id?.toString(), 5 - index, item[0], item[1]);
       });
@@ -317,9 +338,9 @@ export function checkforMoolah() {
   const movedArray = cascadeMoveTowardsNull(matrix);
 
   let transposed = transposeMatrix(movedArray);
-  let iconsToFill:number[][]=[]
+  let iconsToFill: number[][] = []
   for (let i = 0; i < transposed.length; i++) {
-    let row=[]
+    let row = []
     for (let j = 0; j < transposed[i].length; j++) {
       if (transposed[i][j] == null) {
         let index = (gameSettings.resultReelIndex[i] + j + 2) % gameSettings.tempReels[i].length;
@@ -328,8 +349,8 @@ export function checkforMoolah() {
       }
 
     }
-    if(row.length>0)
-    iconsToFill.push(row);
+    if (row.length > 0)
+      iconsToFill.push(row);
   }
 
 
@@ -340,8 +361,8 @@ export function checkforMoolah() {
   // matrix.push([ '1', '2', '3', '4', '5' ])
   // matrix.push([ '1', '1', '1', '1', '6' ])
   // matrix.push([ '0', '0', '0', '0', '0' ])
-  console.log("iconsTofill",iconsToFill);
-  gameSettings.resultSymbolMatrix=matrix;
+  console.log("iconsTofill", iconsToFill);
+  gameSettings.resultSymbolMatrix = matrix;
 
   // index.forEach(element => {
   //   console.log("X : " + element[0] + " Y : " + element[1]);
@@ -361,13 +382,13 @@ export function checkforMoolah() {
   // });
 
   const result = new CheckResult();
-  result.makeResultJson(ResultType.moolah,iconsToFill);
+  result.makeResultJson(ResultType.moolah, iconsToFill);
 }
 
 function getLastindex(reelIndex: number, index: number) {
   if (index >= gameSettings.tempReels[reelIndex].length)
-  if (index >= gameSettings.tempReels[reelIndex].length)
-    index = index - gameSettings.tempReels[reelIndex].length;
+    if (index >= gameSettings.tempReels[reelIndex].length)
+      index = index - gameSettings.tempReels[reelIndex].length;
 
   console.log("index __", index);
 
