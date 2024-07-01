@@ -46,7 +46,7 @@ export const gameSettings: GameSettings = {
   lineData: [],
   fullPayTable: [],
   _winData: undefined,
-  freeSpinStarted : false,
+  freeSpinStarted: false,
   resultReelIndex: [],
   jackpot: {
     symbolName: "",
@@ -63,6 +63,8 @@ export const gameSettings: GameSettings = {
     // game: new bonusGame(5),
   },
   currentBet: 0,
+  currentLines : 0 ,
+  BetPerLines : 0,
   startGame: false,
   gamble: {
     game: null,
@@ -72,12 +74,13 @@ export const gameSettings: GameSettings = {
   reels: [[]],
 
   initiate: async (GameData: {}, clientID: string) => {
-    console.log(GameData)
+console.log(GameData)
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
     gameSettings.Weights = [];
     gameSettings._winData = new WinData(clientID);
+
 
     gameSettings.currentGamedata = GameData[0] ||GameData ;
     // gameSettings.currentBet = 
@@ -86,6 +89,7 @@ export const gameSettings: GameSettings = {
         gameSettings.bonus.id = element.Id;
       }
     });
+
 
     initSymbols();
     UiInitData.paylines = convertSymbols(gameSettings.currentGamedata.Symbols);
@@ -111,7 +115,7 @@ export const playerData: PlayerData = {
   Balance: 100000,
   haveWon: 0,
   currentWining: 0,
-  playerId : "",
+  playerId: "",
   // haveUsed: 0
 };
 
@@ -161,7 +165,7 @@ export function addPayLineSymbols(
 
 export function makePayLines() {
   gameSettings.currentGamedata.Symbols.forEach((element) => {
-    if (element.useWildSub || (element.useWildSub && element.multiplier?.length > 0) || element.Name=="Bonus") {
+    if (element.useWildSub || (element.useWildSub && element.multiplier?.length > 0) || element.Name == "Bonus") {
       element.multiplier?.forEach((item, index) => {
         addPayLineSymbols(element.Id?.toString(), 5 - index, item[0], item[1]);
       });
@@ -232,7 +236,7 @@ export function spinResult(clientID: string) {
   }
 
   console.log("CALLED SPINNN" + playerData.Balance);
-  
+
   // TODO : Middle ware goes here
   (async () => {
     await middleware();
@@ -240,42 +244,54 @@ export function spinResult(clientID: string) {
   //minus the balance
 
   //TODO:To get the user information
-  
+
   console.log("CurrentBet : " + gameSettings.currentBet);
- 
-    playerData.Balance -= gameSettings.currentBet;
-    gameSettings.tempReels = [[]];
-    console.log("player balance:", playerData.Balance);
-    console.log("player havewon:", playerData.haveWon);
-    gameSettings.bonus.start = false;
-    console.log("CALLEDD");
-    
-    new RandomResultGenerator();
-    const result = new CheckResult();
-    result.makeResultJson(ResultType.normal);
-   
+
+  playerData.Balance -= gameSettings.currentBet;
+  gameSettings.tempReels = [[]];
+  console.log("player balance:", playerData.Balance);
+  console.log("player havewon:", playerData.haveWon);
+  gameSettings.bonus.start = false;
+  console.log("CALLEDD");
+
+  new RandomResultGenerator();
+  const result = new CheckResult();
+  result.makeResultJson(ResultType.normal);
+
+
+  // playerData.Balance -= gameSettings.currentBet;
+  // gameSettings.tempReels = [[]];
+  // console.log("player balance:", playerData.Balance);
+  // console.log("player havewon:", playerData.haveWon);
+  // gameSettings.bonus.start = false;
+  // console.log("CALLEDD");
+
+  // new RandomResultGenerator();
+  // const result = new CheckResult();
+  // result.makeResultJson(ResultType.normal);
 }
 
-export function startFreeSpin()
-{
-  console.log("____----Started FREE SPIN ----_____" + " :::  FREE SPINSS ::::" , gameSettings._winData.freeSpins);
+export function startFreeSpin() {
+  console.log(
+    "____----Started FREE SPIN ----_____" + " :::  FREE SPINSS ::::",
+    gameSettings._winData.freeSpins
+  );
   getClient(playerData.playerId).sendMessage("StartedFreeSpin", {});
   gameSettings.freeSpinStarted = true;
-  for(let i = 0 ; i <= gameSettings._winData.freeSpins; i++ )
-    {
-      gameSettings.bonus.start = false;
-      new RandomResultGenerator();
-      new CheckResult();
-      console.log("FREE SPINS LEFTTT ::::" + (gameSettings._winData.freeSpins -i));
-    }
-    gameSettings._winData.freeSpins = 0;
+  for (let i = 0; i <= gameSettings._winData.freeSpins; i++) {
+    gameSettings.bonus.start = false;
+    new RandomResultGenerator();
+    new CheckResult();
+    console.log(
+      "FREE SPINS LEFTTT ::::" + (gameSettings._winData.freeSpins - i)
+    );
+  }
+  gameSettings._winData.freeSpins = 0;
 
   getClient(playerData.playerId).sendMessage("StoppedFreeSpins", {});
   gameSettings.freeSpinStarted = false;
 
   console.log("____----Stopped FREE SPIN ----_____");
-
-
 }
 export function checkforMoolah() {
   console.log("_______-------CALLED FOR CHECK FOR MOOLAHHHH-------_______");
@@ -304,7 +320,7 @@ export function checkforMoolah() {
   for (let i = 0; i < transposed.length; i++) {
     let row=[]
     for (let j = 0; j < transposed[i].length; j++) {
-      if (transposed[i][j] == null || undefined) {
+      if (transposed[i][j] == null) {
         let index = (gameSettings.resultReelIndex[i] + j + 2) % gameSettings.tempReels[i].length;
         transposed[i][j] = gameSettings.tempReels[i][index];
         row.unshift(gameSettings.tempReels[i][index]);
@@ -445,4 +461,7 @@ function transposeMatrix(matrix) {
   }
 
   return transposed;
+
 }
+
+

@@ -101,6 +101,8 @@ export interface GameSettings {
   tempReels: string[][];
   reels: string[][];
   currentBet: number;
+  BetPerLines : number,
+  currentLines : number,
   startGame: boolean;
   initiate: (arg: any, arg2: string) => void;
   gamble: {

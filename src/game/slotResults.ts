@@ -15,6 +15,7 @@ import { middleware } from "../utils/middleware";
 import { startInfiniteSpins } from "./reel";
 import { verifyToken } from "../middleware/tokenAuth";
 import { gameData } from "./testData";
+import { log } from "console";
 export class CheckResult {
   scatter: string;
   useScatter: boolean;
@@ -149,9 +150,11 @@ export class CheckResult {
 
   checkForWin() {
     let allComboWin = [];
-    gameSettings.lineData.forEach((lb, index) => {
+    
+    gameSettings.lineData.slice(0, gameSettings.currentLines).forEach((lb, index) => {
       let win = null;
-
+      console.log("Lines Index : :" + index);
+      
       gameSettings.fullPayTable.forEach((Payline: PayLines) => {
         //  find max win (or win with max symbols count)
         const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
@@ -178,7 +181,7 @@ export class CheckResult {
         BonusArray.push(element)
 
       gameSettings._winData.totalWinningAmount +=
-        element.pay * gameSettings.currentBet;
+        element.pay * gameSettings.BetPerLines;
       gameSettings._winData.freeSpins += element.freeSpin;
     });
     

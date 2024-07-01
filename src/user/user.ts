@@ -33,8 +33,9 @@ export class SocketUser {
 
   initGameData = async (message: any) => {
     const messageData = JSON.parse(message);
-    const game = await Game.findOne({ tagName: messageData.Data.GameID });
-console.log(messageData.Data.GameID,"Game")
+
+    const game = await Game.findOne({ tagName: messageData.Data.GameID || 'SL-VIK' });
+    console.log(messageData.Data.GameID,"Game")
     if(!game || !game.payout || !game.payout.length) {
       // this.sendError("404","Game with the specified tagName not found.");
       // this.socket.disconnect();
@@ -45,6 +46,7 @@ console.log(messageData.Data.GameID,"Game")
     // Retrieve the payout JSON data
     const payoutData = await Payouts.find({ _id: { $in: game.payout } });
     gameSettings.initiate(payoutData[0].data, this.socket.id);
+
   };
 
   sendError(errorCode: string, message: any) {
@@ -71,18 +73,23 @@ console.log(messageData.Data.GameID,"Game")
   messageHandler = () => {
     return (message: any) => {
       const messageData = JSON.parse(message);
+      console.log("message " + JSON.stringify(messageData));
+
       if (messageData.id === "checkMoolah") {
         checkforMoolah();
       }
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
-        gameSettings.currentBet = messageData.data.currentBet;
+        gameSettings.currentLines =  messageData.data.currentLines;
+        gameSettings.BetPerLines = betMultiplier[ messageData.data.currentBet];
+        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet] * gameSettings.currentLines;
         
         spinResult(this.socket.id);
       }
       if (messageData.id == MESSAGEID.GENRTP) {
-        console.log();
-        
-        gameSettings.currentBet = messageData.data.currentBet;
+        gameSettings.currentLines =  messageData.data.currentLines;
+        gameSettings.BetPerLines = betMultiplier[ messageData.data.currentBet];
+        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet] * gameSettings.currentLines;
+
         getRTP(this.socket.id, messageData.data.spins);
       }
 
@@ -154,3 +161,4 @@ export function getClient(clientId: string) {
   const user = users.get(clientId);
   return user;
 }
+export const betMultiplier = [0.1,0.5,0.7,1]

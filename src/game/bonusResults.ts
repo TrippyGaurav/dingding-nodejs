@@ -145,7 +145,7 @@ export class bonusGame{
         if(gameSettings.bonus.start && gameSettings.currentGamedata.bonus.type==bonusGameType.spin){
             
             gameSettings.bonus.stopIndex=this.getRandomPayoutIndex(gameSettings.currentGamedata.bonus.payOutProb);
-            amount=gameSettings.currentBet*this.result[gameSettings.bonus.stopIndex];
+            amount=gameSettings.BetPerLines*this.result[gameSettings.bonus.stopIndex];
         }
         else if(gameSettings.bonus.start && gameSettings.currentGamedata.bonus.type==bonusGameType.tap){
             // gameSettings.bonus.stopIndex=-1;   
@@ -153,19 +153,19 @@ export class bonusGame{
             this.result.forEach((element)=>{
                 if(element<=0)
                     return;
-                amount+=gameSettings.currentBet*element;
+                amount+=gameSettings.BetPerLines*element;
 
                 
             }) 
         }else if(gameSettings.bonus.start && gameSettings.currentGamedata.bonus.type=="slot"){
             // gameSettings.bonus.stopIndex=-1;
             for (let index = 1; index < 4; index++) {
-                amount+=gameSettings.currentBet*this.result[this.result.length-index];
+                amount+=gameSettings.BetPerLines*this.result[this.result.length-index];
                 
             }   
             // amount=gameSettings.currentBet*this.result[this.result.length-1];
             console.log("amount",amount);
-            console.log("current bet",gameSettings.currentBet);
+            console.log("current bet",gameSettings.BetPerLines);
         }
 
         if(!amount || amount<0)
