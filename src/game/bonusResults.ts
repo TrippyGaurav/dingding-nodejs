@@ -22,7 +22,7 @@ export class bonusGame{
     }
 
     
-    generateData( totalPay:number):string[] {
+    generateData( totalPay:number=0):string[] {
         
         this.result=[];
         let res: string[]=[];
@@ -146,6 +146,9 @@ export class bonusGame{
             
             gameSettings.bonus.stopIndex=this.getRandomPayoutIndex(gameSettings.currentGamedata.bonus.payOutProb);
             amount=gameSettings.BetPerLines*this.result[gameSettings.bonus.stopIndex];
+            console.log("bonus amount", amount)
+            console.log("bonus index", gameSettings.bonus.stopIndex)
+            console.log("bonus result", this.result[gameSettings.bonus.stopIndex])
         }
         else if(gameSettings.bonus.start && gameSettings.currentGamedata.bonus.type==bonusGameType.tap){
             // gameSettings.bonus.stopIndex=-1;   
