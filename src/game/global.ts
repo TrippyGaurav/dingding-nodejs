@@ -11,7 +11,7 @@ import {
   specialIcons,
   winning,
 } from "./gameUtils";
-import { getClient } from "../user/user";
+import { getClient } from "../socket/userSocket";
 import exp from "constants";
 import { CheckResult, ResultType, WinData } from "./slotResults";
 import { bonusGame } from "./bonusResults";
@@ -78,6 +78,7 @@ export const gameSettings: GameSettings = {
   reels: [[]],
 
   initiate: async (GameData: {}, clientID: string) => {
+    console.log(GameData)
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
@@ -103,7 +104,7 @@ export const gameSettings: GameSettings = {
 
     // const currentGameData=gameData.filter((element)=>element.id==GameID)
 
-    gameSettings.currentGamedata = gameData[0];
+    gameSettings.currentGamedata = GameData[0] || GameData;
 
 
     gameSettings.currentGamedata.Symbols.forEach((element) => {
@@ -486,6 +487,5 @@ function transposeMatrix(matrix) {
   return transposed;
 
 }
-
 
 

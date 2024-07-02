@@ -10,10 +10,9 @@ import {
   removeRecurringIndexSymbols,
 } from "./gameUtils";
 import { bonusGame } from "./bonusResults";
-import { getClient } from "../user/user";
+import { getClient } from "../socket/userSocket";
 import { middleware } from "../utils/middleware";
 import { startInfiniteSpins } from "./reel";
-import { verifyToken } from "../middleware/tokenAuth";
 import { gameData } from "./testData";
 import { log } from "console";
 export class CheckResult {
@@ -93,31 +92,30 @@ export class CheckResult {
       gameSettings._winData.winningLines.filter(
         (value, index, array) => array.indexOf(value) === index
       );
-      console.log("winning symbols", gameSettings._winData.winningSymbols);
-      
+    console.log("winning symbols", gameSettings._winData.winningSymbols);
+
     gameSettings._winData.updateBalance();
     console.log("result :", gameSettings.resultSymbolMatrix);
     console.log("win data", gameSettings._winData);
     console.log("Bonus start", gameSettings.bonus.start);
 
-    if(!gameSettings.freeSpinStarted && gameSettings._winData.freeSpins != 0)
-        startFreeSpin();
+    if (!gameSettings.freeSpinStarted && gameSettings._winData.freeSpins != 0)
+      startFreeSpin();
 
     // Math.round(num * 100) / 100).toFixed(2)
     console.log("TOTAL WINING : " + gameSettings._winData.totalWinningAmount);
     // console.log(gameWining.WinningLines);
     // console.log(gameWining.winningSymbols);
     console.log("PT BETS :" + getCurrentRTP.playerTotalBets);
-    
+
     const winRate: number =
       (getCurrentRTP.playerWon / getCurrentRTP.playerTotalBets) * 100;
     console.log(
-      `Total Spend : ${getCurrentRTP.playerTotalBets}  Total Won : ${
-        getCurrentRTP.playerWon
+      `Total Spend : ${getCurrentRTP.playerTotalBets}  Total Won : ${getCurrentRTP.playerWon
       } 
       Current RTP : ${winRate.toFixed(2)}% `
     );
- 
+
     console.log("_____________RESULT_END________________");
   }
   checkForBonus() {
@@ -131,7 +129,7 @@ export class CheckResult {
     this.bonusPaytable.forEach((element) => {
       if (
         element.symbolCount > 0 &&
-        bonusSymbols.length >=element.symbolCount 
+        bonusSymbols.length >= element.symbolCount
       ) {
         // bonuswin = new WinData(bonusSymbols, 0, 0);
         gameSettings._winData.winningSymbols.push(bonusSymbols);
@@ -142,9 +140,9 @@ export class CheckResult {
           this.bonusResult = gameSettings.bonus.game.generateData(
             gameSettings.bonusPayTable[0]?.pay
           );
-          let temp=gameSettings.bonus.game.setRandomStopIndex();
+        let temp = gameSettings.bonus.game.setRandomStopIndex();
         gameSettings.totalBonuWinAmount.push(temp);
-        gameSettings._winData.totalWinningAmount+=temp;
+        gameSettings._winData.totalWinningAmount += temp;
 
       }
     });
@@ -152,11 +150,11 @@ export class CheckResult {
 
   checkForWin() {
     let allComboWin = [];
-    
+
     gameSettings.lineData.slice(0, gameSettings.currentLines).forEach((lb, index) => {
       let win = null;
       console.log("Lines Index : :" + index);
-      
+
       gameSettings.fullPayTable.forEach((Payline: PayLines) => {
         //  find max win (or win with max symbols count)
         const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
@@ -176,7 +174,7 @@ export class CheckResult {
     });
 
     const filteredArray = this.checkforDuplicate(allComboWin);
-    let BonusArray=[];
+    let BonusArray = [];
     filteredArray.forEach((element) => {
       gameSettings._winData.winningSymbols.push(element.pos);
       // if(gameSettings.bonus.id>=0 && element.symbol==gameSettings.bonus.id.toString())
@@ -186,23 +184,23 @@ export class CheckResult {
         element.pay * gameSettings.BetPerLines;
       gameSettings._winData.freeSpins += element.freeSpin;
     });
-    
 
-  
-  //check for bonus
-  // if(BonusArray.length>0){
-  //     if (!gameSettings.currentGamedata.bonus.isEnabled)
-  //         return;
-  //     gameSettings.bonus.start = true;
 
-  //  if (gameSettings.currentGamedata.bonus.type == bonusGameType.tap)
-  //     this.bonusResult = gameSettings.bonus.game.generateData(gameSettings.bonusPayTable[0]?.pay);
-  //     else if(gameSettings.currentGamedata.bonus.type=="slot")
-  //     this.bonusResult = gameSettings.bonus.game.generateSlotData();
 
-  //     gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
-  //     console.log("stop index2",gameSettings.bonus.stopIndex);
-  // }
+    //check for bonus
+    // if(BonusArray.length>0){
+    //     if (!gameSettings.currentGamedata.bonus.isEnabled)
+    //         return;
+    //     gameSettings.bonus.start = true;
+
+    //  if (gameSettings.currentGamedata.bonus.type == bonusGameType.tap)
+    //     this.bonusResult = gameSettings.bonus.game.generateData(gameSettings.bonusPayTable[0]?.pay);
+    //     else if(gameSettings.currentGamedata.bonus.type=="slot")
+    //     this.bonusResult = gameSettings.bonus.game.generateSlotData();
+
+    //     gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
+    //     console.log("stop index2",gameSettings.bonus.stopIndex);
+    // }
 
   }
 
@@ -373,7 +371,7 @@ export class CheckResult {
     return foundArray;
   }
 
-  makeResultJson(isResult : ResultType, iconsToFill: number[][]=[]) {
+  makeResultJson(isResult: ResultType, iconsToFill: number[][] = []) {
     //TODO : Try to send the jackpot win data without initializie a variable;
     gameSettings._winData.totalWinningAmount =
       Math.round(gameSettings._winData.totalWinningAmount * 100) / 100;
@@ -397,10 +395,10 @@ export class CheckResult {
       },
       PlayerData: playerData,
     };
-    if(isResult == ResultType.normal)
-    getClient(playerData.playerId).sendMessage("ResultData", ResultData);
-    if(isResult == ResultType.moolah){
-      ResultData.GameData['iconstoFill']=iconsToFill;
+    if (isResult == ResultType.normal)
+      getClient(playerData.playerId).sendMessage("ResultData", ResultData);
+    if (isResult == ResultType.moolah) {
+      ResultData.GameData['iconstoFill'] = iconsToFill;
       getClient(playerData.playerId).sendMessage("MoolahResultData", ResultData);
     }
 
@@ -599,13 +597,13 @@ export class WinData {
     playerData.currentWining = this.totalWinningAmount;
 
     getCurrentRTP.playerWon += this.totalWinningAmount;
-    console.log("BETS "+ gameSettings.currentBet);
-    
-    if(!gameSettings.freeSpinStarted )
-    getCurrentRTP.playerTotalBets += gameSettings.currentBet;
+    console.log("BETS " + gameSettings.currentBet);
+
+    if (!gameSettings.freeSpinStarted)
+      getCurrentRTP.playerTotalBets += gameSettings.currentBet;
     else
-    getCurrentRTP.playerTotalBets += 0;
-  
+      getCurrentRTP.playerTotalBets += 0;
+
   }
 }
 

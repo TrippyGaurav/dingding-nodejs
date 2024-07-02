@@ -1,62 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Add Game</title>
+  </head>
   <body>
-    <div
-      style="
-        height: 100vh;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      "
-    >
-      <button id="spin" style="padding: 8px 16px; font-size: 16px">Spin</button>
-    </div>
-    <script src="http://localhost:5000/socket.io/socket.io.js"></script>
+    <h1>Add Game</h1>
+    <form id="addGameForm" method="POST" enctype="multipart/form-data">
+      <label for="name">Game Name:</label>
+      <input type="text" id="name" name="name" required /><br /><br />
+
+      <label for="thumbnail">Thumbnail URL:</label>
+      <input type="text" id="thumbnail" name="thumbnail" required /><br /><br />
+
+      <label for="url">Game URL:</label>
+      <input type="text" id="url" name="url" required /><br /><br />
+
+      <label for="type">Type:</label>
+      <input type="text" id="type" name="type" required /><br /><br />
+
+      <label for="category">Category:</label>
+      <input type="text" id="category" name="category" required /><br /><br />
+
+      <label for="status">Status:</label>
+      <input type="text" id="status" name="status" required /><br /><br />
+
+      <label for="tagName">Tag Name:</label>
+      <input type="text" id="tagName" name="tagName" required /><br /><br />
+
+      <label for="slug">Slug:</label>
+      <input type="text" id="slug" name="slug" required /><br /><br />
+
+      <label for="creatorUsername">Creator Username:</label>
+      <input
+        type="text"
+        id="creatorUsername"
+        name="creatorUsername"
+        required
+      /><br /><br />
+
+      <label for="creatorRole">Creator Role:</label>
+      <input
+        type="text"
+        id="creatorRole"
+        name="creatorRole"
+        required
+      /><br /><br />
+
+      <label for="file">Payout File:</label>
+      <input
+        type="file"
+        id="file"
+        name="file"
+        accept=".json"
+        required
+      /><br /><br />
+
+      <button type="submit">Add Game</button>
+    </form>
 
     <script>
-      const socket = io("http://localhost:5000", {
-        auth: {
-          token:
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBsYXllcjMiLCJkZXNpZ25hdGlvbiI6InBsYXllciIsImlhdCI6MTcxODk2NTg0MywiZXhwIjoxNzE5NTcwNjQzfQ._UBfSvbYuQCsikCObrFJ-GaYXc4vYcIaxQ6KkJkYlek",
-        },
-      });
-      socket.on("connect_error", (error) => {
-        console.error("Connection Error:", error.message);
-        socket.emit(
-          "AUTH",
-          JSON.stringify({
-            data: {},
-          })
-        );
-      });
+      document.getElementById("addGameForm").onsubmit = async function (event) {
+        event.preventDefault();
 
-      socket.on("connect", () => {
-        console.log("Connected to the server");
+        const formData = new FormData(document.getElementById("addGameForm"));
 
-        socket.on("message", (message) => {
-          console.log(message);
-        });
+        try {
+          const response = await fetch("/add-game", {
+            method: "POST",
+            body: formData,
+          });
 
-        socket.on("InternalError", (errorMessage) => {
-          console.log(errorMessage);
-        });
-
-        const spinHanlder = () => {
-          socket.emit(
-            "message",
-            JSON.stringify({
-              id: "SPIN",
-              data: {
-                currentBet: 1,
-              },
-            })
-          );
-        };
-      });
-
-      const button = document.getElementById("spin");
-      button.addEventListener("click", spinHanlder);
+          if (response.ok) {
+            const result = await response.json();
+            alert("Game added successfully: " + JSON.stringify(result));
+          } else {
+            const error = await response.json();
+            alert("Error adding game: " + JSON.stringify(error));
+          }
+        } catch (error) {
+          alert("Network error: " + error.message);
+        }
+      };
     </script>
   </body>
 </html>

@@ -2,14 +2,14 @@ import { bonusGame } from "./bonusResults";
 import { UiInitData, gameSettings, playerData } from "./global";
 import { bonusGameType, generateMatrix } from "./gameUtils";
 import { PayLines } from "./slotResults";
-import { getClient } from "../user/user";
+import { getClient } from "../socket/userSocket";
 import { shuffleArray } from "./gameUtils";
 
 export function sendInitdata(clientID: string) {
   // const matrix = generateMatrix(gameSettings.matrix.x, 18);
   gameDataInit();
   gameSettings.reels = generateInitialreel();
-  playerData.playerId  = clientID;
+  playerData.playerId = clientID;
   if (
     gameSettings.currentGamedata.bonus.isEnabled &&
     gameSettings.currentGamedata.bonus.type == bonusGameType.spin
@@ -41,8 +41,8 @@ export function sendInitdata(clientID: string) {
     BonusData:
       gameSettings.bonus.game != null
         ? gameSettings.bonus.game.generateData(
-            gameSettings.bonusPayTable[0]?.pay
-          )
+          gameSettings.bonusPayTable[0]?.pay
+        )
         : [],
     UIData: UiInitData,
     PlayerData: playerData,
@@ -55,7 +55,7 @@ export function sendInitdata(clientID: string) {
 export class RandomResultGenerator {
   constructor() {
     let matrix: string[][] = [];
-    let randomIndexArray:number[] = [];
+    let randomIndexArray: number[] = [];
     for (let j = 0; j < gameSettings.matrix.y; j++) {
       let row: string[] = [];
       for (let i = 0; i < gameSettings.matrix.x; i++) {
@@ -86,16 +86,16 @@ export class RandomResultGenerator {
     console.log("indexs", randomIndexArray);
     console.log("gameSettings._winData.resultReelIndex", gameSettings.resultReelIndex);
 
-  //  matrix.pop();
-  // matrix.pop();
-  // matrix.pop();
-  // matrix.push([ '1', '2', '3', '4', '5' ])
-  // matrix.push([ '2', '13', '13', '13', '13' ])
-  // matrix.push([ '1', '1', '1', '1', '6' ])
+    //  matrix.pop();
+    // matrix.pop();
+    // matrix.pop();
+    // matrix.push([ '1', '2', '3', '4', '5' ])
+    // matrix.push([ '2', '13', '13', '13', '13' ])
+    // matrix.push([ '1', '1', '1', '1', '6' ])
 
     gameSettings.resultSymbolMatrix = matrix;
     console.log("MATRIX " + matrix);
-    
+
   }
 
   // export class RandomResultGenerator {

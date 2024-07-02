@@ -8,11 +8,11 @@ import {
 } from "../game/global";
 import { CheckResult } from "../game/slotResults";
 import { getRTP } from "../game/rtpgenerator";
-import { verifySocketToken } from "../middleware/authMiddleware";
-import User from "../dashboard/user/userModel";
+import { verifySocketToken } from "../utils/playerAuth";
+import { User } from "../dashboard/users/userModel";
 export let users: Map<string, SocketUser> = new Map();
 import { Game, Payouts } from "../dashboard/casinoGames/gamesModel";
-import { clientData } from "../dashboard/user/userController";
+// import { clientData } from "../dashboard/user/userController";
 import { gameData } from "../game/testData";
 export class SocketUser {
   socket: Socket;
@@ -31,22 +31,22 @@ export class SocketUser {
     this.socket.on("disconnect", () => this.deleteUserFromMap());
   }
 
-   initGameData = async (message: any) => {
+  initGameData = async (message: any) => {
     try {
       const messageData = JSON.parse(message);
-  
+
       // Use "SL-VIK" as default tagName if messageData.Data.GameID is not present
-      const tagName = messageData.Data.GameID ;
-      
-      const game = await Game.findOne({ tagName: tagName  });
+      const tagName = messageData.Data.GameID;
+
+      const game = await Game.findOne({ tagName: tagName });
       console.log(tagName, "Game");
-      
+
       if (!game || !game.payout || !game.payout.length) {
         console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
         gameSettings.initiate(gameData[0], this.socket.id);
         return;
       }
-      
+
       // Retrieve the payout JSON data
       const payoutData = await Payouts.find({ _id: { $in: game.payout } });
       gameSettings.initiate(payoutData[0].data, this.socket.id);
@@ -55,7 +55,7 @@ export class SocketUser {
       // Handle error (e.g., send error response, disconnect socket, etc.)
     }
   };
-  
+
   sendError(errorCode: string, message: any) {
     const params = {
       errorCode: errorCode,
@@ -86,16 +86,16 @@ export class SocketUser {
         checkforMoolah();
       }
       if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
-        gameSettings.currentLines =  messageData.data.currentLines;
-        gameSettings.BetPerLines = betMultiplier[ messageData.data.currentBet];
-        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet] * gameSettings.currentLines;
-        
+        gameSettings.currentLines = messageData.data.currentLines;
+        gameSettings.BetPerLines = betMultiplier[messageData.data.currentBet];
+        gameSettings.currentBet = betMultiplier[messageData.data.currentBet] * gameSettings.currentLines;
+
         spinResult(this.socket.id);
       }
       if (messageData.id == MESSAGEID.GENRTP) {
-        gameSettings.currentLines =  messageData.data.currentLines;
-        gameSettings.BetPerLines = betMultiplier[ messageData.data.currentBet];
-        gameSettings.currentBet = betMultiplier[ messageData.data.currentBet] * gameSettings.currentLines;
+        gameSettings.currentLines = messageData.data.currentLines;
+        gameSettings.BetPerLines = betMultiplier[messageData.data.currentBet];
+        gameSettings.currentBet = betMultiplier[messageData.data.currentBet] * gameSettings.currentLines;
 
         getRTP(this.socket.id, messageData.data.spins);
       }
@@ -168,4 +168,4 @@ export function getClient(clientId: string) {
   const user = users.get(clientId);
   return user;
 }
-export const betMultiplier = [0.1,0.5,0.7,1]
+export const betMultiplier = [0.1, 0.5, 0.7, 1]

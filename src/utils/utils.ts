@@ -1,7 +1,29 @@
 import { Request } from "express";
 import { JwtPayload } from "jsonwebtoken";
-export const clients: Map<string, WebSocket> = new Map();
+import { IUser } from "../dashboard/users/userType";
 import createHttpError from "http-errors";
+import mongoose from "mongoose";
+import { createTransaction } from "../dashboard/transactions/transactionController";
+import { v2 as cloudinary } from "cloudinary";
+import { config } from "../config/config";
+import bcrypt from "bcrypt";
+
+export const clients: Map<string, WebSocket> = new Map();
+
+export const rolesHierarchy = {
+  company: ["master", "distributor", "subdistributor", "store", "player"],
+  master: ["distributor"],
+  distributor: ["subdistributor"],
+  subdistributor: ["store"],
+  store: ["player"],
+};
+
+cloudinary.config({
+  cloud_name: config.cloud_name,
+  api_key: config.api_key,
+  api_secret: config.api_secret,
+});
+
 export enum MESSAGEID {
   AUTH = "AUTH",
   SPIN = "SPIN",
@@ -15,6 +37,18 @@ export const enum MESSAGETYPE {
   ERROR = "internalError",
 }
 
+export interface DecodedToken {
+  username: string;
+  role: string;
+}
+
+export interface AuthRequest extends Request {
+  user: {
+    username: string;
+    role: string;
+  };
+}
+
 export interface AuthRequest extends Request {
   userId: string;
   userRole: string;
@@ -25,49 +59,110 @@ export interface CustomJwtPayload extends JwtPayload {
   role: string;
 }
 
-export const rolesHierarchy = {
-  company: ["master"],
-  master: ["distributor"],
-  distributor: ["subdistributor"],
-  subdistributor: ["store"],
-  store: ["player"],
+export const updateStatus = (client: IUser, status: string) => {
+  const validStatuses = ["active", "inactive"];
+  if (!validStatuses.includes(status)) {
+    throw createHttpError(400, "Invalid status value");
+  }
+  client.status = status;
 };
 
-export function validatePaginationParams(params: {
-  page: number;
-  limit: number;
-}) {
-  const { page, limit } = params;
-
-  if (!Number.isInteger(page) || page < 1) {
+export const updatePassword = async (
+  client: IUser,
+  password: string,
+  existingPassword: string
+) => {
+  if (!existingPassword) {
     throw createHttpError(
       400,
-      "Page must be an integer greater than or equal to 1."
+      "Existing password is required to update the password"
     );
   }
 
-  if (!Number.isInteger(limit) || limit < 1) {
-    throw createHttpError(
-      400,
-      "Limit must be an integer greater than or equal to 1."
-    );
+  // Check if existingPassword matches client's current password
+  const isPasswordValid = await bcrypt.compare(
+    existingPassword,
+    client.password
+  );
+  if (!isPasswordValid) {
+    throw createHttpError(400, "Existing password is incorrect");
   }
 
-  return { page, limit };
-}
-export function getPaginationMetadata(
-  page: number,
-  limit: number,
-  totalItems: number
-) {
-  const totalPages = Math.ceil(totalItems / limit);
+  // Update password
+  client.password = await bcrypt.hash(password, 10);
+};
 
-  return {
-    currentPage: page,
-    itemsPerPage: limit,
-    totalItems,
-    totalPages,
-    hasNextPage: page < totalPages,
-    hasPrevPage: page > 1,
+export const updateCredits = async (
+  client: IUser,
+  creator: IUser,
+  credits: { type: string; amount: number }
+) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { type, amount } = credits;
+
+    // Validate credits
+    if (
+      !type ||
+      typeof amount !== "number" ||
+      !["recharge", "redeem"].includes(type)
+    ) {
+      throw createHttpError(
+        400,
+        "Credits must include a valid type ('recharge' or 'redeem') and a numeric amount"
+      );
+    }
+
+    const transaction = await createTransaction(
+      type,
+      creator,
+      client,
+      amount,
+      session
+    );
+
+    // Add the transaction to both users' transactions arrays
+    client.transactions.push(transaction._id as mongoose.Types.ObjectId);
+    creator.transactions.push(transaction._id as mongoose.Types.ObjectId);
+
+    await client.save({ session });
+    await creator.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};
+
+export const uploadImage = (image) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload(
+      image,
+      { folder: "casinoGames" },
+      (error, result) => {
+        if (result && result.secure_url) {
+          // console.log(result.secure_url);
+          return resolve(result.secure_url);
+        }
+        console.log(error.message);
+        return reject({ message: error.message });
+      }
+    );
+  });
+};
+
+export const getSubordinateModel = (role: string) => {
+  const rolesHierarchy: Record<string, string> = {
+    company: "User",
+    master: "User",
+    distributor: "User",
+    subdistributor: "User",
+    store: "Player",
   };
-}
+  return rolesHierarchy[role];
+};

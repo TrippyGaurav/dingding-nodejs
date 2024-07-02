@@ -3,12 +3,12 @@ import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import socketController from "./socket/controller";
-import userRoutes from "./dashboard/user/userRoutes";
-import transactionRoutes from "./dashboard/transaction/transactionRoutes";
-import Games from "./dashboard/casinoGames/gamesRoutes";
-import globalErrorHandler from "./middleware/globalHandler";
-import companyRoutes from "./company/companyRoutes";
-import clientRoutes from "./client/clientRoutes";
+import globalErrorHandler from "./dashboard/middleware/globalHandler";
+import companyRoutes from "./dashboard/company/companyRoutes";
+import userRoutes from "./dashboard/users/userRoutes";
+import transactionRoutes from "./dashboard/transactions/transactionRoutes";
+import gameRoutes from "./dashboard/games/gameRoutes";
+
 
 const app = express();
 
@@ -28,19 +28,13 @@ app.use((req, res, next) => {
 });
 
 //cors config
-const corsOptions = {
-  origin: [
-    "*",
-    "http://192.168.1.26:5173",
-    "http://localhost:5000",
-    "http://localhost:3000",
-    "https://game-crm-backend-r32s.onrender.com",
-    "https://milkyway-platform.vercel.app",
-  ],
-  credentials: true,
-  optionSuccessStatus: 200,
-};
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
 app.use(express.json());
 const server = createServer(app);
 
@@ -54,14 +48,11 @@ app.get("/", (req, res, next) => {
   res.status(200).json(health);
 });
 
-//OTHER ROUTES
-app.use("/api/users", userRoutes);
-app.use("/api/transaction", transactionRoutes);
-app.use("/api/games", Games);
 
-// NEW
 app.use("/api/company", companyRoutes);
-app.use("/api/clients", clientRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/games", gameRoutes);
 
 const io = new Server(server, {
   cors: {
