@@ -16,6 +16,7 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import { User, Player } from "./userModel";
 import { createTransaction } from "../transactions/transactionController";
+import Transaction from "../transactions/transactionModel";
 
 // DONE
 export const loginUser = async (
@@ -249,9 +250,17 @@ export const getAllSubordinates = async (
     const subordinates = await Promise.all(
       subordinateModels.map(async (model) => {
         if (model === "Player") {
-          return await Player.find({ _id: { $in: user.subordinates } });
+          return await Player.find({
+            _id: { $in: user.subordinates },
+          }).populate({
+            path: "transactions",
+            model: Transaction,
+          });
         } else {
-          return await User.find({ _id: { $in: user.subordinates } });
+          return await User.find({ _id: { $in: user.subordinates } }).populate({
+            path: "transactions",
+            model: Transaction,
+          });
         }
       })
     );
