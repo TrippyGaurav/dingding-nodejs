@@ -3,6 +3,7 @@ import { User } from "../users/userModel";
 import Transaction from "./transactionModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
+import { rolesHierarchy } from "../utils/utils";
 
 // create transaction
 export const createTransaction = async (
@@ -12,6 +13,13 @@ export const createTransaction = async (
   amount: number,
   session: mongoose.ClientSession
 ) => {
+  if (!rolesHierarchy[creator.role]?.includes(client.role)) {
+    throw createHttpError(
+      403,
+      `${creator.role} cannot perform transactions with ${client.role}`
+    );
+  }
+
   if (type === "recharge") {
     if (creator.credits < amount) {
       throw createHttpError(400, "Insufficient credits to recharge");
@@ -30,8 +38,8 @@ export const createTransaction = async (
   }
 
   const transaction = new Transaction({
-    debtor: type === "recharge" ? creator._id : client._id,
-    creditor: type === "recharge" ? client._id : creator._id,
+    debtor: type === "recharge" ? creator.username : client.username,
+    creditor: type === "recharge" ? client.username : creator.username,
     type: type,
     amount: amount,
     createdAt: new Date(),
@@ -61,7 +69,7 @@ export const getTransactions = async (
     }
 
     const transactions = await Transaction.find({
-      $or: [{ debtor: user._id }, { creditor: user._id }],
+      $or: [{ debtor: user.username }, { creditor: user.username }],
     });
 
     res.status(200).json(transactions);

@@ -237,23 +237,26 @@ export const getAllSubordinates = async (
     }
 
     const rolesHierarchy = {
-      company: "User",
-      master: "User",
-      distributor: "User",
-      subdistributor: "User",
-      store: "Player",
+      company: ["User", "Player"],
+      master: ["User"],
+      distributor: ["User"],
+      subdistributor: ["User"],
+      store: ["Player"],
     };
 
-    const subordinateModel = rolesHierarchy[user.role];
+    const subordinateModels = rolesHierarchy[user.role];
 
-    const populatedUser = await User.findOne({
-      username: creatorUsername,
-    }).populate({
-      path: "subordinates",
-      model: subordinateModel,
-    });
+    const subordinates = await Promise.all(
+      subordinateModels.map(async (model) => {
+        if (model === "Player") {
+          return await Player.find({ _id: { $in: user.subordinates } });
+        } else {
+          return await User.find({ _id: { $in: user.subordinates } });
+        }
+      })
+    );
 
-    res.status(200).json(populatedUser.subordinates);
+    res.status(200).json(subordinates.flat());
   } catch (error) {
     next(error);
   }
