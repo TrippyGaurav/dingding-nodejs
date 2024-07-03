@@ -57,7 +57,7 @@ export const getTransactions = async (
   next: NextFunction
 ) => {
   try {
-    const { creatorUsername } = req.body;
+    const { creatorUsername, creatorRole } = req.body;
 
     if (!creatorUsername) {
       throw createHttpError(400, "User not found");
@@ -68,9 +68,14 @@ export const getTransactions = async (
       return res.status(404).json({ message: "User not found" });
     }
 
-    const transactions = await Transaction.find({
-      $or: [{ debtor: user.username }, { creditor: user.username }],
-    });
+    let transactions;
+    if (user.role === "company") {
+      transactions = await Transaction.find();
+    } else {
+      transactions = await Transaction.find({
+        $or: [{ debtor: user.username }, { creditor: user.username }],
+      });
+    }
 
     res.status(200).json(transactions);
   } catch (error) {
