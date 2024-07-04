@@ -11,7 +11,8 @@ import bcrypt from "bcrypt";
 export const clients: Map<string, WebSocket> = new Map();
 
 export const rolesHierarchy = {
-  company: ["master","distributor","subdistributor","store","player"],
+
+  company: ["master", "distributor", "subdistributor", "store", "player"],
   master: ["distributor"],
   distributor: ["subdistributor"],
   subdistributor: ["store"],
