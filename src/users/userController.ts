@@ -51,15 +51,13 @@ export class UserController {
 
   async loginUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const { username, password, captcha } = req.body;
+      const { username, password } = req.body;
       
-      if (!username || !password || !captcha) {
-        throw createHttpError(400, "Username, password and captcha are required");
+      if (!username || !password ) {
+        throw createHttpError(400, "Username, password are required");
       }
 
-      if(captcha != req.session.captcha){
-        throw createHttpError(401, "Invalid Captcha")
-      }
+  
 
       const user = await this.userService.findUserByUsername(username);
       const player = await this.userService.findPlayerByUsername(username);
