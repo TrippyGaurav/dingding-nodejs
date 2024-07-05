@@ -16,6 +16,7 @@ import mongoose from "mongoose";
 import { User, Player } from "./userModel";
 
 import UserService from "./userService";
+import Transaction from "../transactions/transactionModel";
 
 export class UserController {
   private userService : UserService;
@@ -34,9 +35,9 @@ export class UserController {
     this.getCurrentUser = this.getCurrentUser.bind(this);
     this.getAllSubordinates = this.getAllSubordinates.bind(this);
     this.getSubordinateById = this.getSubordinateById.bind(this);
-    this.getClientsOfClient = this.getClientsOfClient.bind(this);
     this.deleteUser = this.deleteUser.bind(this);
     this.updateClient = this.updateClient.bind(this)
+    // this.getUserSubordinates = this.getUserSubordinates.bind(this);
   }
 
   public static getSubordinateRoles(role: string): string[] {
@@ -50,10 +51,14 @@ export class UserController {
 
   async loginUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const { username, password } = req.body;
+      const { username, password, captcha } = req.body;
+      
+      if (!username || !password || !captcha) {
+        throw createHttpError(400, "Username, password and captcha are required");
+      }
 
-      if (!username || !password) {
-        throw createHttpError(400, "Username and password are required");
+      if(captcha != req.session.captcha){
+        throw createHttpError(401, "Invalid Captcha")
       }
 
       const user = await this.userService.findUserByUsername(username);
@@ -199,95 +204,21 @@ export class UserController {
 
       const subordinateModels = UserController.rolesHierarchy[user.role];
 
+  
+
       const subordinates = await Promise.all(
         subordinateModels.map(async (model) => {
           if (model === "Player") {
-            return await this.userService.findPlayersByIds(user.subordinates);
+            return await Player.find({
+              _id: { $in: user.subordinates },
+            })
           } else {
-            return await this.userService.findUsersByIds(user.subordinates);
+            return await User.find({ _id: { $in: user.subordinates } })
           }
         })
       );
 
       res.status(200).json(subordinates.flat());
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async getSubordinateById(req: Request, res: Response, next: NextFunction) {
-    try {
-      const _req = req as AuthRequest;
-      const { subordinateId } = req.params;
-      const { username, role } = _req.user;
-
-      const clientObjectId = new mongoose.Types.ObjectId(subordinateId);
-
-      const creator = await this.userService.findUserByUsername(username);
-      if (!creator) {
-        throw createHttpError(404, "Creator not found");
-      }
-
-      const subordinateModel = getSubordinateModel(role);
-
-      let client;
-      if (subordinateModel === "User") {
-        client = await this.userService.findUserById(clientObjectId);
-      } else {
-        client = await this.userService.findPlayerById(clientObjectId);
-      }
-
-      if (!client) {
-        throw createHttpError(404, "Client not found");
-      }
-
-      if (role !== "company" && !creator.subordinates.includes(clientObjectId)) {
-        throw createHttpError(
-          403,
-          "Access denied: Client is not in your subordinates list"
-        );
-      }
-
-      res.status(200).json(client);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async getClientsOfClient(req: Request, res: Response, next: NextFunction) {
-    try {
-      const _req = req as AuthRequest;
-      const { username, role } = _req.user;
-
-      const { clientId } = req.params;
-
-      if (!clientId) {
-        throw createHttpError(400, "User ID is required");
-      }
-
-      const creator = await this.userService.findUserByUsername(username);
-      if (!creator) {
-        throw createHttpError(404, "Creator not found");
-      }
-
-      const clientObjectId = new mongoose.Types.ObjectId(clientId);
-
-      if (
-        role !== "company" &&
-        !creator.subordinates.includes(clientObjectId)
-      ) {
-        throw createHttpError(
-          403,
-          "Forbidden: You do not have the necessary permissions to access this resource."
-        );
-      }
-
-      const client = await this.userService.findUserById(clientObjectId);
-      if (!client) {
-        throw createHttpError(404, "Client not found");
-      }
-
-      res.status(200).json(client.subordinates);
     } catch (error) {
       next(error);
     }
@@ -398,5 +329,92 @@ export class UserController {
       next(error)
     }
   }  
+
+  async getSubordinateById(req: Request, res: Response, next: NextFunction) {
+    try {
+        const _req = req as AuthRequest;
+        const { subordinateId } = req.params;
+        const { username: loggedUserName, role: loggedUserRole } = _req.user;
+
+        const subordinateObjectId = new mongoose.Types.ObjectId(subordinateId);
+        const loggedUser = await this.userService.findUserByUsername(loggedUserName);
+
+        if (loggedUserRole === "company" || loggedUser.subordinates.includes(subordinateObjectId)) {
+            const user = await this.userService.findUserById(subordinateObjectId);
+
+            if (!user) {
+                throw createHttpError(404, "User not found");
+            }
+
+            let client;
+            if (user.role === "player") {
+                client = await Player.findById(subordinateObjectId)
+                    .populate({
+                        path: "transactions",
+                        model: Transaction,
+                    })
+                    .populate({
+                        path: "subordinates",
+                        model: Player, // Adjust if subordinates of players exist and need to be populated
+                    });
+            } else {
+                client = await User.findById(subordinateObjectId)
+                    .populate({
+                        path: "transactions",
+                        model: Transaction,
+                    })
+                    .populate({
+                        path: "subordinates",
+                        model: User, // Adjust if subordinates of users exist and need to be populated
+                    });
+            }
+
+            if (!client) {
+                throw createHttpError(404, "Client not found");
+            }
+
+            res.status(200).json(client);
+        } else {
+            throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
+        }
+    } catch (error) {
+        next(error);
+    }
+}
+
+  // async getUserSubordinates(req: Request, res: Response, next: NextFunction) {
+  //   try {
+  //     const _req = req as AuthRequest;
+  //     const {username:loggedInUserName, role:loggedInUserRole} = _req.user;
+  //     const { subordinateId } = req.params;
+  //     const userObjectId = new mongoose.Types.ObjectId(subordinateId);
+
+  //     const loggedUser = await this.userService.findUserByUsername(loggedInUserName);
+  //     const accessUser = await this.userService.findUserById(userObjectId);
+
+  //     if(!accessUser){
+  //       throw createHttpError(404, "User not found")
+  //     }
+      
+
+  //     if(loggedUser._id.toString() === accessUser._id.toString() || loggedInUserRole === "company" || loggedUser.subordinates.includes(userObjectId)){
+  //       const subordinateModels = UserController.rolesHierarchy[accessUser.role];
+  //       const subordinates = await Promise.all(
+  //         subordinateModels.map(async (model) => {
+  //           if (model === "Player") {
+  //             return await this.userService.findPlayersByIds(accessUser.subordinates);
+  //           } else {
+  //             return await this.userService.findUsersByIds(accessUser.subordinates);
+  //           }
+  //         })
+  //       );
+  //       return res.status(200).json(subordinates.flat());
+  //     }
+    
+  //     throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // }
 }
 
