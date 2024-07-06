@@ -3,85 +3,54 @@ import { User } from "../users/userModel";
 import Transaction from "./transactionModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
-import { rolesHierarchy } from "../utils/utils";
+import { AuthRequest } from "../utils/utils";
+import { IPlayer, IUser } from "../users/userType";
+import { ITransaction } from "./transactionType";
+import TransactionService from "./transactionService";
 
-// create transaction
-export const createTransaction = async (
-  type: string,
-  creator: any,
-  client: any,
-  amount: number,
-  session: mongoose.ClientSession
-) => {
-  if (!rolesHierarchy[creator.role]?.includes(client.role)) {
-    throw createHttpError(
-      403,
-      `${creator.role} cannot perform transactions with ${client.role}`
-    );
+
+
+export class TransactionController {
+  private transactionService: TransactionService;
+
+  constructor(){
+    this.transactionService = new TransactionService();
+    this.getTransactions = this.getTransactions.bind(this)
   }
 
-  if (type === "recharge") {
-    if (creator.credits < amount) {
-      throw createHttpError(400, "Insufficient credits to recharge");
-    }
-
-    client.credits += amount;
-    client.totalRecharged += amount;
-    creator.credits -= amount;
-  } else if (type === "redeem") {
-    if (client.credits < amount) {
-      throw createHttpError(400, "Client has insufficient credits to redeem");
-    }
-    client.credits -= amount;
-    client.totalRedeemed += amount;
-    creator.credits += amount;
+  async createTransaction(type:string, debtor:IUser, creditor: IUser | IPlayer, amount:number, session:mongoose.ClientSession):Promise<ITransaction>{
+    return await this.transactionService.createTransaction(type, debtor, creditor, amount, session);
   }
 
-  const transaction = new Transaction({
-    debtor: type === "recharge" ? creator.username : client.username,
-    creditor: type === "recharge" ? client.username : creator.username,
-    type: type,
-    amount: amount,
-    createdAt: new Date(),
-  });
+  async getTransactions(req:Request, res:Response, next:NextFunction){
+    try {
+      const _req = req as AuthRequest;
+      const {username, role} = _req.user;
 
-  await transaction.save({ session });
-
-  return transaction;
-};
-
-// Get all transactions
-export const getTransactions = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { creatorUsername, creatorRole } = req.body;
-
-    if (!creatorUsername) {
-      throw createHttpError(400, "User not found");
+      const transactions = await this.transactionService.getTransactions(username, role);
+      res.status(200).json(transactions);
+    } catch (error) {
+      next(error)
     }
-
-    const user = await User.findOne({ username: creatorUsername });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    let transactions;
-    if (user.role === "company") {
-      transactions = await Transaction.find();
-    } else {
-      transactions = await Transaction.find({
-        $or: [{ debtor: user.username }, { creditor: user.username }],
-      });
-    }
-
-    res.status(200).json(transactions);
-  } catch (error) {
-    next(error);
   }
-};
+
+  async getTransactionsByClientId(req: Request, res: Response, next: NextFunction) {
+    try {
+      const _req = req as AuthRequest;
+      const {username, role} = _req.user;
+      const { clientId } = req.params;
+      
+
+      const transactions = await this.transactionService.getTransactionsByClientId(clientId, username, role);
+
+      res.status(200).json(transactions);
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+
 
 // Get Transaction By id
 export const getTransactionsByClientId = async (
