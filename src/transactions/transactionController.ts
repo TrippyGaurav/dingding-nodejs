@@ -14,8 +14,9 @@ export class TransactionController {
   constructor() {
     this.transactionService = new TransactionService();
     this.getTransactions = this.getTransactions.bind(this);
-    this.getTransactionsByClientId = this.getTransactionsByClientId.bind(this);
+    this.getTransactionsBySubId = this.getTransactionsBySubId.bind(this);
     this.deleteTransaction = this.deleteTransaction.bind(this);
+    this.getAllTransactions = this.getAllTransactions.bind(this)
   }
 
   /**
@@ -40,13 +41,8 @@ export class TransactionController {
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
 
-      const transactions = await this.transactionService.getTransactions(username, role);
-      if (transactions instanceof mongoose.Query) {
-        const result = await transactions.lean().exec();
-        res.status(200).json(result);
-      } else {
-        res.status(200).json(transactions);
-      }
+      const transactions = await this.transactionService.getTransactions(username);
+      res.status(200).json(transactions)
     } catch (error) {
       console.error(`Error fetching transactions: ${error.message}`);
       next(error);
@@ -56,29 +52,58 @@ export class TransactionController {
   /**
    * Retrieves transactions for a specific client.
    */
-  async getTransactionsByClientId(req: Request, res: Response, next: NextFunction) {
+  async getTransactionsBySubId(req: Request, res: Response, next: NextFunction) {
     try {
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
-      const { clientId } = req.params;
+      const { subordinateId } = req.params;
 
-      // Validate clientId
-      if (!mongoose.Types.ObjectId.isValid(clientId)) {
-        throw createHttpError(400, "Invalid clientId");
+      const user = await User.findOne({ username });
+      const subordinate = await User.findOne({ _id: subordinateId });
+
+      if (!user) {
+        throw createHttpError(404, "Unable to find logged in user");
       }
 
-      const transactions = await this.transactionService.getTransactionsByClientId(clientId, username, role);
-      if (transactions instanceof mongoose.Query) {
-        const result = await transactions.lean().exec();
-        res.status(200).json(result);
-      } else {
+      if (!subordinate) {
+        throw createHttpError(404, "User not found");
+      }
+
+      if (user.role === "company" || user.subordinates.includes(new mongoose.Types.ObjectId(subordinateId))) {
+        const transactions = await this.transactionService.getTransactionsBySubName(subordinate.username)
         res.status(200).json(transactions);
       }
+      else {
+        throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
+      }
+
     } catch (error) {
       console.error(`Error fetching transactions by client ID: ${error.message}`);
       next(error);
     }
   }
+
+  /**
+   * Retrieves All transactions
+   */
+  async getAllTransactions(req: Request, res: Response, next: NextFunction) {
+    try {
+      const _req = req as AuthRequest;
+      const { username, role } = _req.user;
+
+      if (role != "company") {
+        throw createHttpError(403, "Access denied. Only users with the role 'company' can access this resource.");
+      }
+
+      const transactions = await Transaction.find()
+      res.status(200).json(transactions)
+
+    } catch (error) {
+      console.error(`Error fetching transactions by client ID: ${error.message}`);
+      next(error);
+    }
+  }
+
 
   /**
    * Deletes a transaction.
@@ -116,9 +141,3 @@ export class TransactionController {
   }
 }
 
-// Ensure indexes are created for performance
-Transaction.createIndexes();
-
-// Exporting an instance of the controller
-const transactionController = new TransactionController();
-export default transactionController;

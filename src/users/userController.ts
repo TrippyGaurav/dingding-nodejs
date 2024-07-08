@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import {
   AuthRequest,
-  getSubordinateModel,
   updateCredits,
   updatePassword,
   updateStatus,
@@ -17,9 +16,10 @@ import { User, Player } from "./userModel";
 
 import UserService from "./userService";
 import Transaction from "../transactions/transactionModel";
+import { IPlayer, IUser } from "./userType";
 
 export class UserController {
-  private userService : UserService;
+  private userService: UserService;
   private static rolesHierarchy = {
     company: ["master", "distributor", "subdistributor", "store", "player"],
     master: ["distributor"],
@@ -28,7 +28,7 @@ export class UserController {
     store: ["player"],
   };
 
-  constructor(){
+  constructor() {
     this.userService = new UserService();
     this.loginUser = this.loginUser.bind(this);
     this.createUser = this.createUser.bind(this);
@@ -44,7 +44,7 @@ export class UserController {
     return this.rolesHierarchy[role] || [];
   }
 
-  public static isRoleValid(role: string, subordinateRole: string): boolean { 
+  public static isRoleValid(role: string, subordinateRole: string): boolean {
     return this.getSubordinateRoles(role).includes(subordinateRole);
   }
 
@@ -52,32 +52,32 @@ export class UserController {
   async loginUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;
-      
-      if (!username || !password ) {
+
+      if (!username || !password) {
         throw createHttpError(400, "Username, password are required");
       }
 
       const user = await this.userService.findUserByUsername(username);
       const player = await this.userService.findPlayerByUsername(username);
 
-      if(user && player){
+      if (user && player) {
         throw createHttpError(400, "Something went wrong. Please contact manager for assistancee")
       }
 
-      let role:string;
-      if(user){
+      let role: string;
+      if (user) {
         role = "user";
       }
-      else if(player){
+      else if (player) {
         role = "player";
       }
-      else{
+      else {
         throw createHttpError(401, "Invalid User")
       }
 
-      const isPasswordValid = await bcrypt.compare(password, user?user.password : player.password);
+      const isPasswordValid = await bcrypt.compare(password, user ? user.password : player.password);
 
-      if(!isPasswordValid){
+      if (!isPasswordValid) {
         throw createHttpError(401, "Invalid username or password")
       }
 
@@ -85,7 +85,7 @@ export class UserController {
       user.loginTimes = (user.loginTimes || 0) + 1;
       await user.save()
 
-      const token = jwt.sign({username : user ? user.username : player.username, role : user ? user.role : player.role}, config.jwtSecret!, {expiresIn:"24h"});
+      const token = jwt.sign({ username: user ? user.username : player.username, role: user ? user.role : player.role }, config.jwtSecret!, { expiresIn: "24h" });
 
       res.cookie("userToken", token, {
         maxAge: 1000 * 60 * 60 * 24 * 7,
@@ -94,72 +94,72 @@ export class UserController {
       });
 
       res.status(200).json({
-        message:"Login successful",
-        token:token,
-        role:user ? user.role : player.role
+        message: "Login successful",
+        token: token,
+        role: user ? user.role : player.role
       })
 
     } catch (error) {
       next(error)
-    }``
+    } ``
   }
 
-  async createUser(req: Request, res: Response, next: NextFunction){
+  async createUser(req: Request, res: Response, next: NextFunction) {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
       const _req = req as AuthRequest;
-      const {user} = req.body;
-      const {username, role} = _req.user; // ADMIN
+      const { user } = req.body;
+      const { username, role } = _req.user; // ADMIN
 
 
       if (!user || !user.name || !user.username || !user.password || !user.role || user.credits === undefined) {
         throw createHttpError(400, "All required fields must be provided");
       }
 
-      if(role!=="company" && !UserController.isRoleValid(role, user.role)){
+      if (role !== "company" && !UserController.isRoleValid(role, user.role)) {
         throw createHttpError(403, `A ${role} cannot create a ${user.role}`);
       }
 
       const admin = await this.userService.findUserByUsername(username, session);
-      if(!admin){
+      if (!admin) {
         throw createHttpError(404, "Admin not found")
       }
 
 
       let existingUser = user.role === "player" ? await this.userService.findPlayerByUsername(user.username, session) : await this.userService.findUserByUsername(user.username, session);
-      if(existingUser){
+      if (existingUser) {
         throw createHttpError(409, "User already exists")
       }
 
       const hashedPassword = await bcrypt.hash(user.password, 10);
-      
+
       let newUser;
 
-      if(user.role === "player"){
-        newUser = await this.userService.createPlayer(user, 0,  hashedPassword, session)
+      if (user.role === "player") {
+        newUser = await this.userService.createPlayer(user, 0, hashedPassword, session)
       }
-      else{
+      else {
         newUser = await this.userService.createUser(user, 0, hashedPassword, session);
       }
 
-      if(user.credits > 0){
+      if (user.credits > 0) {
         const transaction = await this.userService.createTransaction("recharge", admin, newUser, user.credits, session);
         newUser.transactions.push(transaction._id as mongoose.Types.ObjectId);
-        admin.transactions.push(transaction._id as mongoose.Types.ObjectId);      
+        admin.transactions.push(transaction._id as mongoose.Types.ObjectId);
       }
 
-      await newUser.save({session});
+      await newUser.save({ session });
       admin.subordinates.push(newUser._id);
-      await admin.save({session});
+      await admin.save({ session });
 
       await session.commitTransaction();
       res.status(201).json(newUser);
     } catch (error) {
       next(error)
     }
-    finally{
+    finally {
       session.endSession()
     }
   }
@@ -168,6 +168,8 @@ export class UserController {
     try {
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
+
+      // throw createHttpError(404, "Access Denied")`
 
       let user;
 
@@ -190,18 +192,18 @@ export class UserController {
   async getAllSubordinates(req: Request, res: Response, next: NextFunction) {
     try {
       const _req = req as AuthRequest;
-      const { username:loggedUserName, role:loggedUserRole } = _req.user;      
+      const { username: loggedUserName, role: loggedUserRole } = _req.user;
 
       const loggedUser = await this.userService.findUserByUsername(loggedUserName);
 
-      if(!loggedUser){
+      if (!loggedUser) {
         throw createHttpError(404, "User not found")
       }
 
       if (loggedUser.role !== "company") {
         throw createHttpError(403, "Access denied. Only users with the role 'company' can access this resource.");
       }
-      const users = await User.find({});
+      const users = await User.find({ role: { $ne: "company" } });
       const players = await Player.find({});
 
       const allSubordinates = [...users, ...players];
@@ -217,25 +219,25 @@ export class UserController {
       // }
 
       res.status(200).json(allSubordinates);
-      } catch (error) {
+    } catch (error) {
       next(error);
     }
   }
 
-  async deleteUser(req: Request, res: Response, next: NextFunction){
+  async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
       const { clientId } = req.params;
 
-      if(!clientId){
+      if (!clientId) {
         throw createHttpError(400, "Client Id is required");
       }
 
       const clientObjectId = new mongoose.Types.ObjectId(clientId);
 
       const admin = await this.userService.findUserByUsername(username);
-      if(!admin){
+      if (!admin) {
         throw createHttpError(404, "Admin Not Found");
       }
 
@@ -320,49 +322,63 @@ export class UserController {
 
       await admin.save();
       await client.save();
-    
+
       res.status(200).json({ message: "Client updated successfully", client });
 
     } catch (error) {
       next(error)
     }
-  }  
+  }
 
   async getSubordinateById(req: Request, res: Response, next: NextFunction) {
     try {
-        const _req = req as AuthRequest;
-        const { subordinateId } = req.params;
-        const { username: loggedUserName, role: loggedUserRole } = _req.user;
+      const _req = req as AuthRequest;
+      const { subordinateId } = req.params;
+      const { username: loggedUserName, role: loggedUserRole } = _req.user;
 
-        const subordinateObjectId = new mongoose.Types.ObjectId(subordinateId);
-        const loggedUser = await this.userService.findUserByUsername(loggedUserName);
-        const user = await this.userService.findUserById(subordinateObjectId);
+      console.log(loggedUserName, loggedUserRole);
 
-        if (loggedUserRole === "company" || loggedUser.subordinates.includes(subordinateObjectId) || user._id.toString() == subordinateId) {
-            
-            if (!user) {
-                throw createHttpError(404, "User not found");
-            }
 
-            let client;
-            if (user.role === "store") {
-                client = await User.findById(subordinateId).populate({path:"subordinates", model:Player}).populate({path:"transactions", model:Transaction})
-            } else {
-                client = await User.findById(subordinateObjectId).populate({path: "transactions",model: Transaction,}).populate({path: "subordinates",model: User, });
-            }
+      const subordinateObjectId = new mongoose.Types.ObjectId(subordinateId);
+      const loggedUser = await this.userService.findUserByUsername(loggedUserName);
 
-            if (!client) {
-                throw createHttpError(404, "Client not found");
-            }
+      let user;
 
-            res.status(200).json(client);
-        } else {
-            throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
+      user = await this.userService.findUserById(subordinateObjectId);
+
+      if (!user) {
+        user = await this.userService.findPlayerById(subordinateObjectId);
+
+        if (!user) {
+          throw createHttpError(404, "User not found");
         }
+      }
+
+      if (loggedUserRole === "company" || loggedUser.subordinates.includes(subordinateObjectId) || user._id.toString() == loggedUser._id.toString()) {
+
+        let client;
+        if (user.role === "store") {
+          client = await User.findById(subordinateId).populate({ path: "subordinates", model: Player }).populate({ path: "transactions", model: Transaction })
+        }
+        else if (user.role === "player") {
+          client = user;
+        }
+        else {
+          client = await User.findById(subordinateObjectId).populate({ path: "transactions", model: Transaction, }).populate({ path: "subordinates", model: User, });
+        }
+
+        if (!client) {
+          throw createHttpError(404, "Client not found");
+        }
+
+        res.status(200).json(client);
+      } else {
+        throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
+      }
     } catch (error) {
-        next(error);
+      next(error);
     }
-}
+  }
 
   // async getUserSubordinates(req: Request, res: Response, next: NextFunction) {
   //   try {
@@ -377,7 +393,7 @@ export class UserController {
   //     if(!accessUser){
   //       throw createHttpError(404, "User not found")
   //     }
-      
+
 
   //     if(loggedUser._id.toString() === accessUser._id.toString() || loggedInUserRole === "company" || loggedUser.subordinates.includes(userObjectId)){
   //       const subordinateModels = UserController.rolesHierarchy[accessUser.role];
@@ -392,7 +408,7 @@ export class UserController {
   //       );
   //       return res.status(200).json(subordinates.flat());
   //     }
-    
+
   //     throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
   //   } catch (error) {
   //     next(error);

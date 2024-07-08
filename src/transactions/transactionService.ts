@@ -44,42 +44,19 @@ export class TransactionService {
     return transaction;
   }
 
-  getTransactions(username: string, role: string) {
-    return User.findOne({ username }).then(user => {
-      if (!user) {
-        throw createHttpError(404, "User not found");
-      }
-
-      if (user.role === "company") {
-        return Transaction.find(); 
-      } else {
-        return Transaction.find({
-          $or: [{ debtor: user.username }, { creditor: user.username }],
-        }); 
-      }
-    });
+  async getTransactions(username: string) {
+    const user = await User.findOne({ username });
+    const transactions = await Transaction.find({ $or: [{ debtor: user.username }, { creditor: user.username }] })
+    return transactions;
   }
 
-  getTransactionsByClientId(clientId: string, username: string, role: string) {
-    const clientObjectId = new mongoose.Types.ObjectId(clientId);
-    return User.findOne({ username }).then(creator => {
-      if (!creator) {
-        throw createHttpError(404, "Creator not found");
-      }
-      return User.findById(clientObjectId).populate("transactions").then(client => {
-        if (!client) {
-          throw createHttpError(404, "Client not found");
-        }
-        if (!creator.subordinates.includes(clientObjectId)) {
-          throw createHttpError(403, "Access denied: Client is not in your clients list");
-        }
-        return client.transactions; 
-      });
-    });
+  async getTransactionsBySubName(subordinateName: string) {
+    const transactions = await Transaction.find({ $or: [{ debtor: subordinateName }, { creditor: subordinateName }] })
+    return transactions
   }
 
   deleteTransaction(id: string, session: mongoose.ClientSession) {
-    return Transaction.findByIdAndDelete(id).session(session); 
+    return Transaction.findByIdAndDelete(id).session(session);
   }
 }
 
