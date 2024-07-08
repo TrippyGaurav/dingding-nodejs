@@ -192,32 +192,34 @@ export class UserController {
   async getAllSubordinates(req: Request, res: Response, next: NextFunction) {
     try {
       const _req = req as AuthRequest;
-      const { username, role } = _req.user;
+      const { username:loggedUserName, role:loggedUserRole } = _req.user;      
 
-      const user = await this.userService.findUserByUsername(username);
+      const loggedUser = await this.userService.findUserByUsername(loggedUserName);
 
-      if (!user) {
-        throw createHttpError(404, "User not found");
+      if(!loggedUser){
+        throw createHttpError(404, "User not found")
       }
 
-      const subordinateModels = UserController.rolesHierarchy[user.role];
+      if (loggedUser.role !== "company") {
+        throw createHttpError(403, "Access denied. Only users with the role 'company' can access this resource.");
+      }
+      const users = await User.find({});
+      const players = await Player.find({});
 
-  
+      const allSubordinates = [...users, ...players];
 
-      const subordinates = await Promise.all(
-        subordinateModels.map(async (model) => {
-          if (model === "Player") {
-            return await Player.find({
-              _id: { $in: user.subordinates },
-            })
-          } else {
-            return await User.find({ _id: { $in: user.subordinates } })
-          }
-        })
-      );
 
-      res.status(200).json(subordinates.flat());
-    } catch (error) {
+
+      // let userWithSubordinates;
+      // if(loggedUser.role === "store"){
+      //   userWithSubordinates = await User.findById(loggedUser._id).populate({path:"subordinates", model:Player});
+      // }
+      // else{
+      //   userWithSubordinates = await User.findById(loggedUser._id).populate({path:"subordinates", model:User});
+      // }
+
+      res.status(200).json(allSubordinates);
+      } catch (error) {
       next(error);
     }
   }
@@ -336,35 +338,19 @@ export class UserController {
 
         const subordinateObjectId = new mongoose.Types.ObjectId(subordinateId);
         const loggedUser = await this.userService.findUserByUsername(loggedUserName);
+        const user = await this.userService.findUserById(subordinateObjectId);
 
-        if (loggedUserRole === "company" || loggedUser.subordinates.includes(subordinateObjectId)) {
-            const user = await this.userService.findUserById(subordinateObjectId);
-
+        if (loggedUserRole === "company" || loggedUser.subordinates.includes(subordinateObjectId) || user._id.toString() == subordinateId) {
+            
             if (!user) {
                 throw createHttpError(404, "User not found");
             }
 
             let client;
-            if (user.role === "player") {
-                client = await Player.findById(subordinateObjectId)
-                    .populate({
-                        path: "transactions",
-                        model: Transaction,
-                    })
-                    .populate({
-                        path: "subordinates",
-                        model: Player, // Adjust if subordinates of players exist and need to be populated
-                    });
+            if (user.role === "store") {
+                client = await User.findById(subordinateId).populate({path:"subordinates", model:Player}).populate({path:"transactions", model:Transaction})
             } else {
-                client = await User.findById(subordinateObjectId)
-                    .populate({
-                        path: "transactions",
-                        model: Transaction,
-                    })
-                    .populate({
-                        path: "subordinates",
-                        model: User, // Adjust if subordinates of users exist and need to be populated
-                    });
+                client = await User.findById(subordinateObjectId).populate({path: "transactions",model: Transaction,}).populate({path: "subordinates",model: User, });
             }
 
             if (!client) {
