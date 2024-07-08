@@ -1,43 +1,55 @@
-import { Request, Response, NextFunction } from "express";
-import bcrypt from "bcrypt";
-import createHttpError from "http-errors";
-import { User } from "../users/userModel";
+// import { Request, Response, NextFunction } from "express";
+// import bcrypt from "bcrypt";
+// import createHttpError from "http-errors";
+// import { User } from "../users/userModel";
 
-export const createCompany = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { user } = req.body;
+// class CompanyController {
+//   async createCompany(req: Request, res: Response, next: NextFunction): Promise<void> {
+//     try {
+//       const { user } = req.body;
 
-    // Validate required fields
-    if (!user || !user.name || !user.username || !user.password || !user.role) {
-      throw createHttpError(
-        400,
-        "All required fields (name, username, password, role) must be provided"
-      );
-    }
+//       // Validate required fields
+//       if (!this.validateUserFields(user)) {
+//         throw createHttpError(400, "All required fields (name, username, password, role) must be provided");
+//       }
 
-    const existingCompany = await User.findOne({ username: user.username });
-    if (existingCompany) {
-      throw createHttpError(409, "Company already exists");
-    }
+//       const existingCompany = await this.findCompanyByUsername(user.username);
+//       if (existingCompany) {
+//         throw createHttpError(409, "Company already exists");
+//       }
 
-    const hashedPassword = await bcrypt.hash(user.password, 10);
+//       const hashedPassword = await this.hashPassword(user.password);
 
-    // Create the new company with infinite credits
-    const company = new User({
-      name: user.name,
-      username: user.username,
-      password: hashedPassword,
-      role: user.role,
-      credits: Infinity, // Assign infinite credits
-    });
+//       const company = await this.saveCompany({
+//         name: user.name,
+//         username: user.username,
+//         password: hashedPassword,
+//         role: user.role,
+//         credits: Infinity, // Assign infinite credits
+//       });
 
-    await company.save();
-    res.status(201).json(company);
-  } catch (error) {
-    next(error);
-  }
-};
+//       res.status(201).json(company);
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+
+//   private validateUserFields(user: any): boolean {
+//     return user && user.name && user.username && user.password && user.role;
+//   }
+
+//   private async findCompanyByUsername(username: string): Promise<typeof User | null> {
+//     return User.findOne({ username });
+//   }
+
+//   private async hashPassword(password: string): Promise<string> {
+//     return bcrypt.hash(password, 10);
+//   }
+
+//   private async saveCompany(userData: any): Promise<typeof User> {
+//     const company = new User(userData);
+//     return company.save();
+//   }
+// }
+
+// export default new CompanyController();

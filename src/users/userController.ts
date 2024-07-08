@@ -57,8 +57,6 @@ export class UserController {
         throw createHttpError(400, "Username, password are required");
       }
 
-  
-
       const user = await this.userService.findUserByUsername(username);
       const player = await this.userService.findPlayerByUsername(username);
 

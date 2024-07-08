@@ -8,129 +8,117 @@ import { IPlayer, IUser } from "../users/userType";
 import { ITransaction } from "./transactionType";
 import TransactionService from "./transactionService";
 
-
-
 export class TransactionController {
   private transactionService: TransactionService;
 
-  constructor(){
+  constructor() {
     this.transactionService = new TransactionService();
-    this.getTransactions = this.getTransactions.bind(this)
+    this.getTransactions = this.getTransactions.bind(this);
+    this.getTransactionsByClientId = this.getTransactionsByClientId.bind(this);
+    this.deleteTransaction = this.deleteTransaction.bind(this);
   }
 
-  async createTransaction(type:string, debtor:IUser, creditor: IUser | IPlayer, amount:number, session:mongoose.ClientSession):Promise<ITransaction>{
-    return await this.transactionService.createTransaction(type, debtor, creditor, amount, session);
-  }
-
-  async getTransactions(req:Request, res:Response, next:NextFunction){
+  /**
+   * Creates a new transaction.
+   */
+  async createTransaction(type: string, debtor: IUser, creditor: IUser | IPlayer, amount: number, session: mongoose.ClientSession): Promise<ITransaction> {
     try {
-      const _req = req as AuthRequest;
-      const {username, role} = _req.user;
-
-      const transactions = await this.transactionService.getTransactions(username, role);
-      res.status(200).json(transactions);
+      const transaction = await this.transactionService.createTransaction(type, debtor, creditor, amount, session);
+      console.log(`Transaction created: ${transaction._id}`);
+      return transaction;
     } catch (error) {
-      next(error)
+      console.error(`Error creating transaction: ${error.message}`);
+      throw error;
     }
   }
 
+  /**
+   * Retrieves transactions for the authenticated user.
+   */
+  async getTransactions(req: Request, res: Response, next: NextFunction) {
+    try {
+      const _req = req as AuthRequest;
+      const { username, role } = _req.user;
+
+      const transactions = await this.transactionService.getTransactions(username, role);
+      if (transactions instanceof mongoose.Query) {
+        const result = await transactions.lean().exec();
+        res.status(200).json(result);
+      } else {
+        res.status(200).json(transactions);
+      }
+    } catch (error) {
+      console.error(`Error fetching transactions: ${error.message}`);
+      next(error);
+    }
+  }
+
+  /**
+   * Retrieves transactions for a specific client.
+   */
   async getTransactionsByClientId(req: Request, res: Response, next: NextFunction) {
     try {
       const _req = req as AuthRequest;
-      const {username, role} = _req.user;
+      const { username, role } = _req.user;
       const { clientId } = req.params;
-      
+
+      // Validate clientId
+      if (!mongoose.Types.ObjectId.isValid(clientId)) {
+        throw createHttpError(400, "Invalid clientId");
+      }
 
       const transactions = await this.transactionService.getTransactionsByClientId(clientId, username, role);
-
-      res.status(200).json(transactions);
+      if (transactions instanceof mongoose.Query) {
+        const result = await transactions.lean().exec();
+        res.status(200).json(result);
+      } else {
+        res.status(200).json(transactions);
+      }
     } catch (error) {
+      console.error(`Error fetching transactions by client ID: ${error.message}`);
+      next(error);
+    }
+  }
+
+  /**
+   * Deletes a transaction.
+   */
+  async deleteTransaction(req: Request, res: Response, next: NextFunction) {
+    const { id } = req.params;
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw createHttpError(400, "Invalid transaction ID");
+      }
+
+      const deletedTransaction = await this.transactionService.deleteTransaction(id, session);
+      if (deletedTransaction instanceof mongoose.Query) {
+        const result = await deletedTransaction.lean().exec();
+        if (!result) {
+          throw createHttpError(404, "Transaction not found");
+        }
+        res.status(200).json({ message: "Transaction deleted successfully" });
+        console.log(`Transaction deleted: ${id}`);
+      } else {
+        if (!deletedTransaction) {
+          throw createHttpError(404, "Transaction not found");
+        }
+        res.status(200).json({ message: "Transaction deleted successfully" });
+        console.log(`Transaction deleted: ${id}`);
+      }
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error(`Error deleting transaction: ${error.message}`);
       next(error);
     }
   }
 }
 
+// Ensure indexes are created for performance
+Transaction.createIndexes();
 
-
-// Get Transaction By id
-export const getTransactionsByClientId = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { clientId } = req.params;
-    const { creatorUsername, creatorRole } = req.body;
-
-    // Validate input
-    if (!clientId) {
-      throw createHttpError(400, "Client Id is required");
-    }
-    if (!creatorUsername || !creatorRole) {
-      throw createHttpError(403, "Unable to verify the creator");
-    }
-
-    // Convert clientId to ObjectId
-    const clientObjectId = new mongoose.Types.ObjectId(clientId);
-
-    // Check if creator exists
-    const creator = await User.findOne({ username: creatorUsername });
-    if (!creator) {
-      throw createHttpError(404, "Creator not found");
-    }
-
-    // Check if client exists
-    const client = await User.findById(clientObjectId).populate("transactions");
-    if (!client) {
-      throw createHttpError(404, "Client not found");
-    }
-
-    // Check if client is in creator's clients list
-    if (!creator.subordinates.includes(clientObjectId)) {
-      throw createHttpError(
-        403,
-        "Access denied: Client is not in your clients list"
-      );
-    }
-
-    // Return the client's transactions
-    res.status(200).json(client.transactions);
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Delete a transaction
-export const deleteTransaction = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { id } = req.params;
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const deletedTransaction = await Transaction.findByIdAndDelete(id).session(
-      session
-    );
-    if (!deletedTransaction) {
-      throw new Error("Transaction not found");
-    }
-
-    // Remove transaction from users' transactions array
-    await User.updateMany(
-      { transactions: id },
-      { $pull: { transactions: id } },
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
-
-    res.status(200).json({ message: "Transaction deleted successfully" });
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    next(error);
-  }
-};
+// Exporting an instance of the controller
+const transactionController = new TransactionController();
+export default transactionController;

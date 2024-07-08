@@ -2,7 +2,7 @@ import express from "express";
 import { extractRoleFromCookie } from "../middleware/middlware";
 import {
   TransactionController,
-  getTransactionsByClientId,
+  // getTransactionsByClientId,
 } from "./transactionController";
 import { checkUser } from "../middleware/checkUser";
 
@@ -13,7 +13,8 @@ transactionRoutes.get("/", checkUser, transactionController.getTransactions);
 transactionRoutes.get(
   "/:clientId",
   extractRoleFromCookie,
-  getTransactionsByClientId
+  // getTransactionsByClientId
 );
 
 export default transactionRoutes;
+// 
