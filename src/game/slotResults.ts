@@ -395,6 +395,7 @@ export class CheckResult {
       },
       PlayerData: playerData,
     };
+    getClient(playerData.playerId).updateCreditsInDb(playerData.Balance);
     if (isResult == ResultType.normal)
       getClient(playerData.playerId).sendMessage("ResultData", ResultData);
     if (isResult == ResultType.moolah) {

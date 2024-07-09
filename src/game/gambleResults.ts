@@ -52,7 +52,7 @@ export class GambleGame {
       },
       PlayerData: playerData,
     };
-
+    getClient(playerData.playerId).updateCreditsInDb(playerData.Balance);
     //TODO : ADD MESSAGE FOR CLIENT
     getClient(clientId).sendMessage("GambleResult", ResultData);
     // sendMessageToClient(clientId, "GambleResult", ResultData);

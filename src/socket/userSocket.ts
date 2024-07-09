@@ -140,7 +140,7 @@ export class SocketUser {
   };
 
   //Update player credits case win ,bet,and lose;
-  async updateCreditsInDb(finalBalance: number) {
+  export async updateCreditsInDb(finalBalance: number) {
     console.log(finalBalance, "finalba;")
     await Player.findOneAndUpdate(
       { username: this.username },
