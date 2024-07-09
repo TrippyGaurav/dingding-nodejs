@@ -28,7 +28,6 @@ gameRoutes.get("/:gameId", extractRoleFromCookie, getGameById);
 gameRoutes.post("/thumbnail", extractRoleFromCookie, uploadThubnail);
 gameRoutes.put(
   "/favourite/:playerId",
-  determineOrigin,
   extractRoleFromCookie,
   addFavouriteGame
 );
