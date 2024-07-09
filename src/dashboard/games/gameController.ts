@@ -347,12 +347,6 @@ export const addFavouriteGame = async (
     const { playerId } = req.params;
     const { gameId, type } = req.body;
 
-    if (!req.isPlayer) {
-      throw createHttpError(
-        403,
-        "Access denied: You don't have permission to perform this action"
-      );
-    }
 
     if (!playerId || !gameId) {
       throw createHttpError(400, "Player ID and Game ID are required");

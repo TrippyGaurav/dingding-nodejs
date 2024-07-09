@@ -97,6 +97,10 @@ export class UserController {
         }
       }
 
+
+      console.log("Logged : ", user);
+
+
       const isPasswordValid = await bcrypt.compare(password, user.password);
 
       if (!isPasswordValid) {
@@ -108,7 +112,7 @@ export class UserController {
       user.loginTimes = (user.loginTimes || 0) + 1;
       await user.save()
 
-      const token = jwt.sign({ username: user.username, role: user.role }, config.jwtSecret!, { expiresIn: "24h" });
+      const token = jwt.sign({ id: user._id, username: user.username, role: user.role }, config.jwtSecret!, { expiresIn: "24h" });
 
       res.cookie("userToken", token, {
         maxAge: 1000 * 60 * 60 * 24 * 7,
@@ -117,6 +121,7 @@ export class UserController {
       });
 
       res.status(200).json({
+
         message: "Login successful",
         token: token,
         role: user.role
@@ -481,12 +486,19 @@ export class UserController {
 
       const subordinateObjectId = new mongoose.Types.ObjectId(subordinateId);
 
-
       // Fetch subordinate details
-      const subordinate = await User.findById(subordinateObjectId);
+      let subordinate = await User.findById(subordinateObjectId);
+
+
       if (!subordinate) {
-        throw createHttpError(404, "Subordinate not found");
+        subordinate = await Player.findById(subordinateObjectId)
+
+        if (!subordinate) {
+          throw createHttpError(404, "Subordinate not found");
+
+        }
       }
+
 
       // Fetch today's transactions where the subordinate is the creditor
       const transactionsTodayAsCreditor = await Transaction.find({
@@ -531,8 +543,13 @@ export class UserController {
         players: playersCreatedToday
       };
 
+      console.log(report);
+
+
       res.status(200).json(report)
     } catch (error) {
+      console.log(error);
+
       next(error)
     }
   }
