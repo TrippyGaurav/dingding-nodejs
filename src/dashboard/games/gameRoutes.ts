@@ -16,7 +16,7 @@ const gameRoutes = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 gameRoutes.get("/", extractRoleFromCookie, getAllGames);
-gameRoutes.post("/", upload.single("file"), addGame);
+gameRoutes.post("/", upload.single("file"), extractRoleFromCookie, addGame);
 gameRoutes.put(
   "/:gameId",
   upload.single("file"),
