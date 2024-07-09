@@ -20,6 +20,14 @@ userRoutes.get("/", checkUser, userController.getCurrentUser);
 // // GET all subordinates
 userRoutes.get("/all", checkUser, userController.getAllSubordinates);
 
+// GET Report
+userRoutes.get("/report", checkUser, userController.getReport)
+
+// GET a client Report
+userRoutes.get("/report/:subordinateId", checkUser, userController.getASubordinateReport)
+
+// GET a client
+userRoutes.get("/:subordinateId", checkUser, userController.getSubordinateById);
 
 
 // // DELETE A Client
@@ -28,10 +36,7 @@ userRoutes.delete("/:clientId", checkUser, userController.deleteUser);
 // // UPDATE a client
 userRoutes.put("/:clientId", checkUser, userController.updateClient);
 
-// GET a client
-userRoutes.get("/:subordinateId", checkUser, userController.getSubordinateById);
 
-// // GET clients of user by userId
-// userRoutes.get("/:subordinateId/subordinates", checkUser, userController.getUserSubordinates);
+
 
 export default userRoutes;

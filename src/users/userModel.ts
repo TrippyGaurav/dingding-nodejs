@@ -1,4 +1,4 @@
-import mongoose, { Model, Schema } from "mongoose";
+import mongoose, { Model, Schema, Types } from "mongoose";
 import { IPlayer, IUser } from "./userType";
 
 const UserSchema: Schema = new Schema<IUser>(
@@ -10,14 +10,14 @@ const UserSchema: Schema = new Schema<IUser>(
     role: { type: String, required: true },
     subordinates: [
       { type: mongoose.Types.ObjectId, refPath: "subordinateModel" },
-    ], // Reference different models
-
+    ],
     transactions: [{ type: mongoose.Types.ObjectId, ref: "Transaction" }],
     lastLogin: { type: Date, default: null },
     loginTimes: { type: Number, default: 0 },
     totalRecharged: { type: Number, default: 0 },
     totalRedeemed: { type: Number, default: 0 },
     credits: { type: Number, required: true },
+    createdBy: { type: Types.ObjectId as any, ref: "User", default: null },
   },
   { timestamps: true }
 );
@@ -46,6 +46,7 @@ const PlayerSchema = new Schema<IPlayer>(
     credits: { type: Number, default: 0 },
     favouriteGames: { type: [String], default: [] },
     transactions: [{ type: mongoose.Types.ObjectId, ref: "Transaction" }],
+    createdBy: { type: Types.ObjectId as any, ref: "User", default: null },
   },
   { timestamps: true }
 );
