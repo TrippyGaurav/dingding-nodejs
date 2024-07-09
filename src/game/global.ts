@@ -401,7 +401,7 @@ function getLastindex(reelIndex: number, index: number) {
   console.log("Changed Index " + Index);
   if (Index < 0) {
     Index = gameSettings.tempReels[reelIndex].length - 1;
-    console.log("Reel Lenght " + gameSettings.tempReels[reelIndex].length + " Changed value below Zero " + Index);
+    console.log("Reel Lenght " + gameSettings.tempReels[reelIndex].length + " Changed value below Zeros " + Index);
     return gameSettings.tempReels[reelIndex][Index]
   }
   else return gameSettings.tempReels[reelIndex][Index];
