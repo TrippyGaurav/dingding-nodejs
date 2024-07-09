@@ -1,4 +1,4 @@
-import { Document, Types } from "mongoose";
+import mongoose, { Document, Types, mongo } from "mongoose";
 
 export interface IUser extends Document {
   name: string;
@@ -15,6 +15,8 @@ export interface IUser extends Document {
   credits: number;
   createdAt: Date;
   updatedAt: Date;
+  createdBy: Types.ObjectId | null;
+
 }
 
 export interface IPlayer extends Document {
@@ -31,4 +33,5 @@ export interface IPlayer extends Document {
   transactions: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
+  createdBy: Types.ObjectId | null;
 }

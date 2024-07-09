@@ -121,8 +121,6 @@ export const addGame = async (
 
     await newPayout.save();
 
-    console.log("JSON Data : ", jsonData);
-
     const game = new Game({
       name,
       thumbnail,
@@ -135,9 +133,16 @@ export const addGame = async (
       payout: newPayout._id,
     });
 
+    console.log("Game : ", game);
+
+
     const savedGame = await game.save();
+    console.log("Saved : ", savedGame);
+
     res.status(201).json(savedGame);
   } catch (error) {
+    console.log(error);
+
     next(error);
   }
 };
