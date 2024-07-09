@@ -1,17 +1,20 @@
 import express from "express";
-import { extractRoleFromCookie } from "../middleware/middlware";
 import {
-  getTransactions,
-  getTransactionsByClientId,
+  TransactionController,
+  // getTransactionsByClientId,
 } from "./transactionController";
+import { checkUser } from "../middleware/checkUser";
 
+const transactionController = new TransactionController()
 const transactionRoutes = express.Router();
 
-transactionRoutes.get("/", extractRoleFromCookie, getTransactions);
+transactionRoutes.get("/all", checkUser, transactionController.getAllTransactions)
+transactionRoutes.get("/", checkUser, transactionController.getTransactions);
 transactionRoutes.get(
-  "/:clientId",
-  extractRoleFromCookie,
-  getTransactionsByClientId
+  "/:subordinateId",
+  checkUser,
+  transactionController.getTransactionsBySubId
 );
 
 export default transactionRoutes;
+// 

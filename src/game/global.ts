@@ -11,12 +11,14 @@ import {
   specialIcons,
   winning,
 } from "./gameUtils";
-import { getClient } from "../socket/userSocket";
+import { SocketUser, getClient } from "../socket/userSocket";
 import exp from "constants";
 import { CheckResult, ResultType, WinData } from "./slotResults";
 import { bonusGame } from "./bonusResults";
 import { middleware } from "../utils/middleware";
 import { log } from "console";
+import { updateCredits } from "../utils/utils";
+import socketController from "../socket/controller";
 
 export const gameSettings: GameSettings = {
   currentGamedata: {
@@ -78,7 +80,7 @@ export const gameSettings: GameSettings = {
   reels: [[]],
 
   initiate: async (GameData: {}, clientID: string) => {
-    console.log(GameData)
+    // console.log(GameData)
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
@@ -273,6 +275,7 @@ export function spinResult(clientID: string) {
   playerData.Balance -= gameSettings.currentBet;
   gameSettings.tempReels = [[]];
   console.log("player balance:", playerData.Balance);
+
   console.log("player havewon:", playerData.haveWon);
   gameSettings.bonus.start = false;
   console.log("CALLEDD");

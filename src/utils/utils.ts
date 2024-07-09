@@ -1,12 +1,16 @@
 import { Request } from "express";
 import { JwtPayload } from "jsonwebtoken";
-import { IUser } from "../dashboard/users/userType";
+
+import { IPlayer, IUser } from "../dashboard/users/userType";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
-import { createTransaction } from "../dashboard/transactions/transactionController";
+import { TransactionController } from "../dashboard/transactions/transactionController";
 import { v2 as cloudinary } from "cloudinary";
 import { config } from "../config/config";
 import bcrypt from "bcrypt";
+
+
+const transactionController = new TransactionController()
 
 export const clients: Map<string, WebSocket> = new Map();
 
@@ -59,7 +63,7 @@ export interface CustomJwtPayload extends JwtPayload {
   role: string;
 }
 
-export const updateStatus = (client: IUser, status: string) => {
+export const updateStatus = (client: IUser | IPlayer, status: string) => {
   const validStatuses = ["active", "inactive"];
   if (!validStatuses.includes(status)) {
     throw createHttpError(400, "Invalid status value");
@@ -68,7 +72,7 @@ export const updateStatus = (client: IUser, status: string) => {
 };
 
 export const updatePassword = async (
-  client: IUser,
+  client: IUser | IPlayer,
   password: string,
   existingPassword: string
 ) => {
@@ -93,7 +97,7 @@ export const updatePassword = async (
 };
 
 export const updateCredits = async (
-  client: IUser,
+  client: IUser | IPlayer,
   creator: IUser,
   credits: { type: string; amount: number }
 ) => {
@@ -115,7 +119,7 @@ export const updateCredits = async (
       );
     }
 
-    const transaction = await createTransaction(
+    const transaction = await transactionController.createTransaction(
       type,
       creator,
       client,

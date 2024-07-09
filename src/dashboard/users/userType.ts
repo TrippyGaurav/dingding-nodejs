@@ -24,6 +24,8 @@ export interface IPlayer extends Document {
   status: string;
   lastLogin: Date | null;
   loginTimes: number;
+  totalRecharged: number;
+  totalRedeemed: number;
   credits: number;
   favouriteGames: string[];
   transactions: Types.ObjectId[];

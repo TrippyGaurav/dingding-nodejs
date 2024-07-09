@@ -1,42 +1,37 @@
 import express from "express";
 import { extractRoleFromCookie } from "../middleware/middlware";
 import {
-  createUser,
-  loginUser,
-  deleteClient,
-  updateClient,
-  getClientsOfClient,
-  getAllSubordinates,
-  getSubordinateById,
-  getCurrentUser,
+  UserController,
 } from "./userController";
 import { checkUser } from "../middleware/checkUser";
 
+const userController = new UserController()
 const userRoutes = express.Router();
 
 // LOGIN
-userRoutes.post("/login", loginUser);
+userRoutes.post("/login", userController.loginUser);
 
 // ADD User
-userRoutes.post("/", checkUser, createUser);
+userRoutes.post("/", checkUser, userController.createUser);
 
 // // GET all details about the current user
-userRoutes.get("/", checkUser, getCurrentUser);
+userRoutes.get("/", checkUser, userController.getCurrentUser);
 
 // // GET all subordinates
-userRoutes.get("/all", extractRoleFromCookie, getAllSubordinates);
+userRoutes.get("/all", checkUser, userController.getAllSubordinates);
 
-// // GET all details of a particular user
-userRoutes.get("/:subordinateId", checkUser, getSubordinateById);
+
 
 // // DELETE A Client
-userRoutes.delete("/:clientId", extractRoleFromCookie, deleteClient);
+userRoutes.delete("/:clientId", checkUser, userController.deleteUser);
 
 // // UPDATE a client
-userRoutes.put("/:clientId", extractRoleFromCookie, updateClient);
+userRoutes.put("/:clientId", checkUser, userController.updateClient);
 
-// // FOR COMPANY
+// GET a client
+userRoutes.get("/:subordinateId", checkUser, userController.getSubordinateById);
+
 // // GET clients of user by userId
-userRoutes.get("/:clientId/clients", extractRoleFromCookie, getClientsOfClient);
+// userRoutes.get("/:subordinateId/subordinates", checkUser, userController.getUserSubordinates);
 
 export default userRoutes;

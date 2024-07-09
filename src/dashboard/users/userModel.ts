@@ -41,6 +41,8 @@ const PlayerSchema = new Schema<IPlayer>(
     status: { type: String, default: "active" },
     lastLogin: { type: Date, default: null },
     loginTimes: { type: Number, default: 0 },
+    totalRecharged: { type: Number, default: 0 },
+    totalRedeemed: { type: Number, default: 0 },
     credits: { type: Number, default: 0 },
     favouriteGames: { type: [String], default: [] },
     transactions: [{ type: mongoose.Types.ObjectId, ref: "Transaction" }],

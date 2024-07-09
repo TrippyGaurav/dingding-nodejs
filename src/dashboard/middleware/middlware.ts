@@ -33,8 +33,13 @@ export function extractRoleFromCookie(
       process.env.JWT_SECRET!,
       (err, decoded: DecodedToken | undefined) => {
         if (err) {
-          console.error("Token verification failed:", err.message);
-          return res.status(401).json({ error: "You are not authenticated" });
+          if (err.name === "TokenExpiredError") {
+            console.error("Token expired:", err.message);
+            return next(createHttpError(401, "Token has expired"));
+          } else {
+            console.error("Token verification failed:", err.message);
+            return next(createHttpError(401, "You are not authenticated"));
+          }
         } else {
           req.body = {
             ...req.body,
@@ -43,7 +48,6 @@ export function extractRoleFromCookie(
           };
 
           console.log(decoded!.username);
-
           console.log("Authenticated successfully");
           next();
         }

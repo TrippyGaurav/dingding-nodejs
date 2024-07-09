@@ -3,8 +3,8 @@ import { ITransaction } from "./transactionType";
 
 const TransactionSchema = new Schema<ITransaction>(
   {
-    debtor: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    creditor: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    debtor: { type: String, required: true },
+    creditor: { type: String, required: true },
     type: { type: String, required: true },
     amount: { type: Number, required: true },
   },

@@ -9,7 +9,7 @@ import {
 import { CheckResult } from "../game/slotResults";
 import { getRTP } from "../game/rtpgenerator";
 import { verifySocketToken } from "../utils/playerAuth";
-import { User } from "../dashboard/users/userModel";
+import { Player, User } from "../dashboard/users/userModel";
 export let users: Map<string, SocketUser> = new Map();
 import { Game, Payouts } from "../dashboard/casinoGames/gamesModel";
 // import { clientData } from "../dashboard/user/userController";
@@ -49,6 +49,7 @@ export class SocketUser {
 
       // Retrieve the payout JSON data
       const payoutData = await Payouts.find({ _id: { $in: game.payout } });
+      console.log(payoutData)
       gameSettings.initiate(payoutData[0].data, this.socket.id);
     } catch (error) {
       console.error('Error initializing game data:', error);
@@ -109,7 +110,7 @@ export class SocketUser {
   async handleAuth() {
     try {
       // const messageData = JSON.parse(message);
-      const CurrentUser = await User.findOne({
+      const CurrentUser = await Player.findOne({
         username: this.username,
       }).exec();
       if (CurrentUser) {
@@ -140,7 +141,8 @@ export class SocketUser {
 
   //Update player credits case win ,bet,and lose;
   async updateCreditsInDb(finalBalance: number) {
-    await User.findOneAndUpdate(
+    console.log(finalBalance, "finalba;")
+    await Player.findOneAndUpdate(
       { username: this.username },
       {
         credits: finalBalance,
@@ -153,6 +155,7 @@ export async function initializeUser(socket: Socket) {
   try {
     const decoded = await verifySocketToken(socket);
     socket.data.username = decoded.username;
+
     socket.data.designation = decoded.designation;
     const user = new SocketUser(socket, socket);
     users.set(user.socket.id, user);
