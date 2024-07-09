@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import Game, { Payouts } from "./gameModel";
+import { Payouts } from "./gameModel";
+import Game from "./gameModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import { uploadImage } from "../../utils/utils";

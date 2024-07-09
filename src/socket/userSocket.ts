@@ -9,11 +9,12 @@ import {
 import { CheckResult } from "../game/slotResults";
 import { getRTP } from "../game/rtpgenerator";
 import { verifySocketToken } from "../utils/playerAuth";
-import { Player, User } from "../dashboard/users/userModel";
+import { Player } from "../dashboard/users/userModel";
 export let users: Map<string, SocketUser> = new Map();
-import { Game, Payouts } from "../dashboard/casinoGames/gamesModel";
+import { Payouts } from "../dashboard/games/gameModel";
 // import { clientData } from "../dashboard/user/userController";
 import { gameData } from "../game/testData";
+import Game from "../dashboard/games/gameModel";
 export class SocketUser {
   socket: Socket;
   isAlive: boolean = false;
@@ -37,11 +38,10 @@ export class SocketUser {
 
       // Use "SL-VIK" as default tagName if messageData.Data.GameID is not present
       const tagName = messageData.Data.GameID;
-
       const game = await Game.findOne({ tagName: tagName });
-      console.log(tagName, "Game");
+      console.log(game.payout, "Game");
 
-      if (!game || !game.payout || !game.payout.length) {
+      if (!game || !game.payout) {
         console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
         gameSettings.initiate(gameData[0], this.socket.id);
         return;
@@ -49,7 +49,7 @@ export class SocketUser {
 
       // Retrieve the payout JSON data
       const payoutData = await Payouts.find({ _id: { $in: game.payout } });
-      console.log(payoutData)
+      console.log(payoutData, "payout")
       gameSettings.initiate(payoutData[0].data, this.socket.id);
     } catch (error) {
       console.error('Error initializing game data:', error);
@@ -140,7 +140,7 @@ export class SocketUser {
   };
 
   //Update player credits case win ,bet,and lose;
-   async updateCreditsInDb(finalBalance: number) {
+  async updateCreditsInDb(finalBalance: number) {
     console.log(finalBalance, "finalba;")
     await Player.findOneAndUpdate(
       { username: this.username },
@@ -155,7 +155,6 @@ export async function initializeUser(socket: Socket) {
   try {
     const decoded = await verifySocketToken(socket);
     socket.data.username = decoded.username;
-
     socket.data.designation = decoded.designation;
     const user = new SocketUser(socket, socket);
     users.set(user.socket.id, user);
