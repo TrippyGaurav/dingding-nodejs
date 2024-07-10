@@ -1,18 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRTP = void 0;
+exports.getRTP = getRTP;
 const global_1 = require("./global");
-const slotResults_1 = require("./slotResults");
 function getRTP(client, spins) {
     let moneySpend = 0;
     let moneyWon = 0;
+    global_1.getCurrentRTP.playerWon = 0;
+    global_1.getCurrentRTP.playerTotalBets = 0;
     for (let i = 0; i < spins; i++) {
-        const resultData = new slotResults_1.CheckResult(client);
+        (0, global_1.spinResult)(client);
         moneySpend += global_1.gameSettings.currentBet;
-        moneyWon += resultData.winData.totalWinningAmount;
+        moneyWon += global_1.gameSettings._winData.totalWinningAmount;
     }
-    console.log("Bet : ", global_1.gameSettings.currentBet, " Players Total bet  : ", moneySpend, " Player Won : ", moneyWon);
-    console.log("GENERATED RTP : ", (moneyWon / moneySpend) * 100);
+    // Calculate RTP only if moneySpend is not zero to avoid division by zero
+    let rtp = 0;
+    console.log("Bet : ", global_1.gameSettings.currentBet, "Players Total bet  : ", moneySpend, "Player Won : ", moneyWon);
+    if (moneySpend > 0) {
+        rtp = (moneyWon / moneySpend); // Use toFixed to limit decimal places
+    }
+    console.log(global_1.gameSettings.noOfBonus, "bonus");
+    console.log(global_1.gameSettings.totalBonuWinAmount, "totalBonus");
+    console.log("GENERATED RTP : ", rtp);
     return;
 }
-exports.getRTP = getRTP;

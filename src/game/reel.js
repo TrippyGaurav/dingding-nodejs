@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.startInfiniteSpins = void 0;
+exports.startInfiniteSpins = startInfiniteSpins;
 // Example symbols with their weights
 const symbolWeights = [
     { symbol: "A", weight: 5 },
@@ -79,4 +79,3 @@ function startInfiniteSpins() {
     }
     askForSpin();
 }
-exports.startInfiniteSpins = startInfiniteSpins;

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GambleGame = void 0;
 const global_1 = require("./global");
-const user_1 = require("../user/user");
+const userSocket_1 = require("../socket/userSocket");
 // import { sendMessageToClient } from "./App";
 class GambleGame {
     constructor(clientId, multiplier = 2) {
@@ -40,8 +40,9 @@ class GambleGame {
             },
             PlayerData: global_1.playerData,
         };
+        (0, userSocket_1.getClient)(global_1.playerData.playerId).updateCreditsInDb(global_1.playerData.Balance);
         //TODO : ADD MESSAGE FOR CLIENT
-        (0, user_1.getClient)(clientId).sendMessage("GambleResult", ResultData);
+        (0, userSocket_1.getClient)(clientId).sendMessage("GambleResult", ResultData);
         // sendMessageToClient(clientId, "GambleResult", ResultData);
     }
     updateplayerBalance() {
