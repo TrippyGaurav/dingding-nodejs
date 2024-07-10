@@ -373,20 +373,20 @@ const addFavouriteGame = (req, res, next) => __awaiter(void 0, void 0, void 0, f
             throw (0, http_errors_1.default)(404, "Player not found");
         }
         let message;
+        let updatedPlayer;
         if (type === "add") {
-            const updateResult = yield userModel_1.Player.updateOne({ _id: playerId }, { $addToSet: { favouriteGames: gameId } });
-            message = updateResult.modifiedCount > 0
+            updatedPlayer = yield userModel_1.Player.findByIdAndUpdate(playerId, { $addToSet: { favouriteGames: gameId } }, { new: true });
+            message = updatedPlayer.favouriteGames.includes(gameId)
                 ? "Game added to favourites"
                 : "Game already in favourites";
         }
         else if (type === "remove") {
-            const updateResult = yield userModel_1.Player.updateOne({ _id: playerId }, { $pull: { favouriteGames: gameId } });
-            message = updateResult.modifiedCount > 0
+            updatedPlayer = yield userModel_1.Player.findByIdAndUpdate(playerId, { $pull: { favouriteGames: gameId } }, { new: true });
+            message = !updatedPlayer.favouriteGames.includes(gameId)
                 ? "Game removed from favourites"
                 : "Game not found in favourites";
         }
-        yield player.save();
-        res.status(200).json({ message: message });
+        return res.status(200).json({ message, data: updatedPlayer });
     }
     catch (error) {
         next(error);
