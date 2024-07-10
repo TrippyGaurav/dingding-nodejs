@@ -1,6 +1,6 @@
 import { gameSettings, playerData } from "./global";
 import { bonusGameType } from "./gameUtils";
-import { getClient } from "../user/user";
+import { getClient } from "../socket/userSocket";
 // import { sendMessageToClient } from "./App";
 
 export class GambleGame {
@@ -52,7 +52,7 @@ export class GambleGame {
       },
       PlayerData: playerData,
     };
-    
+    getClient(playerData.playerId).updateCreditsInDb(playerData.Balance);
     //TODO : ADD MESSAGE FOR CLIENT
     getClient(clientId).sendMessage("GambleResult", ResultData);
     // sendMessageToClient(clientId, "GambleResult", ResultData);

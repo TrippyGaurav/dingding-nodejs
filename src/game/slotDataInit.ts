@@ -1,12 +1,15 @@
-import { spec } from "node:test/reporters";
 import { bonusGame } from "./bonusResults";
 import { UiInitData, gameSettings, playerData } from "./global";
 import { bonusGameType, generateMatrix } from "./gameUtils";
 import { PayLines } from "./slotResults";
-import { getClient } from "../user/user";
+import { getClient } from "../socket/userSocket";
+import { shuffleArray } from "./gameUtils";
 
 export function sendInitdata(clientID: string) {
-  const matrix = generateMatrix(gameSettings.matrix.x, 18);
+  // const matrix = generateMatrix(gameSettings.matrix.x, 18);
+  gameDataInit();
+  gameSettings.reels = generateInitialreel();
+  playerData.playerId = clientID;
   if (
     gameSettings.currentGamedata.bonus.isEnabled &&
     gameSettings.currentGamedata.bonus.type == bonusGameType.spin
@@ -28,7 +31,7 @@ export function sendInitdata(clientID: string) {
 
   const dataToSend = {
     GameData: {
-      Reel: matrix,
+      Reel: gameSettings.reels,
       Lines: gameSettings.currentGamedata.linesApiData,
       Bets: gameSettings.currentGamedata.bets,
       canSwitchLines: false,
@@ -38,8 +41,8 @@ export function sendInitdata(clientID: string) {
     BonusData:
       gameSettings.bonus.game != null
         ? gameSettings.bonus.game.generateData(
-            gameSettings.bonusPayTable[0]?.pay
-          )
+          gameSettings.bonusPayTable[0]?.pay
+        )
         : [],
     UIData: UiInitData,
     PlayerData: playerData,
@@ -51,29 +54,75 @@ export function sendInitdata(clientID: string) {
 
 export class RandomResultGenerator {
   constructor() {
-    // Generating a 3x5 matrix of random numbers based on weights
-    const matrix: string[][] = [];
-    for (let i = 0; i < gameSettings.matrix.y; i++) {
-      const row: string[] = [];
-      for (let j = 0; j < gameSettings.matrix.x; j++) {
-        const randomIndex: number = this.randomWeightedIndex(
-          gameSettings.Weights
-        );
-        row.push(gameSettings.Symbols[randomIndex]);
+    let matrix: string[][] = [];
+    let randomIndexArray: number[] = [];
+    for (let j = 0; j < gameSettings.matrix.y; j++) {
+      let row: string[] = [];
+      for (let i = 0; i < gameSettings.matrix.x; i++) {
+        if (j == 0) {
+          let rowrandomIndex =
+            Math.floor(Math.random() * (gameSettings.reels[i].length - 1 - 0)) +
+            0;
+          randomIndexArray.push(rowrandomIndex);
+          row.push(gameSettings.reels[i][rowrandomIndex].toString());
+        } else {
+          // if (randomIndexArray[i] == 0)
+          //   row.push(gameSettings.reels[i][randomIndexArray[i] + j].toString());
+          // else if (randomIndexArray[i] == gameSettings.reels[i].length - 1)
+          //   row.push(gameSettings.reels[i][randomIndexArray[i] - j].toString());
+          // else if (randomIndexArray[i] <= gameSettings.matrix.y)
+          //   row.push(gameSettings.reels[i][randomIndexArray[i] + j].toString());
+          // else if (randomIndexArray[i] > gameSettings.matrix.y)
+          //   row.push(gameSettings.reels[i][randomIndexArray[i] - j].toString());
+          let initialRandomIndex = randomIndexArray[i];
+          let adjustedIndex = (initialRandomIndex + j) % gameSettings.reels[i].length;
+          row.push(gameSettings.reels[i][adjustedIndex].toString());
+        }
       }
       matrix.push(row);
-    }
 
+    }
+    gameSettings.resultReelIndex = randomIndexArray;
+    console.log("indexs", randomIndexArray);
+    console.log("gameSettings._winData.resultReelIndex", gameSettings.resultReelIndex);
+
+    //  matrix.pop();
     // matrix.pop();
     // matrix.pop();
-    // matrix.pop();
-    // matrix.push([ '4', '0', '0', '0', '4' ])
-    // matrix.push([ '6', '4', '8', '4', '2' ])
-    // matrix.push([ '1', '8', '4', '4', '8' ])
+    // matrix.push([ '1', '2', '3', '4', '5' ])
+    // matrix.push([ '2', '13', '13', '13', '13' ])
+    // matrix.push([ '1', '1', '1', '1', '6' ])
 
     gameSettings.resultSymbolMatrix = matrix;
-    gameDataInit();
+    console.log("MATRIX " + matrix);
+
   }
+
+  // export class RandomResultGenerator {
+  //   constructor() {
+  //     // Generating a 3x5 matrix of random numbers based on weights
+  //     const matrix: string[][] = [];
+  //     for (let i = 0; i < gameSettings.matrix.y; i++) {
+  //       const row: string[] = [];
+  //       for (let j = 0; j < gameSettings.matrix.x; j++) {
+  //         const randomIndex: number = this.randomWeightedIndex(
+  //           gameSettings.Weights
+  //         );
+  //         row.push(gameSettings.Symbols[randomIndex]);
+  //       }
+  //       matrix.push(row);
+  //     }
+
+  // matrix.pop();
+  // matrix.pop();
+  // matrix.pop();
+  // matrix.push([ '4', '0', '0', '0', '4' ])
+  // matrix.push([ '6', '4', '8', '4', '2' ])
+  // matrix.push([ '1', '8', '4', '4', '8' ])
+
+  //     gameSettings.resultSymbolMatrix = matrix;
+  //     gameDataInit();
+  //   }
 
   // Function to generate a random number based on weights
   randomWeightedIndex(weights: number[]): number {
@@ -95,6 +144,24 @@ function gameDataInit() {
   gameSettings.lineData = gameSettings.currentGamedata.linesApiData;
   // gameSettings.bonus.start = false;
   makeFullPayTable();
+}
+
+function generateInitialreel(): string[][] {
+  let matrix: string[][] = [];
+  for (let i = 0; i < gameSettings.matrix.x; i++) {
+    let reel: string[] = [];
+
+    gameSettings.currentGamedata.Symbols.forEach((element) => {
+      for (let j = 0; j < element.reelInstance[i]; j++) {
+        reel.push(element.Id.toString());
+      }
+    });
+
+    shuffleArray(reel);
+    matrix.push(reel);
+  }
+
+  return matrix;
 }
 
 function makeFullPayTable() {

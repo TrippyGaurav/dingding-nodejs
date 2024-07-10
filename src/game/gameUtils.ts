@@ -1,6 +1,7 @@
 import { bonusGame } from "./bonusResults";
 import { GambleGame } from "./gambleResults";
 import { gameSettings } from "./global";
+import { WinData } from "./slotResults";
 
 export interface SymbolData {
   symbolName: string;
@@ -27,6 +28,7 @@ export interface PlayerData {
   Balance: number;
   haveWon: number;
   currentWining: number;
+  playerId: string,
   // haveUsed: number
 }
 export interface PayLine {
@@ -79,6 +81,11 @@ export interface GameSettings {
   resultSymbolMatrix: string[][] | undefined;
   lineData: number[][];
   fullPayTable: PayLine[];
+  freeSpinStarted: boolean;
+  resultReelIndex: number[],
+  noOfBonus: number,
+  noOfFreeSpins: number,
+  totalBonuWinAmount: number[],
   jackpot: {
     symbolName: string;
     symbolId: number;
@@ -86,15 +93,21 @@ export interface GameSettings {
     defaultAmount: number;
     increaseValue: number;
   };
+  _winData: WinData;
   bonus: {
     game: bonusGame;
     start: boolean;
     stopIndex: number;
+    id: number;
     // maxPay: number
   };
+  tempReels: string[][];
+  reels: string[][];
   currentBet: number;
+  BetPerLines: number,
+  currentLines: number,
   startGame: boolean;
-  initiate: (arg: string, arg2: string) => void;
+  initiate: (arg: any, arg2: string) => void;
   gamble: {
     game: GambleGame;
     maxCount: number;
@@ -152,6 +165,15 @@ export function generateMatrix(n_Rows: number, n_Columns: number): any[][] {
   return matrix;
 }
 
+export function shuffleArray(array: any[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    let k = array[i];
+    array[i] = array[j];
+    array[j] = k;
+  }
+}
+
 export function convertData(data: string[][]): string[] {
   const result: string[] = [];
   for (const row of data) {
@@ -203,3 +225,45 @@ export function convertSymbols(data) {
   // return { symbols: convertedData };
   return uiData;
 }
+export function removeRecurringIndexSymbols(
+  symbolsToEmit: string[][]
+): string[][] {
+  const seen = new Set<string>();
+  const result: string[][] = [];
+
+  symbolsToEmit.forEach((subArray) => {
+    if (!Array.isArray(subArray)) {
+      console.warn('Expected an array but got', subArray);
+      return;
+    }
+    const uniqueSubArray: string[] = [];
+    subArray.forEach((symbol) => {
+      if (!seen.has(symbol)) {
+        seen.add(symbol);
+        uniqueSubArray.push(symbol);
+      }
+    });
+    if (uniqueSubArray.length > 0) {
+      result.push(uniqueSubArray);
+    }
+  });
+
+  return result;
+}
+export function combineUniqueSymbols(symbolsToEmit: string[][]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  symbolsToEmit.forEach((subArray) => {
+    subArray.forEach((symbol) => {
+      if (!seen.has(symbol)) {
+        seen.add(symbol);
+        result.push(symbol);
+      }
+    });
+  });
+
+  return result;
+}
+
+// Test the function

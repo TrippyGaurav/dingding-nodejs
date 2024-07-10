@@ -1,14 +1,24 @@
-import { sendInitdata } from "./slotDataInit";
+import { RandomResultGenerator, sendInitdata } from "./slotDataInit";
 import { gameData } from "./testData";
 import {
   GameSettings,
   PlayerData,
   WildSymbol,
+  bonusGameType,
+  combineUniqueSymbols,
   convertSymbols,
+  removeRecurringIndexSymbols,
   specialIcons,
   winning,
 } from "./gameUtils";
-import { getClient } from "../user/user";
+import { SocketUser, getClient } from "../socket/userSocket";
+import exp from "constants";
+import { CheckResult, ResultType, WinData } from "./slotResults";
+import { bonusGame } from "./bonusResults";
+import { middleware } from "../utils/middleware";
+import { log } from "console";
+import { updateCredits } from "../utils/utils";
+import socketController from "../socket/controller";
 
 export const gameSettings: GameSettings = {
   currentGamedata: {
@@ -24,6 +34,7 @@ export const gameSettings: GameSettings = {
       },
     ],
   },
+  tempReels: [[]],
   matrix: { x: 5, y: 3 },
   payLine: [],
   scatterPayTable: [],
@@ -36,6 +47,13 @@ export const gameSettings: GameSettings = {
   resultSymbolMatrix: [],
   lineData: [],
   fullPayTable: [],
+  _winData: undefined,
+  freeSpinStarted: false,
+  resultReelIndex: [],
+  //The two variables are just for simulation.
+  noOfBonus: 0,
+  noOfFreeSpins: 0,
+  totalBonuWinAmount: [],
   jackpot: {
     symbolName: "",
     symbolsCount: 0,
@@ -47,40 +65,56 @@ export const gameSettings: GameSettings = {
     start: false,
     stopIndex: -1,
     game: null,
+    id: -1,
     // game: new bonusGame(5),
   },
-  currentBet: 5,
+  currentBet: 0,
+  currentLines: 0,
+  BetPerLines: 0,
   startGame: false,
   gamble: {
     game: null,
     maxCount: 1,
     start: false,
   },
-  initiate: async (GameID: string, clientID: string) => {
+  reels: [[]],
+
+  initiate: async (GameData: {}, clientID: string) => {
+    // console.log(GameData)
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
     gameSettings.Symbols = [];
     gameSettings.Weights = [];
-    try {
-      const resp = await fetch(
-        "https://664c355635bbda10987f44ff.mockapi.io/api/gameId/" + GameID
-      );
-      const data = await resp.json();
-      if (data == "Not found") {
-        // Alerts(clientID, "Invalid Game ID");
-        getClient(clientID).sendError("404", "GAMENOTFOUND");
-        gameSettings.startGame = false;
-        return;
-      }
-      gameSettings.currentGamedata = data;
-      // const currentGameData=gameData.filter((element)=>element.id==GameID)
-    } catch (error) {
-      getClient(clientID).sendError("404", "NETWORK ERROR");
-      return;
-    }
+    gameSettings._winData = new WinData(clientID);
+    // try {
+    //   const resp = await fetch(
+    //     "https://664c355635bbda10987f44ff.mockapi.io/api/gameId/" + GameID
+    //   );
+    //   const data = await resp.json();
+    //   if (data == "Not found") {
+    //     // Alerts(clientID, "Invalid Game ID");
+    //     getClient(clientID).sendError("404", "GAMENOTFOUND");
+    //     gameSettings.startGame = false;
+    //     return;
+    //   }
+    //   gameSettings.currentGamedata = data;
+    //   // const currentGameData=gameData.filter((element)=>element.id==GameID)
+    // } catch (error) {
+    //   getClient(clientID).sendError("404", "NETWORK ERROR");
+    //   return;
+    // }
 
     // const currentGameData=gameData.filter((element)=>element.id==GameID)
-    // gameSettings.currentGamedata=currentGameData[0];
+
+    gameSettings.currentGamedata = GameData[0] || GameData;
+
+
+    gameSettings.currentGamedata.Symbols.forEach((element) => {
+      if (element.Name == "Bonus") {
+        gameSettings.bonus.id = element.Id
+      }
+
+    })
 
     initSymbols();
     UiInitData.paylines = convertSymbols(gameSettings.currentGamedata.Symbols);
@@ -105,7 +139,8 @@ function initSymbols() {
 export const playerData: PlayerData = {
   Balance: 100000,
   haveWon: 0,
-  currentWining: 5,
+  currentWining: 0,
+  playerId: "",
   // haveUsed: 0
 };
 
@@ -155,7 +190,7 @@ export function addPayLineSymbols(
 
 export function makePayLines() {
   gameSettings.currentGamedata.Symbols.forEach((element) => {
-    if (element.useWildSub || element.multiplier?.length > 0) {
+    if (element.useWildSub || (element.Name == "FreeSpin") || (element.Name == "Scatter")) {
       element.multiplier?.forEach((item, index) => {
         addPayLineSymbols(element.Id?.toString(), 5 - index, item[0], item[1]);
       });
@@ -203,3 +238,257 @@ function handleSpecialSymbols(symbol) {
       break;
   }
 }
+
+//CHECKMOOLAH
+export function spinResult(clientID: string) {
+  console.log(gameSettings._winData, ":gameSettings._winData");
+
+  if (
+    gameSettings.currentGamedata.bonus.isEnabled &&
+    gameSettings.currentGamedata.bonus.type == bonusGameType.tap
+  )
+    gameSettings.bonus.game = new bonusGame(
+      gameSettings.currentGamedata.bonus.noOfItem,
+      clientID
+    );
+
+  // if(playerData.Balance < gameWining.currentBet)
+  if (playerData.Balance < gameSettings.currentBet) {
+    // Alerts(clientID, "Low Balance");
+    console.warn("LOW BALANCE ALErt");
+    console.error("Low Balance ALErt");
+    return;
+  }
+
+  console.log("CALLED SPINNN" + playerData.Balance);
+
+  // TODO : Middle ware goes here
+  (async () => {
+    await middleware();
+  })();
+  //minus the balance
+
+  //TODO:To get the user information
+
+  console.log("CurrentBet : " + gameSettings.currentBet);
+
+  playerData.Balance -= gameSettings.currentBet;
+  gameSettings.tempReels = [[]];
+  console.log("player balance:", playerData.Balance);
+
+  console.log("player havewon:", playerData.haveWon);
+  gameSettings.bonus.start = false;
+  console.log("CALLEDD");
+
+  new RandomResultGenerator();
+  const result = new CheckResult();
+  result.makeResultJson(ResultType.normal);
+
+
+  // playerData.Balance -= gameSettings.currentBet;
+  // gameSettings.tempReels = [[]];
+  // console.log("player balance:", playerData.Balance);
+  // console.log("player havewon:", playerData.haveWon);
+  // gameSettings.bonus.start = false;
+  // console.log("CALLEDD");
+
+  // new RandomResultGenerator();
+  // const result = new CheckResult();
+  // result.makeResultJson(ResultType.normal);
+}
+
+export function startFreeSpin() {
+  console.log(
+    "____----Started FREE SPIN ----_____" + " :::  FREE SPINSS ::::",
+    gameSettings._winData.freeSpins
+  );
+  getClient(playerData.playerId).sendMessage("StartedFreeSpin", {});
+  gameSettings.freeSpinStarted = true;
+  for (let i = 0; i <= gameSettings._winData.freeSpins; i++) {
+    gameSettings.bonus.start = false;
+    new RandomResultGenerator();
+    new CheckResult();
+    console.log(
+      "FREE SPINS LEFTTT ::::" + (gameSettings._winData.freeSpins - i)
+    );
+  }
+  gameSettings._winData.freeSpins = 0;
+
+  getClient(playerData.playerId).sendMessage("StoppedFreeSpins", {});
+  gameSettings.freeSpinStarted = false;
+
+  console.log("____----Stopped FREE SPIN ----_____");
+}
+export function checkforMoolah() {
+  console.log("_______-------CALLED FOR CHECK FOR MOOLAHHHH-------_______");
+
+
+  gameSettings.tempReels = gameSettings.reels;
+  const lastWinData = gameSettings._winData;
+  lastWinData.winningSymbols = combineUniqueSymbols(
+    removeRecurringIndexSymbols(lastWinData.winningSymbols)
+  );
+  const index = lastWinData.winningSymbols.map((str) => {
+    const index: { x, y } = str.split(",").map(Number);
+    return index;
+  });
+  console.log("Winning Indexes " + index);
+  let matrix = [];
+  matrix = gameSettings.resultSymbolMatrix;
+  index.forEach(element => {
+    matrix[element[1]][element[0]] = null;
+
+  })
+  const movedArray = cascadeMoveTowardsNull(matrix);
+
+  let transposed = transposeMatrix(movedArray);
+  let iconsToFill: number[][] = []
+  for (let i = 0; i < transposed.length; i++) {
+    let row = []
+    for (let j = 0; j < transposed[i].length; j++) {
+      if (transposed[i][j] == null) {
+        let index = (gameSettings.resultReelIndex[i] + j + 2) % gameSettings.tempReels[i].length;
+        transposed[i][j] = gameSettings.tempReels[i][index];
+        row.unshift(gameSettings.tempReels[i][index]);
+      }
+
+    }
+    if (row.length > 0)
+      iconsToFill.push(row);
+  }
+
+
+  matrix = transposeMatrix(transposed);
+  // matrix.pop();
+  // matrix.pop();
+  // matrix.pop();
+  // matrix.push([ '1', '2', '3', '4', '5' ])
+  // matrix.push([ '1', '1', '1', '1', '6' ])
+  // matrix.push([ '0', '0', '0', '0', '0' ])
+  console.log("iconsTofill", iconsToFill);
+  gameSettings.resultSymbolMatrix = matrix;
+
+  // index.forEach(element => {
+  //   console.log("X : " + element[0] + " Y : " + element[1]);
+  //   console.log("REEL LENGTH " + gameSettings.tempReels[element[0]].length);
+
+  //   console.log("SYMBOL before  changing" + gameSettings.resultSymbolMatrix[element[1]][element[0]]);
+
+  //   console.log(gameSettings.resultReelIndex);
+
+  //   removeElement(gameSettings.tempReels, element[0], gameSettings.resultReelIndex[element[0]]);
+  //   gameSettings.resultSymbolMatrix[element[1]][element[0]] = getLastindex(element[0], (gameSettings.resultReelIndex[element[0]] + element[1]));
+
+  //   console.log("reel Lenght" + gameSettings.tempReels[element[0]].length + "  Changing Reel Index " + (gameSettings.resultReelIndex[element[0]] + element[1]));
+
+
+  //   console.log("SYMBOL After changing " + gameSettings.resultSymbolMatrix[element[1]][element[0]]);
+  // });
+
+  const result = new CheckResult();
+  result.makeResultJson(ResultType.moolah, iconsToFill);
+}
+
+function getLastindex(reelIndex: number, index: number) {
+  if (index >= gameSettings.tempReels[reelIndex].length)
+    if (index >= gameSettings.tempReels[reelIndex].length)
+      index = index - gameSettings.tempReels[reelIndex].length;
+
+  console.log("index __", index);
+
+
+  let Index = index - 1;
+  console.log("Changed Index " + Index);
+  if (Index < 0) {
+    Index = gameSettings.tempReels[reelIndex].length - 1;
+    console.log("Reel Lenght " + gameSettings.tempReels[reelIndex].length + " Changed value below Zeros " + Index);
+    return gameSettings.tempReels[reelIndex][Index]
+  }
+  else return gameSettings.tempReels[reelIndex][Index];
+}
+function removeElement(
+  arr: string[][],
+  rowIndex: number,
+  colIndex: number
+): void {
+  console.log("row : " + rowIndex + " col : " + colIndex);
+  console.log("temp Reel " + gameSettings.tempReels[rowIndex]);
+  console.log(arr[rowIndex].length);
+
+
+  // if (rowIndex < 0 || rowIndex >= arr.length || colIndex < 0 || colIndex >= arr[rowIndex].length) {
+  //     throw new Error('Invalid indices provided '+ rowIndex + " " + colIndex);
+  // }
+
+  // Remove the element at the specified indices
+  arr[rowIndex].splice(colIndex, 1);
+
+  // Shift elements to the left to fill the removed position
+  for (let i = rowIndex; i < arr.length; i++) {
+    for (let j = colIndex; j < arr[i].length; j++) {
+      if (j + 1 < arr[i].length) {
+        arr[i][j] = arr[i][j + 1];
+      } else {
+        // If we are at the last column, remove the last element
+        arr[i].pop();
+      }
+    }
+    for (let j = colIndex; j < arr[i].length; j++) {
+      if (j + 1 < arr[i].length) {
+        arr[i][j] = arr[i][j + 1];
+      } else {
+        // If we are at the last column, remove the last element
+        arr[i].pop();
+      }
+    }
+  }
+}
+
+
+function cascadeMoveTowardsNull(arr: (string | null)[][]): (string | null)[][] {
+  // Check if the array is empty or if it has empty subarrays
+  if (arr.length === 0 || arr[0].length === 0) return arr;
+
+  // Determine the number of rows and columns
+  const numRows = arr.length;
+  const numCols = arr[0].length;
+
+  // Create a new array to store the result
+  let result: (string | null)[][] = Array.from({ length: numRows }, () => new Array(numCols).fill(null));
+
+  for (let col = 0; col < numCols; col++) {
+    let newRow = numRows - 1;
+
+    // Place non-null elements starting from the bottom
+    for (let row = numRows - 1; row >= 0; row--) {
+      if (arr[row][col] !== null) {
+        result[newRow][col] = arr[row][col];
+        newRow--;
+      }
+    }
+
+    // Fill the top positions with null if there are remaining positions
+    for (let row = newRow; row >= 0; row--) {
+      result[row][col] = null;
+    }
+  }
+
+  return result;
+}
+
+function transposeMatrix(matrix) {
+  let transposed = [];
+
+  for (let i = 0; i < matrix[0].length; i++) {
+    let newRow = [];
+    for (let j = 0; j < matrix.length; j++) {
+      newRow.push(matrix[j][i]);
+    }
+    transposed.push(newRow);
+  }
+
+  return transposed;
+
+}
+
+
