@@ -23,8 +23,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Payouts = void 0;
+exports.Platform = exports.Payouts = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const PlatformSchema = new mongoose_1.Schema({
+    name: { type: String, required: true, unique: true },
+    games: [{ type: mongoose_1.default.Types.ObjectId, ref: "Game" }]
+});
 const GameSchema = new mongoose_1.Schema({
     name: {
         type: String,
@@ -79,4 +83,6 @@ const PayoutsSchema = new mongoose_1.Schema({
 const Game = mongoose_1.default.model("Game", GameSchema);
 const Payouts = mongoose_1.default.model("Payouts", PayoutsSchema);
 exports.Payouts = Payouts;
+const Platform = mongoose_1.default.model("Platform", PlatformSchema);
+exports.Platform = Platform;
 exports.default = Game;
