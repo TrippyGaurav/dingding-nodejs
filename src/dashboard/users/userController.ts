@@ -339,9 +339,6 @@ export class UserController {
 
       const client = (await this.userService.findUserById(clientObjectId)) || (await this.userService.findPlayerById(clientObjectId));
 
-      console.log("CLient : ", client);
-
-
       if (!client) {
         throw createHttpError(404, "Client not found");
       }

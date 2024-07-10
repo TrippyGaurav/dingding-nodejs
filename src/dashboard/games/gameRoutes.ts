@@ -8,7 +8,6 @@ import {
   updateGame,
   uploadThubnail,
 } from "./gameController";
-import determineOrigin from "../middleware/determineOrigin";
 import multer from "multer";
 import { checkUser } from "../middleware/checkUser";
 
@@ -20,7 +19,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 gameRoutes.get("/", checkUser, gameController.getGames);
 
 // POST : Add a Game
-gameRoutes.post("/", upload.single("file"), checkUser, gameController.addGame);
+gameRoutes.post('/', upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), checkUser, gameController.addGame);
 
 // GET : Get All Platforms
 gameRoutes.get("/platforms", checkUser, gameController.getPlatforms)

@@ -5,16 +5,29 @@ import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import { AuthRequest, uploadImage } from "../../utils/utils";
 import { Player } from "../users/userModel";
+import { v2 as cloudinary } from "cloudinary";
+import { config } from "../../config/config";
+
 
 interface GameRequest extends Request {
-  file: Express.Multer.File;
+  files?: {
+    [fieldname: string]: Express.Multer.File[];
+  };
 }
+
+interface CloudinaryUploadResult {
+  secure_url: string;
+}
+
+
 
 export class GameController {
 
   constructor() {
     this.getGames = this.getGames.bind(this);
     this.addGame = this.addGame.bind(this);
+    this.addPlatform = this.addPlatform.bind(this);
+    this.getPlatforms = this.getPlatforms.bind(this);
   }
 
   // GET : Games
@@ -23,6 +36,7 @@ export class GameController {
       const _req = req as AuthRequest;
       const { category, platform } = req.query;
       const { username, role } = _req.user;
+
 
       if (!platform) {
         throw createHttpError(400, "Platform query parameter is required")
@@ -94,7 +108,7 @@ export class GameController {
   }
 
   // POST : Add Game
-  async addGame(req: AuthRequest, res: Response, next: NextFunction) {
+  async addGame(req: GameRequest, res: Response, next: NextFunction) {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -108,23 +122,11 @@ export class GameController {
 
       const { name, thumbnail, url, type, category, status, tagName, slug, platform } = req.body;
 
-      if (
-        !name ||
-        !thumbnail ||
-        !url ||
-        !type ||
-        !category ||
-        !status ||
-        !tagName ||
-        !slug ||
-        !req.file ||
-        !platform
-      ) {
-        throw createHttpError(
-          400,
-          "All required fields must be provided, including the payout file and platform"
-        );
+
+      if (!name || !url || !type || !category || !status || !tagName || !slug || !req.files.thumbnail || !req.files.payoutFile || !platform) {
+        throw createHttpError(400, "All required fields must be provided, including the payout file and platform");
       }
+
 
       const existingGame = await Game.findOne({ $or: [{ name }, { slug }] }).session(session);
       if (existingGame) {
@@ -140,8 +142,26 @@ export class GameController {
         throw createHttpError(400, `Platform ${platform} not found`);
       }
 
+      cloudinary.config({
+        cloud_name: config.cloud_name,
+        api_key: config.api_key,
+        api_secret: config.api_secret,
+      });
+
+      // Upload thumbnail to Cloudinary
+      const thumbnailBuffer = req.files.thumbnail[0].buffer;
+      const thumbnailUploadResult = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
+        cloudinary.uploader.upload_stream({ resource_type: 'image', folder: platform }, (error, result) => {
+          if (error) {
+            return reject(error);
+          }
+          resolve(result as CloudinaryUploadResult);
+        }).end(thumbnailBuffer);
+      });
+
+
       // Handle file for payout
-      const jsonData = JSON.parse(req.file.buffer.toString("utf-8"));
+      const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString('utf-8'));
       const newPayout = new Payouts({
         gameName: tagName,
         data: jsonData,
@@ -151,7 +171,7 @@ export class GameController {
 
       const game = new Game({
         name,
-        thumbnail,
+        thumbnail: thumbnailUploadResult.secure_url, // Save the Cloudinary URL
         url,
         type,
         category,
@@ -172,6 +192,8 @@ export class GameController {
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
+      console.log(error);
+
       next(error);
     }
   }
@@ -187,6 +209,11 @@ export class GameController {
       }
 
       const { name } = req.body;
+      console.log(req.body);
+
+
+      console.log("Platform Name ", name);
+
 
       if (!name) {
         throw createHttpError(400, "Platform name is required");
