@@ -1,22 +1,34 @@
 import express from "express";
 import { extractRoleFromCookie } from "../middleware/middlware";
 import {
+  GameController,
   addFavouriteGame,
-  addGame,
   deleteGame,
-  getAllGames,
   getGameById,
   updateGame,
   uploadThubnail,
 } from "./gameController";
 import determineOrigin from "../middleware/determineOrigin";
 import multer from "multer";
+import { checkUser } from "../middleware/checkUser";
 
+const gameController = new GameController()
 const gameRoutes = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-gameRoutes.get("/", extractRoleFromCookie, getAllGames);
-gameRoutes.post("/", upload.single("file"), extractRoleFromCookie, addGame);
+// GET : Get all Games
+gameRoutes.get("/", checkUser, gameController.getGames);
+
+// POST : Add a Game
+gameRoutes.post("/", upload.single("file"), checkUser, gameController.addGame);
+
+// GET : Get All Platforms
+gameRoutes.get("/platforms", checkUser, gameController.getPlatforms)
+
+// POST : Add a Platform
+gameRoutes.post("/platforms", checkUser, gameController.addPlatform)
+
+
 gameRoutes.put(
   "/:gameId",
   upload.single("file"),
@@ -31,5 +43,6 @@ gameRoutes.put(
   extractRoleFromCookie,
   addFavouriteGame
 );
+
 
 export default gameRoutes;
