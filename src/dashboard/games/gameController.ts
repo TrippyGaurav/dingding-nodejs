@@ -425,7 +425,6 @@ export const addFavouriteGame = async (
     const { playerId } = req.params;
     const { gameId, type } = req.body;
 
-
     if (!playerId || !gameId) {
       throw createHttpError(400, "Player ID and Game ID are required");
     }
@@ -435,10 +434,7 @@ export const addFavouriteGame = async (
     }
 
     if (type !== "add" && type !== "remove") {
-      throw createHttpError(
-        400,
-        "Invalid type value. It should be either 'add' or 'remove'"
-      );
+      throw createHttpError(400, "Invalid type value. It should be either 'add' or 'remove'");
     }
 
     const player = await Player.findById(playerId);
@@ -448,31 +444,33 @@ export const addFavouriteGame = async (
     }
 
     let message;
+    let updatedPlayer;
 
     if (type === "add") {
-      const updateResult = await Player.updateOne(
-        { _id: playerId },
-        { $addToSet: { favouriteGames: gameId } }
+      updatedPlayer = await Player.findByIdAndUpdate(
+        playerId,
+        { $addToSet: { favouriteGames: gameId } },
+        { new: true }
       );
 
-      message = updateResult.modifiedCount > 0
+      message = updatedPlayer.favouriteGames.includes(gameId)
         ? "Game added to favourites"
         : "Game already in favourites";
 
     } else if (type === "remove") {
-      const updateResult = await Player.updateOne(
-        { _id: playerId },
-        { $pull: { favouriteGames: gameId } }
+      updatedPlayer = await Player.findByIdAndUpdate(
+        playerId,
+        { $pull: { favouriteGames: gameId } },
+        { new: true }
       );
 
-      message = updateResult.modifiedCount > 0
+      message = !updatedPlayer.favouriteGames.includes(gameId)
         ? "Game removed from favourites"
         : "Game not found in favourites";
     }
 
-    await player.save();
+    return res.status(200).json({ message, data: updatedPlayer });
 
-    res.status(200).json({ message: message });
   } catch (error) {
     next(error);
   }
