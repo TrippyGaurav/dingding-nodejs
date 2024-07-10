@@ -1,6 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertSymbols = exports.convertData = exports.generateMatrix = exports.weightedRandom = exports.bonusGameType = exports.specialIcons = void 0;
+exports.bonusGameType = exports.specialIcons = void 0;
+exports.weightedRandom = weightedRandom;
+exports.generateMatrix = generateMatrix;
+exports.shuffleArray = shuffleArray;
+exports.convertData = convertData;
+exports.convertSymbols = convertSymbols;
+exports.removeRecurringIndexSymbols = removeRecurringIndexSymbols;
+exports.combineUniqueSymbols = combineUniqueSymbols;
 const global_1 = require("./global");
 var specialIcons;
 (function (specialIcons) {
@@ -47,7 +54,6 @@ function weightedRandom(items, weights) {
         index: items.length - 1,
     };
 }
-exports.weightedRandom = weightedRandom;
 // Function to generate a 5x18 matrix of randomly selected items based on weights
 function generateMatrix(n_Rows, n_Columns) {
     const matrix = [];
@@ -62,7 +68,14 @@ function generateMatrix(n_Rows, n_Columns) {
     // console.log(matrix);
     return matrix;
 }
-exports.generateMatrix = generateMatrix;
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        let k = array[i];
+        array[i] = array[j];
+        array[j] = k;
+    }
+}
 function convertData(data) {
     const result = [];
     for (const row of data) {
@@ -71,7 +84,6 @@ function convertData(data) {
     }
     return result;
 }
-exports.convertData = convertData;
 function convertSymbols(data) {
     let uiData = {
         symbols: [],
@@ -109,4 +121,38 @@ function convertSymbols(data) {
     // return { symbols: convertedData };
     return uiData;
 }
-exports.convertSymbols = convertSymbols;
+function removeRecurringIndexSymbols(symbolsToEmit) {
+    const seen = new Set();
+    const result = [];
+    symbolsToEmit.forEach((subArray) => {
+        if (!Array.isArray(subArray)) {
+            console.warn('Expected an array but got', subArray);
+            return;
+        }
+        const uniqueSubArray = [];
+        subArray.forEach((symbol) => {
+            if (!seen.has(symbol)) {
+                seen.add(symbol);
+                uniqueSubArray.push(symbol);
+            }
+        });
+        if (uniqueSubArray.length > 0) {
+            result.push(uniqueSubArray);
+        }
+    });
+    return result;
+}
+function combineUniqueSymbols(symbolsToEmit) {
+    const seen = new Set();
+    const result = [];
+    symbolsToEmit.forEach((subArray) => {
+        subArray.forEach((symbol) => {
+            if (!seen.has(symbol)) {
+                seen.add(symbol);
+                result.push(symbol);
+            }
+        });
+    });
+    return result;
+}
+// Test the function

@@ -1,46 +1,14 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WinData = exports.PayLines = exports.CheckResult = void 0;
+exports.ResultType = exports.WinData = exports.PayLines = exports.CheckResult = void 0;
 // import { Alerts } from "./Alerts";
 // import { sendMessageToClient } from "./App";
 const global_1 = require("./global");
-const slotDataInit_1 = require("./slotDataInit");
 const gameUtils_1 = require("./gameUtils");
-const bonusResults_1 = require("./bonusResults");
-const user_1 = require("../user/user");
-const middleware_1 = require("../utils/middleware");
+const userSocket_1 = require("../socket/userSocket");
 class CheckResult {
-    constructor(clientID) {
-        this.clientID = clientID;
-        if (global_1.gameSettings.currentGamedata.bonus.isEnabled &&
-            global_1.gameSettings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.tap)
-            global_1.gameSettings.bonus.game = new bonusResults_1.bonusGame(global_1.gameSettings.currentGamedata.bonus.noOfItem, clientID);
-        // if(playerData.Balance < gameWining.currentBet)
-        if (global_1.playerData.Balance < global_1.gameSettings.currentBet) {
-            // Alerts(clientID, "Low Balance");
-            return;
-        }
-        // TODO : Middle ware goes here
-        (() => __awaiter(this, void 0, void 0, function* () {
-            yield (0, middleware_1.middleware)();
-        }))();
-        //minus the balance
-        //TODO:To get the user information
-        console.log("CurrentBet : " + global_1.gameSettings.currentBet);
-        global_1.playerData.Balance -= global_1.gameSettings.currentBet;
-        console.log("player balance:", global_1.playerData.Balance);
-        console.log("player havewon:", global_1.playerData.haveWon);
-        new slotDataInit_1.RandomResultGenerator();
-        global_1.gameSettings.bonus.start = false;
+    constructor() {
+        global_1.gameSettings._winData = new WinData(global_1.playerData.playerId);
         this.scatter = gameUtils_1.specialIcons.scatter;
         this.useScatter = global_1.gameSettings.useScatter && this.scatter !== null;
         this.jackpot = global_1.gameSettings.jackpot;
@@ -59,7 +27,6 @@ class CheckResult {
         this.jackpotWinSymbols = [];
         this.winSeq = null;
         this.bonusResult = [];
-        this.winData = new WinData(clientID);
         this.searchWinSymbols();
     }
     searchWinSymbols() {
@@ -69,40 +36,44 @@ class CheckResult {
         // gameWining.WinningLines = [];
         // gameWining.TotalWinningAmount = 0;
         this.checkForWin();
-        this.checkForScatter();
+        // this.checkForScatter();
         this.checkForBonus();
         this.checkForJackpot();
         // let excludeindex: number[] = [];
-        // for (let i = 0; i < this.winData.winningSymbols.length; i++) {
-        //     for (let j = i + 1; j < this.winData.winningSymbols.length; j++) {
-        //         if (this.winData.winningSymbols[i].some(ai => this.winData.winningSymbols[j].includes(ai)))
+        // for (let i = 0; i < gameSettings._winData.winningSymbols.length; i++) {
+        //     for (let j = i + 1; j < gameSettings._winData.winningSymbols.length; j++) {
+        //         if (gameSettings._winData.winningSymbols[i].some(ai => gameSettings._winData.winningSymbols[j].includes(ai)))
         //             excludeindex.push(j);
         //     }
         // }
         // let excludeindexModified: number[] = excludeindex.filter((value, index, array) => array.indexOf(value) === index);
         // for (let i = excludeindexModified.length - 1; i >= 0; i--) {
-        //     this.winData.winningSymbols.splice(excludeindexModified[i], 1);
+        //     gameSettings._winData.winningSymbols.splice(excludeindexModified[i], 1);
         // }
-        this.winData.winningLines = this.winData.winningLines.filter((value, index, array) => array.indexOf(value) === index);
-        this.winData.updateBalance();
+        global_1.gameSettings._winData.winningLines =
+            global_1.gameSettings._winData.winningLines.filter((value, index, array) => array.indexOf(value) === index);
+        console.log("winning symbols", global_1.gameSettings._winData.winningSymbols);
+        global_1.gameSettings._winData.updateBalance();
         console.log("result :", global_1.gameSettings.resultSymbolMatrix);
-        console.log("win data", this.winData);
+        console.log("win data", global_1.gameSettings._winData);
         console.log("Bonus start", global_1.gameSettings.bonus.start);
-        this.makeResultJson();
+        if (!global_1.gameSettings.freeSpinStarted && global_1.gameSettings._winData.freeSpins != 0)
+            (0, global_1.startFreeSpin)();
         // Math.round(num * 100) / 100).toFixed(2)
-        console.log("TOTAL WINING : " + this.winData.totalWinningAmount);
+        console.log("TOTAL WINING : " + global_1.gameSettings._winData.totalWinningAmount);
         // console.log(gameWining.WinningLines);
         // console.log(gameWining.winningSymbols);
+        console.log("PT BETS :" + global_1.getCurrentRTP.playerTotalBets);
         const winRate = (global_1.getCurrentRTP.playerWon / global_1.getCurrentRTP.playerTotalBets) * 100;
         console.log(`Total Spend : ${global_1.getCurrentRTP.playerTotalBets}  Total Won : ${global_1.getCurrentRTP.playerWon} 
       Current RTP : ${winRate.toFixed(2)}% `);
-        (0, user_1.getClient)(this.clientID).updateCreditsInDb(global_1.playerData.Balance);
         console.log("_____________RESULT_END________________");
     }
     checkForBonus() {
         if (!global_1.gameSettings.currentGamedata.bonus.isEnabled)
             return;
         let bonusSymbols = [];
+        // gameSettings.totalBonuWinAmount=[];
         let temp = this.findSymbol(gameUtils_1.specialIcons.bonus);
         if (temp.length > 0)
             bonusSymbols.push(...temp);
@@ -110,21 +81,25 @@ class CheckResult {
         this.bonusPaytable.forEach((element) => {
             var _a;
             if (element.symbolCount > 0 &&
-                element.symbolCount == bonusSymbols.length) {
+                bonusSymbols.length >= element.symbolCount) {
                 // bonuswin = new WinData(bonusSymbols, 0, 0);
-                this.winData.winningSymbols.push(bonusSymbols);
-                // this.winData.bonus=true;
+                global_1.gameSettings._winData.winningSymbols.push(bonusSymbols);
+                // gameSettings._winData.bonus=true;
                 global_1.gameSettings.bonus.start = true;
+                global_1.gameSettings.noOfBonus++;
                 if (global_1.gameSettings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.tap)
                     this.bonusResult = global_1.gameSettings.bonus.game.generateData((_a = global_1.gameSettings.bonusPayTable[0]) === null || _a === void 0 ? void 0 : _a.pay);
-                global_1.gameSettings.bonus.game.setRandomStopIndex();
+                let temp = global_1.gameSettings.bonus.game.setRandomStopIndex();
+                global_1.gameSettings.totalBonuWinAmount.push(temp);
+                global_1.gameSettings._winData.totalWinningAmount += temp;
             }
         });
     }
     checkForWin() {
         let allComboWin = [];
-        global_1.gameSettings.lineData.forEach((lb, index) => {
+        global_1.gameSettings.lineData.slice(0, global_1.gameSettings.currentLines).forEach((lb, index) => {
             let win = null;
+            console.log("Lines Index : :" + index);
             global_1.gameSettings.fullPayTable.forEach((Payline) => {
                 //  find max win (or win with max symbols count)
                 const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
@@ -136,17 +111,33 @@ class CheckResult {
                             win = winTemp;
                     }
                     // gameWining.WinningLines.push(index);
-                    this.winData.winningLines.push(index);
+                    global_1.gameSettings._winData.winningLines.push(index);
                     console.log(`Line Index : ${index} : ` + lb + " - line win: " + win);
                 }
             });
         });
         const filteredArray = this.checkforDuplicate(allComboWin);
+        let BonusArray = [];
         filteredArray.forEach((element) => {
-            this.winData.winningSymbols.push(element.pos);
-            this.winData.totalWinningAmount += element.pay * global_1.gameSettings.currentBet;
-            this.winData.freeSpins += element.freeSpin;
+            global_1.gameSettings._winData.winningSymbols.push(element.pos);
+            // if(gameSettings.bonus.id>=0 && element.symbol==gameSettings.bonus.id.toString())
+            //   BonusArray.push(element)
+            global_1.gameSettings._winData.totalWinningAmount +=
+                element.pay * global_1.gameSettings.BetPerLines;
+            global_1.gameSettings._winData.freeSpins += element.freeSpin;
         });
+        //check for bonus
+        // if(BonusArray.length>0){
+        //     if (!gameSettings.currentGamedata.bonus.isEnabled)
+        //         return;
+        //     gameSettings.bonus.start = true;
+        //  if (gameSettings.currentGamedata.bonus.type == bonusGameType.tap)
+        //     this.bonusResult = gameSettings.bonus.game.generateData(gameSettings.bonusPayTable[0]?.pay);
+        //     else if(gameSettings.currentGamedata.bonus.type=="slot")
+        //     this.bonusResult = gameSettings.bonus.game.generateSlotData();
+        //     gameSettings._winData.totalWinningAmount+=gameSettings.bonus.game.setRandomStopIndex();
+        //     console.log("stop index2",gameSettings.bonus.stopIndex);
+        // }
     }
     checkforDuplicate(allComboWin) {
         allComboWin.sort((a, b) => b.pos.length - a.pos.length);
@@ -175,9 +166,9 @@ class CheckResult {
             this.scatterPayTable.forEach((sPL) => {
                 if (sPL.symbolCount > 0 &&
                     sPL.symbolCount == this.scatterWinSymbols.length) {
-                    this.winData.winningSymbols.push(this.scatterWinSymbols);
-                    this.winData.freeSpins += sPL.freeSpins;
-                    this.winData.totalWinningAmount += sPL.pay;
+                    global_1.gameSettings._winData.winningSymbols.push(this.scatterWinSymbols);
+                    global_1.gameSettings._winData.freeSpins += sPL.freeSpins;
+                    global_1.gameSettings._winData.totalWinningAmount += sPL.pay;
                 }
             });
             // if (this.scatterWin == null) this.scatterWinSymbols = [];
@@ -193,9 +184,9 @@ class CheckResult {
             // console.log('find Jackpot symbols: ' + this.jackpotWinSymbols);
             if (this.jackpot.symbolsCount > 0 &&
                 this.jackpot.symbolsCount == this.jackpotWinSymbols.length) {
-                this.winData.winningSymbols.push(this.jackpotWinSymbols);
-                this.winData.totalWinningAmount += this.jackpot.defaultAmount;
-                this.winData.jackpotwin += this.jackpot.defaultAmount;
+                global_1.gameSettings._winData.winningSymbols.push(this.jackpotWinSymbols);
+                global_1.gameSettings._winData.totalWinningAmount += this.jackpot.defaultAmount;
+                global_1.gameSettings._winData.jackpotwin += this.jackpot.defaultAmount;
                 //TODO :ADD JACKPOT WIN PAYMENT FOR THE FINAL JSON (done)
             }
         }
@@ -222,14 +213,14 @@ class CheckResult {
                 s === payLine.line[i]) {
                 const symbolIndex = i.toString() + "," + lineData[i].toString();
                 winSymbols.push(symbolIndex);
-                // this.winData.winningSymbols.push(symbolIndex);
+                // gameSettings._winData.winningSymbols.push(symbolIndex);
                 tempWinSymbols.pos.push(symbolIndex);
                 tempWinSymbols.pay = payLine.pay;
                 tempWinSymbols.freeSpin = payLine.freeSpins;
             }
             master.push(tempWinSymbols);
         }
-        // this.winData.winningSymbols.push(winSymbols);
+        // gameSettings._winData.winningSymbols.push(winSymbols);
         const filteredArray = master.filter((item) => item.pos.length > 0);
         const groupedBySymbol = filteredArray.reduce((acc, item) => {
             if (!acc[item.symbol]) {
@@ -248,8 +239,8 @@ class CheckResult {
         if (!payLine.pay)
             payLine.pay = 0;
         allComboWin.push(...mergedArray);
-        // this.winData.freeSpins += payLine.freeSpins;
-        // this.winData.totalWinningAmount += payLine.pay
+        // gameSettings._winData.freeSpins += payLine.freeSpins;
+        // gameSettings._winData.totalWinningAmount += payLine.pay
         // const winData=new WinData(winSymbols, payLine.freeSpins, payLine.pay);
         return { freeSpins: payLine.freeSpins, pay: payLine.pay };
     }
@@ -282,29 +273,35 @@ class CheckResult {
         }
         return foundArray;
     }
-    makeResultJson() {
+    makeResultJson(isResult, iconsToFill = []) {
         //TODO : Try to send the jackpot win data without initializie a variable;
-        this.winData.totalWinningAmount =
-            Math.round(this.winData.totalWinningAmount * 100) / 100;
+        global_1.gameSettings._winData.totalWinningAmount =
+            Math.round(global_1.gameSettings._winData.totalWinningAmount * 100) / 100;
         const ResultData = {
             GameData: {
                 ResultReel: global_1.gameSettings.resultSymbolMatrix,
-                linesToEmit: this.winData.winningLines,
+                linesToEmit: global_1.gameSettings._winData.winningLines,
                 // linesToEmit: gameWining.WinningLines,
-                symbolsToEmit: this.winData.winningSymbols,
+                symbolsToEmit: (0, gameUtils_1.removeRecurringIndexSymbols)(global_1.gameSettings._winData.winningSymbols),
                 // symbolsToEmit: gameWining.winningSymbols,
-                WinAmout: this.winData.totalWinningAmount,
+                WinAmout: global_1.gameSettings._winData.totalWinningAmount,
                 // WinAmout: gameWining.TotalWinningAmount,
-                freeSpins: this.winData.freeSpins,
+                freeSpins: global_1.gameSettings._winData.freeSpins,
                 // freeSpins: gameWining.freeSpins,
-                jackpot: this.winData.jackpotwin,
+                jackpot: global_1.gameSettings._winData.jackpotwin,
                 isBonus: global_1.gameSettings.bonus.start,
                 BonusStopIndex: global_1.gameSettings.bonus.stopIndex,
                 BonusResult: this.bonusResult,
             },
             PlayerData: global_1.playerData,
         };
-        (0, user_1.getClient)(this.clientID).sendMessage("ResultData", ResultData);
+        (0, userSocket_1.getClient)(global_1.playerData.playerId).updateCreditsInDb(global_1.playerData.Balance);
+        if (isResult == ResultType.normal)
+            (0, userSocket_1.getClient)(global_1.playerData.playerId).sendMessage("ResultData", ResultData);
+        if (isResult == ResultType.moolah) {
+            ResultData.GameData['iconstoFill'] = iconsToFill;
+            (0, userSocket_1.getClient)(global_1.playerData.playerId).sendMessage("MoolahResultData", ResultData);
+        }
         // sendMessageToClient(this.clientID, "ResultData", ResultData);
     }
     // return symbols from windows
@@ -461,6 +458,7 @@ class PayLines {
 exports.PayLines = PayLines;
 class WinData {
     constructor(clientId) {
+        this.resultReelIndex = [];
         this.freeSpins = 0;
         this.winningLines = [];
         this.winningSymbols = [];
@@ -474,7 +472,16 @@ class WinData {
         global_1.playerData.haveWon += this.totalWinningAmount;
         global_1.playerData.currentWining = this.totalWinningAmount;
         global_1.getCurrentRTP.playerWon += this.totalWinningAmount;
-        global_1.getCurrentRTP.playerTotalBets += global_1.gameSettings.currentBet;
+        console.log("BETS " + global_1.gameSettings.currentBet);
+        if (!global_1.gameSettings.freeSpinStarted)
+            global_1.getCurrentRTP.playerTotalBets += global_1.gameSettings.currentBet;
+        else
+            global_1.getCurrentRTP.playerTotalBets += 0;
     }
 }
 exports.WinData = WinData;
+var ResultType;
+(function (ResultType) {
+    ResultType["moolah"] = "moolah";
+    ResultType["normal"] = "normal";
+})(ResultType || (exports.ResultType = ResultType = {}));
