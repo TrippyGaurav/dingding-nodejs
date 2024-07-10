@@ -49,16 +49,22 @@ const updateStatus = (client, status) => {
 };
 exports.updateStatus = updateStatus;
 const updatePassword = (client, password, existingPassword) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!existingPassword) {
-        throw (0, http_errors_1.default)(400, "Existing password is required to update the password");
+    try {
+        if (!existingPassword) {
+            throw (0, http_errors_1.default)(400, "Existing password is required to update the password");
+        }
+        // Check if existingPassword matches client's current password
+        const isPasswordValid = yield bcrypt_1.default.compare(existingPassword, client.password);
+        if (!isPasswordValid) {
+            throw (0, http_errors_1.default)(400, "Existing password is incorrect");
+        }
+        // Update password
+        client.password = yield bcrypt_1.default.hash(password, 10);
     }
-    // Check if existingPassword matches client's current password
-    const isPasswordValid = yield bcrypt_1.default.compare(existingPassword, client.password);
-    if (!isPasswordValid) {
-        throw (0, http_errors_1.default)(400, "Existing password is incorrect");
+    catch (error) {
+        console.log(error);
+        throw error;
     }
-    // Update password
-    client.password = yield bcrypt_1.default.hash(password, 10);
 });
 exports.updatePassword = updatePassword;
 const updateCredits = (client, creator, credits) => __awaiter(void 0, void 0, void 0, function* () {

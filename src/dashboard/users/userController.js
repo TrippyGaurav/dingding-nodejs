@@ -256,21 +256,27 @@ class UserController {
                 const { username, role } = _req.user;
                 const { clientId } = req.params;
                 const { status, credits, password, existingPassword } = req.body;
+                console.log("Upadating for : ", clientId);
                 if (!clientId) {
                     throw (0, http_errors_1.default)(400, "Client Id is required");
                 }
                 const clientObjectId = new mongoose_1.default.Types.ObjectId(clientId);
-                const admin = yield this.userService.findUserByUsername(username);
+                let admin;
+                admin = yield this.userService.findUserByUsername(username);
                 if (!admin) {
-                    throw (0, http_errors_1.default)(404, "Creator not found");
+                    admin = yield this.userService.findPlayerByUsername(username);
+                    if (!admin) {
+                        throw (0, http_errors_1.default)(404, "Creator not found");
+                    }
                 }
                 const client = (yield this.userService.findUserById(clientObjectId)) || (yield this.userService.findPlayerById(clientObjectId));
+                console.log("CLient : ", client);
                 if (!client) {
                     throw (0, http_errors_1.default)(404, "Client not found");
                 }
-                if (role != "company" && !admin.subordinates.some((id) => id.equals(clientObjectId))) {
-                    throw (0, http_errors_1.default)(403, "Client does not belong to the creator");
-                }
+                // if (role != "company" && !admin.subordinates.some((id) => id.equals(clientObjectId))) {
+                //   throw createHttpError(403, "Client does not belong to the creator");
+                // }
                 if (status) {
                     (0, utils_1.updateStatus)(client, status);
                 }
@@ -286,6 +292,7 @@ class UserController {
                 res.status(200).json({ message: "Client updated successfully", client });
             }
             catch (error) {
+                console.log("Error in updating : ", error);
                 next(error);
             }
         });
