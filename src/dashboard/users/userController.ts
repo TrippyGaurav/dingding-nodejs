@@ -317,26 +317,38 @@ export class UserController {
       const { clientId } = req.params;
       const { status, credits, password, existingPassword } = req.body;
 
+      console.log("Upadating for : ", clientId);
+
+
       if (!clientId) {
         throw createHttpError(400, "Client Id is required");
       }
 
       const clientObjectId = new mongoose.Types.ObjectId(clientId);
 
-      const admin = await this.userService.findUserByUsername(username);
+      let admin;
+
+      admin = await this.userService.findUserByUsername(username);
       if (!admin) {
-        throw createHttpError(404, "Creator not found");
+        admin = await this.userService.findPlayerByUsername(username)
+
+        if (!admin) {
+          throw createHttpError(404, "Creator not found");
+        }
       }
 
       const client = (await this.userService.findUserById(clientObjectId)) || (await this.userService.findPlayerById(clientObjectId));
+
+      console.log("CLient : ", client);
+
 
       if (!client) {
         throw createHttpError(404, "Client not found");
       }
 
-      if (role != "company" && !admin.subordinates.some((id) => id.equals(clientObjectId))) {
-        throw createHttpError(403, "Client does not belong to the creator");
-      }
+      // if (role != "company" && !admin.subordinates.some((id) => id.equals(clientObjectId))) {
+      //   throw createHttpError(403, "Client does not belong to the creator");
+      // }
 
       if (status) {
         updateStatus(client, status);
@@ -357,6 +369,7 @@ export class UserController {
       res.status(200).json({ message: "Client updated successfully", client });
 
     } catch (error) {
+      console.log("Error in updating : ", error);
       next(error)
     }
   }

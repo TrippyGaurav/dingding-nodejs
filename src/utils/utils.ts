@@ -76,24 +76,29 @@ export const updatePassword = async (
   password: string,
   existingPassword: string
 ) => {
-  if (!existingPassword) {
-    throw createHttpError(
-      400,
-      "Existing password is required to update the password"
+  try {
+    if (!existingPassword) {
+      throw createHttpError(
+        400,
+        "Existing password is required to update the password"
+      );
+    }
+
+    // Check if existingPassword matches client's current password
+    const isPasswordValid = await bcrypt.compare(
+      existingPassword,
+      client.password
     );
-  }
+    if (!isPasswordValid) {
+      throw createHttpError(400, "Existing password is incorrect");
+    }
 
-  // Check if existingPassword matches client's current password
-  const isPasswordValid = await bcrypt.compare(
-    existingPassword,
-    client.password
-  );
-  if (!isPasswordValid) {
-    throw createHttpError(400, "Existing password is incorrect");
+    // Update password
+    client.password = await bcrypt.hash(password, 10);
+  } catch (error) {
+    console.log(error);
+    throw error
   }
-
-  // Update password
-  client.password = await bcrypt.hash(password, 10);
 };
 
 export const updateCredits = async (

@@ -1,5 +1,10 @@
 import mongoose, { Schema } from "mongoose";
-import { IGame } from "./gameType";
+import { IGame, IPlatform } from "./gameType";
+
+const PlatformSchema = new Schema<IPlatform>({
+  name: { type: String, required: true, unique: true },
+  games: [{ type: mongoose.Types.ObjectId, ref: "Game" }]
+})
 
 const GameSchema = new Schema<IGame>(
   {
@@ -63,6 +68,7 @@ const PayoutsSchema = new Schema(
 
 const Game = mongoose.model<IGame>("Game", GameSchema);
 const Payouts = mongoose.model("Payouts", PayoutsSchema);
+const Platform = mongoose.model("Platform", PlatformSchema);
 
-export { Payouts };
+export { Payouts, Platform };
 export default Game;

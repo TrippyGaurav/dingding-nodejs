@@ -1,4 +1,9 @@
-import { Document, Types } from "mongoose";
+import mongoose, { Document, Types } from "mongoose";
+
+export interface IPlatform extends Document {
+  name: string;
+  games: mongoose.Types.ObjectId[];
+}
 
 export interface IGame extends Document {
   name: string;
