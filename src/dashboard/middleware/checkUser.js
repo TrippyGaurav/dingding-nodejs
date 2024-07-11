@@ -9,7 +9,9 @@ const http_errors_1 = __importDefault(require("http-errors"));
 function checkUser(req, res, next) {
     var _a, _b;
     const cookie = (_b = (_a = req.headers.cookie) === null || _a === void 0 ? void 0 : _a.split("; ").find((row) => row.startsWith("userToken="))) === null || _b === void 0 ? void 0 : _b.split("=")[1];
-    if (cookie) {
+    const authHeaders = req.headers.authorization;
+    const token = cookie || (authHeaders && authHeaders.startsWith("Bearer") && authHeaders.split(" ")[1]);
+    if (token) {
         jsonwebtoken_1.default.verify(cookie, process.env.JWT_SECRET, (err, decoded) => {
             if (err) {
                 if (err.name === "TokenExpiredError") {

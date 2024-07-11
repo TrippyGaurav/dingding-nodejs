@@ -30,10 +30,14 @@ const http_errors_1 = __importDefault(require("http-errors"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const utils_1 = require("../../utils/utils");
 const userModel_1 = require("../users/userModel");
+const cloudinary_1 = require("cloudinary");
+const config_1 = require("../../config/config");
 class GameController {
     constructor() {
         this.getGames = this.getGames.bind(this);
         this.addGame = this.addGame.bind(this);
+        this.addPlatform = this.addPlatform.bind(this);
+        this.getPlatforms = this.getPlatforms.bind(this);
     }
     // GET : Games
     getGames(req, res, next) {
@@ -49,32 +53,25 @@ class GameController {
                 if (category && category !== "all" && category !== "fav") {
                     matchStage.category = category;
                 }
-                if (platform) {
-                    if (platform === "crm") {
-                        const games = yield gameModel_2.default.aggregate([{ $match: matchStage }]);
-                        return res.status(200).json(games);
-                    }
-                    const platformDoc = yield gameModel_1.Platform.findOne({ name: platform }).populate("games");
-                    if (!platformDoc) {
-                        throw (0, http_errors_1.default)(404, `Platform ${platform} not found`);
-                    }
-                    // Use the game IDs from the platform for aggregation
-                    matchStage._id = { $in: platformDoc.games.map(game => game._id) };
-                }
                 if (role === "player") {
                     if (category === "fav") {
                         const player = yield userModel_1.Player.findOne({ username }).populate("favouriteGames");
                         if (!player) {
                             throw (0, http_errors_1.default)(404, "Player not found");
                         }
-                        console.log("Player : ", player);
                         const favouriteGames = yield gameModel_2.default.find({ _id: { $in: player.favouriteGames } });
                         console.log("FAv : ", favouriteGames);
                         return res.status(200).json({ featured: [], others: favouriteGames });
                     }
                     else {
+                        const platformDoc = yield gameModel_1.Platform.findOne({ name: platform }).populate("games");
+                        if (!platformDoc) {
+                            throw (0, http_errors_1.default)(404, `Platform ${platform} not found`);
+                        }
+                        const platformGames = platformDoc.games;
+                        console.log("Platform Games : ", platformGames);
                         const games = yield gameModel_2.default.aggregate([
-                            { $match: matchStage },
+                            { $match: Object.assign({ _id: { $in: platformGames.map(game => game._id) } }, matchStage) },
                             {
                                 $sort: { createdAt: -1 }
                             },
@@ -89,8 +86,32 @@ class GameController {
                     }
                 }
                 else if (role === "company") {
-                    const games = yield gameModel_2.default.aggregate([{ $match: matchStage }]);
-                    return res.status(200).json(games);
+                    if (category === "all") {
+                        const platforms = yield gameModel_1.Platform.find().populate("games");
+                        let allGames = [];
+                        platforms.forEach(platform => {
+                            allGames = allGames.concat(platform.games.map(game => game._id));
+                        });
+                        const games = yield gameModel_2.default.aggregate([
+                            { $match: Object.assign({ _id: { $in: allGames } }, matchStage) },
+                            { $sort: { createdAt: -1 } }
+                        ]);
+                        return res.status(200).json(games);
+                    }
+                    else {
+                        const platformDoc = yield gameModel_1.Platform.findOne({ name: category }).populate("games");
+                        if (platformDoc) {
+                            const platformGames = platformDoc.games;
+                            const games = yield gameModel_2.default.aggregate([
+                                { $match: { _id: { $in: platformGames.map(game => game._id) } } },
+                                { $sort: { createdAt: -1 } }
+                            ]);
+                            return res.status(200).json(games);
+                        }
+                        else {
+                            throw (0, http_errors_1.default)(401, "Platform category not found");
+                        }
+                    }
                 }
                 else {
                     return next((0, http_errors_1.default)(403, "Access denied: You don't have permission to access this resource."));
@@ -113,16 +134,7 @@ class GameController {
                     throw (0, http_errors_1.default)(401, "Access denied: You don't have permission to add games");
                 }
                 const { name, thumbnail, url, type, category, status, tagName, slug, platform } = req.body;
-                if (!name ||
-                    !thumbnail ||
-                    !url ||
-                    !type ||
-                    !category ||
-                    !status ||
-                    !tagName ||
-                    !slug ||
-                    !req.file ||
-                    !platform) {
+                if (!name || !url || !type || !category || !status || !tagName || !slug || !req.files.thumbnail || !req.files.payoutFile || !platform) {
                     throw (0, http_errors_1.default)(400, "All required fields must be provided, including the payout file and platform");
                 }
                 const existingGame = yield gameModel_2.default.findOne({ $or: [{ name }, { slug }] }).session(session);
@@ -134,8 +146,23 @@ class GameController {
                 if (!platformDoc) {
                     throw (0, http_errors_1.default)(400, `Platform ${platform} not found`);
                 }
+                cloudinary_1.v2.config({
+                    cloud_name: config_1.config.cloud_name,
+                    api_key: config_1.config.api_key,
+                    api_secret: config_1.config.api_secret,
+                });
+                // Upload thumbnail to Cloudinary
+                const thumbnailBuffer = req.files.thumbnail[0].buffer;
+                const thumbnailUploadResult = yield new Promise((resolve, reject) => {
+                    cloudinary_1.v2.uploader.upload_stream({ resource_type: 'image', folder: platform }, (error, result) => {
+                        if (error) {
+                            return reject(error);
+                        }
+                        resolve(result);
+                    }).end(thumbnailBuffer);
+                });
                 // Handle file for payout
-                const jsonData = JSON.parse(req.file.buffer.toString("utf-8"));
+                const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString('utf-8'));
                 const newPayout = new gameModel_1.Payouts({
                     gameName: tagName,
                     data: jsonData,
@@ -143,7 +170,7 @@ class GameController {
                 yield newPayout.save({ session });
                 const game = new gameModel_2.default({
                     name,
-                    thumbnail,
+                    thumbnail: thumbnailUploadResult.secure_url, // Save the Cloudinary URL
                     url,
                     type,
                     category,
@@ -162,6 +189,7 @@ class GameController {
             catch (error) {
                 yield session.abortTransaction();
                 session.endSession();
+                console.log(error);
                 next(error);
             }
         });
@@ -176,6 +204,8 @@ class GameController {
                     throw (0, http_errors_1.default)(401, "Access denied: You don't have permission to add games");
                 }
                 const { name } = req.body;
+                console.log(req.body);
+                console.log("Platform Name ", name);
                 if (!name) {
                     throw (0, http_errors_1.default)(400, "Platform name is required");
                 }
@@ -215,9 +245,10 @@ class GameController {
 exports.GameController = GameController;
 // DONE
 const updateGame = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const { gameId } = req.params;
-        const _a = req.body, { creatorRole, status, slug } = _a, updateFields = __rest(_a, ["creatorRole", "status", "slug"]);
+        const _c = req.body, { creatorRole, status, slug } = _c, updateFields = __rest(_c, ["creatorRole", "status", "slug"]);
         if (!gameId) {
             throw (0, http_errors_1.default)(400, "Game ID is required");
         }
@@ -257,20 +288,42 @@ const updateGame = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         if (slug) {
             fieldsToUpdate.slug = slug;
         }
+        // Find the platform this game belongs to
+        const platform = yield gameModel_1.Platform.findOne({ games: gameId });
+        if (!platform) {
+            throw (0, http_errors_1.default)(400, `Platform not found for game with ID: ${gameId}`);
+        }
         // Handle file for payout update
-        if (req.file) {
+        if ((_a = req.files) === null || _a === void 0 ? void 0 : _a.payoutFile) {
             // Delete the old payout
             if (game.payout) {
                 yield gameModel_1.Payouts.findByIdAndDelete(game.payout);
             }
             // Add the new payout
-            const jsonData = JSON.parse(req.file.buffer.toString("utf-8"));
+            const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString("utf-8"));
             const newPayout = new gameModel_1.Payouts({
                 gameName: game.name,
                 data: jsonData,
             });
             yield newPayout.save();
             fieldsToUpdate.payout = newPayout._id;
+        }
+        // Handle file for thumbnail update
+        // Handle file for thumbnail update
+        if ((_b = req.files) === null || _b === void 0 ? void 0 : _b.thumbnail) {
+            const thumbnailBuffer = req.files.thumbnail[0].buffer;
+            const thumbnailUploadResult = yield new Promise((resolve, reject) => {
+                cloudinary_1.v2.uploader.upload_stream({
+                    resource_type: 'image',
+                    folder: platform.name // Specify the folder name based on the platform name
+                }, (error, result) => {
+                    if (error) {
+                        return reject(error);
+                    }
+                    resolve(result);
+                }).end(thumbnailBuffer);
+            });
+            fieldsToUpdate.thumbnail = thumbnailUploadResult.secure_url; // Save the Cloudinary URL
         }
         // If no valid fields to update, return an error
         if (Object.keys(fieldsToUpdate).length === 0) {
