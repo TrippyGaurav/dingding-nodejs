@@ -481,7 +481,7 @@ export class UserController {
         spent: totalMoneySpentToday,
         users: usersCreatedToday,
         players: playersCreatedToday,
-        transactions: transactionsToday.slice(0, 10),
+        transactions: transactionsToday,
       };
 
       res.status(200).json(report);
