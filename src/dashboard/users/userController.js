@@ -70,6 +70,7 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { username, password } = req.body;
+                console.log("Login Request : ", username, password);
                 if (!username || !password) {
                     throw (0, http_errors_1.default)(400, "Username, password are required");
                 }
@@ -270,7 +271,6 @@ class UserController {
                     }
                 }
                 const client = (yield this.userService.findUserById(clientObjectId)) || (yield this.userService.findPlayerById(clientObjectId));
-                console.log("CLient : ", client);
                 if (!client) {
                     throw (0, http_errors_1.default)(404, "Client not found");
                 }
@@ -353,31 +353,32 @@ class UserController {
     getReport(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                const _req = req;
+                const { role } = _req.user;
                 const { type } = req.query;
+                if (role !== 'company') {
+                    throw (0, http_errors_1.default)(403, 'Access denied: You do not have permission to access this resource.');
+                }
                 const { start, end } = UserController.getStartAndEndOfPeriod(type);
-                // Fetch transactions for the specified period
-                const transactions = yield transactionModel_1.default.find({
-                    createdAt: { $gte: start, $lte: end }
-                });
-                // Aggregate the total money spent during the period
-                const totalCreditSpent = transactions.reduce((sum, t) => sum + t.amount, 0);
-                // Get users who spent money and the amount they spent
-                const spendingDetails = transactions.map(t => ({
-                    debtor: t.debtor,
-                    amount: t.amount
-                }));
-                // Fetch users and players registred during the period
-                const usersRegistered = yield userModel_1.User.find({
-                    createdAt: { $gte: start, $lte: end }
-                });
-                const playersRegistered = yield userModel_1.Player.find({
-                    createdAt: { $gte: start, $lte: end }
-                });
+                // Fetch today's transactions
+                const transactionsToday = yield transactionModel_1.default.find({
+                    createdAt: { $gte: start, $lte: end },
+                }).sort({ createdAt: -1 });
+                // Aggregate the total money spent today
+                const totalMoneySpentToday = transactionsToday.reduce((sum, t) => sum + t.amount, 0);
+                // Fetch users and players created today
+                const usersCreatedToday = yield userModel_1.User.find({
+                    createdAt: { $gte: start, $lte: end },
+                }).sort({ createdAt: -1 });
+                const playersCreatedToday = yield userModel_1.Player.find({
+                    createdAt: { $gte: start, $lte: end },
+                }).sort({ createdAt: -1 });
+                // Prepare the report
                 const report = {
-                    totalCreditSpent,
-                    spendingDetails,
-                    usersRegistered,
-                    playersRegistered
+                    spent: totalMoneySpentToday,
+                    users: usersCreatedToday,
+                    players: playersCreatedToday,
+                    transactions: transactionsToday,
                 };
                 res.status(200).json(report);
             }
