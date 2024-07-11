@@ -26,6 +26,7 @@ userRoutes.get("/report", checkUser, userController.getReport)
 // GET a client Report
 userRoutes.get("/report/:subordinateId", checkUser, userController.getASubordinateReport)
 
+
 // GET a client
 userRoutes.get("/:subordinateId", checkUser, userController.getSubordinateById);
 
@@ -35,7 +36,6 @@ userRoutes.delete("/:clientId", checkUser, userController.deleteUser);
 
 // // UPDATE a client
 userRoutes.put("/:clientId", checkUser, userController.updateClient);
-
 
 
 

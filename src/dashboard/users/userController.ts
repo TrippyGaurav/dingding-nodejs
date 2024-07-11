@@ -81,6 +81,8 @@ export class UserController {
   async loginUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;
+      console.log("Login Request : ", username, password);
+
 
       if (!username || !password) {
         throw createHttpError(400, "Username, password are required");
@@ -445,40 +447,45 @@ export class UserController {
 
   async getReport(req: Request, res: Response, next: NextFunction) {
     try {
+      const _req = req as AuthRequest;
+      const { role } = _req.user;
       const { type } = req.query;
+
+
+      if (role !== 'company') {
+        throw createHttpError(403, 'Access denied: You do not have permission to access this resource.');
+      }
+
       const { start, end } = UserController.getStartAndEndOfPeriod(type as string);
 
-      // Fetch transactions for the specified period
-      const transactions = await Transaction.find({
-        createdAt: { $gte: start, $lte: end }
-      });
+      // Fetch today's transactions
+      const transactionsToday = await Transaction.find({
+        createdAt: { $gte: start, $lte: end },
+      }).sort({ createdAt: -1 });
 
-      // Aggregate the total money spent during the period
-      const totalCreditSpent = transactions.reduce((sum, t) => sum + t.amount, 0);
+      // Aggregate the total money spent today
+      const totalMoneySpentToday = transactionsToday.reduce((sum, t) => sum + t.amount, 0);
 
-      // Get users who spent money and the amount they spent
-      const spendingDetails = transactions.map(t => ({
-        debtor: t.debtor,
-        amount: t.amount
-      }));
+      // Fetch users and players created today
+      const usersCreatedToday = await User.find({
+        createdAt: { $gte: start, $lte: end },
+      }).sort({ createdAt: -1 });
 
-      // Fetch users and players registred during the period
-      const usersRegistered = await User.find({
-        createdAt: { $gte: start, $lte: end }
-      });
+      const playersCreatedToday = await Player.find({
+        createdAt: { $gte: start, $lte: end },
+      }).sort({ createdAt: -1 });
 
-      const playersRegistered = await Player.find({
-        createdAt: { $gte: start, $lte: end }
-      });
 
+      // Prepare the report
       const report = {
-        totalCreditSpent,
-        spendingDetails,
-        usersRegistered,
-        playersRegistered
+        spent: totalMoneySpentToday,
+        users: usersCreatedToday,
+        players: playersCreatedToday,
+        transactions: transactionsToday.slice(0, 10),
       };
 
-      res.status(200).json(report)
+      res.status(200).json(report);
+
     }
     catch (error) {
       next(error);

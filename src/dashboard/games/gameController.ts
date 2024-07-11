@@ -47,22 +47,6 @@ export class GameController {
         matchStage.category = category;
       }
 
-      if (platform) {
-
-        if (platform === "crm") {
-          const games = await Game.aggregate([{ $match: matchStage }]);
-          return res.status(200).json(games);
-
-        }
-        const platformDoc = await Platform.findOne({ name: platform }).populate("games");
-        if (!platformDoc) {
-          throw createHttpError(404, `Platform ${platform} not found`);
-        }
-
-        // Use the game IDs from the platform for aggregation
-        matchStage._id = { $in: platformDoc.games.map(game => game._id) };
-      }
-
 
       if (role === "player") {
         if (category === "fav") {
@@ -71,17 +55,25 @@ export class GameController {
             throw createHttpError(404, "Player not found")
           }
 
-          console.log("Player : ", player);
-
-
           const favouriteGames = await Game.find({ _id: { $in: player.favouriteGames } });
           console.log("FAv : ", favouriteGames);
 
           return res.status(200).json({ featured: [], others: favouriteGames });
         }
         else {
+          const platformDoc = await Platform.findOne({ name: platform }).populate("games");
+          if (!platformDoc) {
+            throw createHttpError(404, `Platform ${platform} not found`);
+          }
+
+          const platformGames = platformDoc.games;
+
+          console.log("Platform Games : ", platformGames);
+
+
+
           const games = await Game.aggregate([
-            { $match: matchStage },
+            { $match: { _id: { $in: platformGames.map(game => game._id) }, ...matchStage } },
             {
               $sort: { createdAt: -1 }
             },
@@ -96,8 +88,39 @@ export class GameController {
         }
       }
       else if (role === "company") {
-        const games = await Game.aggregate([{ $match: matchStage }]);
-        return res.status(200).json(games)
+        if (category === "all") {
+          const platforms = await Platform.find().populate("games");
+          let allGames: mongoose.Types.ObjectId[] = [];
+
+          platforms.forEach(platform => {
+            allGames = allGames.concat(platform.games.map(game => game._id));
+          });
+
+          const games = await Game.aggregate([
+            { $match: { _id: { $in: allGames }, ...matchStage } },
+            { $sort: { createdAt: -1 } }
+          ]);
+          return res.status(200).json(games);
+
+        }
+        else {
+          const platformDoc = await Platform.findOne({ name: category }).populate("games");
+
+          if (platformDoc) {
+            const platformGames = platformDoc.games;
+
+            const games = await Game.aggregate([
+              { $match: { _id: { $in: platformGames.map(game => game._id) } } },
+              { $sort: { createdAt: -1 } }
+            ])
+
+            return res.status(200).json(games);
+          }
+          else {
+            throw createHttpError(401, "Platform category not found")
+          }
+        }
+
       }
       else {
         return next(createHttpError(403, "Access denied: You don't have permission to access this resource."));

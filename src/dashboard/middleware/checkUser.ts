@@ -8,8 +8,10 @@ export function checkUser(req: Request, res: Response, next: NextFunction) {
     ?.split("; ")
     .find((row) => row.startsWith("userToken="))
     ?.split("=")[1];
+  const authHeaders = req.headers.authorization;
+  const token = cookie || (authHeaders && authHeaders.startsWith("Bearer") && authHeaders.split(" ")[1]);
 
-  if (cookie) {
+  if (token) {
     jwt.verify(
       cookie,
       process.env.JWT_SECRET!,
