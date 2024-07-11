@@ -12,7 +12,7 @@ function checkUser(req, res, next) {
     const authHeaders = req.headers.authorization;
     const token = cookie || (authHeaders && authHeaders.startsWith("Bearer") && authHeaders.split(" ")[1]);
     if (token) {
-        jsonwebtoken_1.default.verify(cookie, process.env.JWT_SECRET, (err, decoded) => {
+        jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET, (err, decoded) => {
             if (err) {
                 if (err.name === "TokenExpiredError") {
                     console.error("Token expired:", err.message);
