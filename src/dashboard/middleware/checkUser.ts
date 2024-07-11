@@ -13,7 +13,7 @@ export function checkUser(req: Request, res: Response, next: NextFunction) {
 
   if (token) {
     jwt.verify(
-      cookie,
+      token,
       process.env.JWT_SECRET!,
       (err, decoded: DecodedToken | undefined) => {
         if (err) {

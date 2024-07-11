@@ -31,7 +31,7 @@ export function extractRoleFromCookie(
 
   if (token) {
     jwt.verify(
-      cookie,
+      token,
       process.env.JWT_SECRET!,
       (err, decoded: DecodedToken | undefined) => {
         if (err) {
