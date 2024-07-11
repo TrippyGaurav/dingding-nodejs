@@ -375,7 +375,7 @@ class UserController {
                 }).sort({ createdAt: -1 });
                 // Prepare the report
                 const report = {
-                    spent: totalMoneySpentToday,
+                    moneySpent: totalMoneySpentToday,
                     users: usersCreatedToday,
                     players: playersCreatedToday,
                     transactions: transactionsToday,
