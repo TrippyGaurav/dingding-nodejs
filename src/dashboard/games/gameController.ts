@@ -255,7 +255,7 @@ export class GameController {
 
 // DONE
 export const updateGame = async (
-  req: Request,
+  req: GameRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -316,15 +316,21 @@ export const updateGame = async (
       fieldsToUpdate.slug = slug;
     }
 
+    // Find the platform this game belongs to
+    const platform = await Platform.findOne({ games: gameId });
+    if (!platform) {
+      throw createHttpError(400, `Platform not found for game with ID: ${gameId}`);
+    }
+
     // Handle file for payout update
-    if (req.file) {
+    if (req.files?.payoutFile) {
       // Delete the old payout
       if (game.payout) {
         await Payouts.findByIdAndDelete(game.payout);
       }
 
       // Add the new payout
-      const jsonData = JSON.parse(req.file.buffer.toString("utf-8"));
+      const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString("utf-8"));
       const newPayout = new Payouts({
         gameName: game.name,
         data: jsonData,
@@ -333,6 +339,30 @@ export const updateGame = async (
       await newPayout.save();
       fieldsToUpdate.payout = newPayout._id;
     }
+
+    // Handle file for thumbnail update
+    // Handle file for thumbnail update
+    if (req.files?.thumbnail) {
+      const thumbnailBuffer = req.files.thumbnail[0].buffer;
+
+      const thumbnailUploadResult = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'image',
+            folder: platform.name // Specify the folder name based on the platform name
+          },
+          (error, result) => {
+            if (error) {
+              return reject(error);
+            }
+            resolve(result as CloudinaryUploadResult);
+          }
+        ).end(thumbnailBuffer);
+      });
+
+      fieldsToUpdate.thumbnail = thumbnailUploadResult.secure_url; // Save the Cloudinary URL
+    }
+
 
     // If no valid fields to update, return an error
     if (Object.keys(fieldsToUpdate).length === 0) {

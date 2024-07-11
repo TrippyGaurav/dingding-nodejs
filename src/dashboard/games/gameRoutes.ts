@@ -28,12 +28,8 @@ gameRoutes.get("/platforms", checkUser, gameController.getPlatforms)
 gameRoutes.post("/platforms", checkUser, gameController.addPlatform)
 
 
-gameRoutes.put(
-  "/:gameId",
-  upload.single("file"),
-  extractRoleFromCookie,
-  updateGame
-);
+gameRoutes.put("/:gameId", upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), extractRoleFromCookie, updateGame);
+
 gameRoutes.delete("/:gameId", extractRoleFromCookie, deleteGame);
 gameRoutes.get("/:gameId", extractRoleFromCookie, getGameById);
 gameRoutes.post("/thumbnail", extractRoleFromCookie, uploadThubnail);
