@@ -255,6 +255,13 @@ export function spinResult(clientID: string) {
   // if(playerData.Balance < gameWining.currentBet)
   if (playerData.Balance < gameSettings.currentBet) {
     // Alerts(clientID, "Low Balance");
+    getClient(playerData.playerId).sendMessage("low-balance", true)
+    console.log(playerData.Balance,
+      "player balance"
+    )
+
+
+    console.log(gameSettings.currentBet, "currentbet")
     console.warn("LOW BALANCE ALErt");
     console.error("Low Balance ALErt");
     return;

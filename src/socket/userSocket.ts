@@ -39,7 +39,7 @@ export class SocketUser {
       // Use "SL-VIK" as default tagName if messageData.Data.GameID is not present
       const tagName = messageData.Data.GameID;
       const game = await Game.findOne({ tagName: tagName });
-      console.log(game.payout, "Game");
+      console.log(game, "Game");
 
       if (!game || !game.payout) {
         console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
@@ -71,6 +71,7 @@ export class SocketUser {
   }
 
   sendMessage(id: string, message: any) {
+    console.log(id, message, "send")
     this.socket.emit(MESSAGETYPE.MESSAGE, JSON.stringify({ id, message }));
   }
 
@@ -172,4 +173,4 @@ export function getClient(clientId: string) {
   const user = users.get(clientId);
   return user;
 }
-export const betMultiplier = [0.1, 0.5, 0.7, 1]
+export const betMultiplier = [0.1, 0.25, 0.5, 0.75, 1]
