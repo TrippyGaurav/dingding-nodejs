@@ -449,17 +449,10 @@ export class UserController {
     try {
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
-      const { type } = req.query;
+      const { type, userId } = req.query;
       const { start, end } = UserController.getStartAndEndOfPeriod(type as string);
       const allowedAdmins = ["company", "master", "distributor", "subdistributor", "store"];
 
-      const roleHierarchy = {
-        company: ["master", "distributor", "subdistributor", "store", "player"],
-        master: ["distributor"],
-        distributor: ["subdistributor"],
-        subdistributor: ["store"],
-        store: ["player"]
-      };
 
       const currentUser = await User.findOne({ username });
 
@@ -471,8 +464,28 @@ export class UserController {
         throw createHttpError(400, "Access denied : Invalid User ")
       }
 
+      let targetUser = currentUser;
 
-      if (currentUser.role === "company") {
+      if (userId) {
+        let subordinate = await User.findById(userId);
+
+        console.log("Sub : ", subordinate);
+
+        if (!subordinate) {
+          subordinate = await Player.findById(userId);
+
+          if (!subordinate) {
+            throw createHttpError(404, "Subordinate user not found");
+          }
+        }
+
+        console.log("Sub : ", subordinate);
+
+        targetUser = subordinate;
+      }
+
+
+      if (targetUser.role === "company") {
 
         // Total Recharge Amount
         const totalRechargedAmt = await Transaction.aggregate([
@@ -532,7 +545,7 @@ export class UserController {
             $match: {
               $and: [
                 {
-                  role: { $ne: currentUser.role }
+                  role: { $ne: targetUser.role }
                 },
                 {
                   createdAt: { $gte: start, $lte: end }
@@ -566,8 +579,8 @@ export class UserController {
 
 
         return res.status(200).json({
-          username: currentUser.username,
-          role: currentUser.role,
+          username: targetUser.username,
+          role: targetUser.role,
           recharge: totalRechargedAmt[0]?.totalAmount || 0,
           redeem: totalRedeemedAmt[0]?.totalAmount || 0,
           users: counts,
@@ -590,7 +603,7 @@ export class UserController {
                   type: "recharge"
                 },
                 {
-                  creditor: currentUser.username
+                  creditor: targetUser.username
                 }
               ]
             }
@@ -620,7 +633,7 @@ export class UserController {
                   type: "redeem"
                 },
                 {
-                  debtor: currentUser.username
+                  debtor: targetUser.username
                 }
               ]
             }
@@ -636,17 +649,17 @@ export class UserController {
         ])
 
 
-        const userTransactions = await Transaction.find({ $or: [{ debtor: currentUser.username }, { creditor: currentUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
+        const userTransactions = await Transaction.find({ $or: [{ debtor: targetUser.username }, { creditor: targetUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
 
 
         let users;
-        if (currentUser.role === "store") {
+        if (targetUser.role === "store" || targetUser.role === "player") {
           users = await Player.aggregate([
             {
               $match: {
                 $and: [
                   {
-                    createdBy: currentUser._id
+                    createdBy: targetUser._id
                   },
                   {
                     createdAt: { $gte: start, $lte: end }
@@ -668,7 +681,7 @@ export class UserController {
               $match: {
                 $and: [
                   {
-                    createdBy: currentUser._id
+                    createdBy: targetUser._id
                   },
                   {
                     createdAt: { $gte: start, $lte: end }
@@ -691,8 +704,8 @@ export class UserController {
         }, {});
 
         return res.status(200).json({
-          username: currentUser.username,
-          role: currentUser.role,
+          username: targetUser.username,
+          role: targetUser.role,
           recharge: userRechargeAmt[0]?.totalAmount || 0,
           redeem: userRedeemAmt[0]?.totalAmount || 0,
           users: counts,
