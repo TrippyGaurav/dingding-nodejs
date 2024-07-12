@@ -187,42 +187,30 @@ export function convertSymbols(data) {
   let uiData = {
     symbols: [],
   };
-
+  if (!Array.isArray(data)) {
+    console.error("Input data is not an array");
+    return uiData;
+  }
   data.forEach((element) => {
-    if (element.multiplier?.length > 0 && element.useWildSub) {
-      let symbolData = {
-        ID: element.Id,
-        multiplier: {},
-      };
+    let symbolData = {
+      ID: element.Id,
+      Name: element.Name || {},
+      multiplier: {},
+      defaultAmount: element.defaultAmount || {},
+      symbolsCount: element.symbolsCount || element.symbolCount || {},
+      increaseValue: element.increaseValue || {},
+      freeSpin: element.freeSpin
+    };
+    if (element.multiplier) {
       const multiplierObject = {};
       element.multiplier.forEach((item, index) => {
         multiplierObject[(5 - index).toString() + "x"] = item[0];
       });
       symbolData.multiplier = multiplierObject;
-      uiData.symbols.push(symbolData);
     }
+    uiData.symbols.push(symbolData);
   });
 
-  // const convertedData = data.map(symbol => {
-  //   if (symbol.multiplier?.length>0 && symbol.useWildSub) {
-
-  //     const multiplierObject = {};
-  //     multiplierObject['5x'] = symbol.multiplier[0][0];
-  //     multiplierObject['4x'] = symbol.multiplier[1][0];
-  //     multiplierObject['3x'] = symbol.multiplier[2][0];
-
-  //     return {
-  //       ID: symbol.Id,
-  //       multiplier: multiplierObject
-  //     };
-  //   } else {
-  //     return null; // Exclude symbols without multipliers
-  //   }
-  // }).filter(symbol => symbol !== null); // Remove null values
-
-  // console.log("converted data",{ symbols: convertedData });
-
-  // return { symbols: convertedData };
   return uiData;
 }
 export function removeRecurringIndexSymbols(

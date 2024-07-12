@@ -23,15 +23,18 @@ export function sendInitdata(clientID: string) {
     (element) => !element.useWildSub
   );
 
-  for (let i = 0; i < specialSymbols.length; i++) {
-    const strng =
-      "Player has the right to start the slot machine without using their funds for a certain number of times. The size of the bet is determined by the";
-    UiInitData.spclSymbolTxt.push(strng);
-  }
+  // for (let i = 0; i < specialSymbols.length; i++) {
+  //   const strng =
+  //     "Player has the right to start the slot machine without using their funds for a certain number of times. The size of the bet is determined by the";
+  //   UiInitData.spclSymbolTxt.push(strng);
+  // }
 
   const dataToSend = {
     GameData: {
       Reel: gameSettings.reels,
+      // freeSpin: gameSettings.currentGamedata.Symbols[9],
+      // Scatter: gameSettings.currentGamedata.Symbols[11],
+      // Jackpot: gameSettings.currentGamedata.Symbols[12],
       Lines: gameSettings.currentGamedata.linesApiData,
       Bets: gameSettings.currentGamedata.bets,
       canSwitchLines: false,

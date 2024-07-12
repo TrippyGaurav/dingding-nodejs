@@ -31,6 +31,9 @@ export const gameSettings: GameSettings = {
         weightedRandomness: 0,
         useWildSub: false,
         multiplier: [],
+        defaultAmount: [],
+        symbolsCount: [],
+        increaseValue: []
       },
     ],
   },
@@ -80,6 +83,7 @@ export const gameSettings: GameSettings = {
   reels: [[]],
 
   initiate: async (GameData: {}, clientID: string) => {
+    console.log(gameSettings.currentGamedata, "fullPayTable")
     // console.log(GameData)
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
@@ -145,7 +149,8 @@ export const playerData: PlayerData = {
 };
 
 export const UiInitData = {
-  paylines: convertSymbols(gameSettings.currentGamedata.Symbols),
+
+  paylines: convertSymbols(gameSettings.currentGamedata),
   spclSymbolTxt: [],
   AbtLogo: {
     logoSprite: "https://iili.io/JrMCqPf.png",
@@ -241,7 +246,7 @@ function handleSpecialSymbols(symbol) {
 
 //CHECKMOOLAH
 export function spinResult(clientID: string) {
-  console.log(gameSettings._winData, ":gameSettings._winData");
+  // console.log(gameSettings._winData, ":gameSettings._winData");
 
   if (
     gameSettings.currentGamedata.bonus.isEnabled &&
