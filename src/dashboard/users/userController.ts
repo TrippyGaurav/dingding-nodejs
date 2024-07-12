@@ -561,11 +561,13 @@ export class UserController {
         // Transactions
         const transactions = await Transaction.find({
           createdAt: { $gte: start, $lte: end },
-        }).sort({ createdAt: -1 });
+        }).sort({ createdAt: -1 }).limit(10);
 
 
 
         return res.status(200).json({
+          username: currentUser.username,
+          role: currentUser.role,
           recharge: totalRechargedAmt[0]?.totalAmount || 0,
           redeem: totalRedeemedAmt[0]?.totalAmount || 0,
           users: counts,
@@ -634,7 +636,7 @@ export class UserController {
         ])
 
 
-        const userTransactions = await Transaction.find({ $or: [{ debtor: currentUser.username }, { creditor: currentUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 });
+        const userTransactions = await Transaction.find({ $or: [{ debtor: currentUser.username }, { creditor: currentUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
 
 
         let users;
@@ -689,6 +691,8 @@ export class UserController {
         }, {});
 
         return res.status(200).json({
+          username: currentUser.username,
+          role: currentUser.role,
           recharge: userRechargeAmt[0]?.totalAmount || 0,
           redeem: userRedeemAmt[0]?.totalAmount || 0,
           users: counts,
