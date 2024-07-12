@@ -352,35 +352,233 @@ class UserController {
     }
     getReport(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c, _d;
             try {
                 const _req = req;
-                const { role } = _req.user;
+                const { username, role } = _req.user;
                 const { type } = req.query;
-                if (role !== 'company') {
-                    throw (0, http_errors_1.default)(403, 'Access denied: You do not have permission to access this resource.');
-                }
                 const { start, end } = UserController.getStartAndEndOfPeriod(type);
-                // Fetch today's transactions
-                const transactionsToday = yield transactionModel_1.default.find({
-                    createdAt: { $gte: start, $lte: end },
-                }).sort({ createdAt: -1 });
-                // Aggregate the total money spent today
-                const totalMoneySpentToday = transactionsToday.reduce((sum, t) => sum + t.amount, 0);
-                // Fetch users and players created today
-                const usersCreatedToday = yield userModel_1.User.find({
-                    createdAt: { $gte: start, $lte: end },
-                }).sort({ createdAt: -1 });
-                const playersCreatedToday = yield userModel_1.Player.find({
-                    createdAt: { $gte: start, $lte: end },
-                }).sort({ createdAt: -1 });
-                // Prepare the report
-                const report = {
-                    moneySpent: totalMoneySpentToday,
-                    users: usersCreatedToday,
-                    players: playersCreatedToday,
-                    transactions: transactionsToday,
+                const allowedAdmins = ["company", "master", "distributor", "subdistributor", "store"];
+                const roleHierarchy = {
+                    company: ["master", "distributor", "subdistributor", "store", "player"],
+                    master: ["distributor"],
+                    distributor: ["subdistributor"],
+                    subdistributor: ["store"],
+                    store: ["player"]
                 };
-                res.status(200).json(report);
+                const currentUser = yield userModel_1.User.findOne({ username });
+                if (!currentUser) {
+                    throw (0, http_errors_1.default)(401, "User not found");
+                }
+                if (!allowedAdmins.includes(currentUser.role)) {
+                    throw (0, http_errors_1.default)(400, "Access denied : Invalid User ");
+                }
+                if (currentUser.role === "company") {
+                    // Total Recharge Amount
+                    const totalRechargedAmt = yield transactionModel_1.default.aggregate([
+                        {
+                            $match: {
+                                $and: [
+                                    {
+                                        createdAt: {
+                                            $gte: start,
+                                            $lte: end
+                                        }
+                                    },
+                                    {
+                                        type: "recharge"
+                                    }
+                                ]
+                            }
+                        }, {
+                            $group: {
+                                _id: null,
+                                totalAmount: {
+                                    $sum: "$amount"
+                                }
+                            }
+                        }
+                    ]);
+                    // Total Redeem Amount
+                    const totalRedeemedAmt = yield transactionModel_1.default.aggregate([
+                        {
+                            $match: {
+                                $and: [
+                                    {
+                                        createdAt: {
+                                            $gte: start,
+                                            $lte: end
+                                        }
+                                    },
+                                    {
+                                        type: "redeem"
+                                    }
+                                ]
+                            }
+                        }, {
+                            $group: {
+                                _id: null,
+                                totalAmount: {
+                                    $sum: "$amount"
+                                }
+                            }
+                        }
+                    ]);
+                    const users = yield userModel_1.User.aggregate([
+                        {
+                            $match: {
+                                $and: [
+                                    {
+                                        role: { $ne: currentUser.role }
+                                    },
+                                    {
+                                        createdAt: { $gte: start, $lte: end }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: "$role",
+                                count: { $sum: 1 }
+                            }
+                        }
+                    ]);
+                    const players = yield userModel_1.Player.countDocuments({ role: "player", createdAt: { $gte: start, $lte: end } });
+                    const counts = users.reduce((acc, curr) => {
+                        acc[curr._id] = curr.count;
+                        return acc;
+                    }, {});
+                    counts["player"] = players;
+                    // Transactions
+                    const transactions = yield transactionModel_1.default.find({
+                        createdAt: { $gte: start, $lte: end },
+                    }).sort({ createdAt: -1 }).limit(10);
+                    return res.status(200).json({
+                        username: currentUser.username,
+                        role: currentUser.role,
+                        recharge: ((_a = totalRechargedAmt[0]) === null || _a === void 0 ? void 0 : _a.totalAmount) || 0,
+                        redeem: ((_b = totalRedeemedAmt[0]) === null || _b === void 0 ? void 0 : _b.totalAmount) || 0,
+                        users: counts,
+                        transactions: transactions
+                    });
+                }
+                else {
+                    const userRechargeAmt = yield transactionModel_1.default.aggregate([
+                        {
+                            $match: {
+                                $and: [
+                                    {
+                                        createdAt: {
+                                            $gte: start,
+                                            $lte: end
+                                        }
+                                    },
+                                    {
+                                        type: "recharge"
+                                    },
+                                    {
+                                        creditor: currentUser.username
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                totalAmount: {
+                                    $sum: "$amount"
+                                }
+                            }
+                        }
+                    ]);
+                    const userRedeemAmt = yield transactionModel_1.default.aggregate([
+                        {
+                            $match: {
+                                $and: [
+                                    {
+                                        createdAt: {
+                                            $gte: start,
+                                            $lte: end
+                                        }
+                                    },
+                                    {
+                                        type: "redeem"
+                                    },
+                                    {
+                                        debtor: currentUser.username
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                totalAmount: {
+                                    $sum: "$amount"
+                                }
+                            }
+                        }
+                    ]);
+                    const userTransactions = yield transactionModel_1.default.find({ $or: [{ debtor: currentUser.username }, { creditor: currentUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
+                    let users;
+                    if (currentUser.role === "store") {
+                        users = yield userModel_1.Player.aggregate([
+                            {
+                                $match: {
+                                    $and: [
+                                        {
+                                            createdBy: currentUser._id
+                                        },
+                                        {
+                                            createdAt: { $gte: start, $lte: end }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                $group: {
+                                    _id: "$role",
+                                    count: { $sum: 1 }
+                                }
+                            }
+                        ]);
+                    }
+                    else {
+                        users = yield userModel_1.User.aggregate([
+                            {
+                                $match: {
+                                    $and: [
+                                        {
+                                            createdBy: currentUser._id
+                                        },
+                                        {
+                                            createdAt: { $gte: start, $lte: end }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                $group: {
+                                    _id: "$role",
+                                    count: { $sum: 1 }
+                                }
+                            }
+                        ]);
+                    }
+                    const counts = users.reduce((acc, curr) => {
+                        acc[curr._id] = curr.count;
+                        return acc;
+                    }, {});
+                    return res.status(200).json({
+                        username: currentUser.username,
+                        role: currentUser.role,
+                        recharge: ((_c = userRechargeAmt[0]) === null || _c === void 0 ? void 0 : _c.totalAmount) || 0,
+                        redeem: ((_d = userRedeemAmt[0]) === null || _d === void 0 ? void 0 : _d.totalAmount) || 0,
+                        users: counts,
+                        transactions: userTransactions
+                    });
+                }
             }
             catch (error) {
                 next(error);
