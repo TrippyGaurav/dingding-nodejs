@@ -448,43 +448,257 @@ export class UserController {
   async getReport(req: Request, res: Response, next: NextFunction) {
     try {
       const _req = req as AuthRequest;
-      const { role } = _req.user;
+      const { username, role } = _req.user;
       const { type } = req.query;
-
-
-      if (role !== 'company') {
-        throw createHttpError(403, 'Access denied: You do not have permission to access this resource.');
-      }
-
       const { start, end } = UserController.getStartAndEndOfPeriod(type as string);
+      const allowedAdmins = ["company", "master", "distributor", "subdistributor", "store"];
 
-      // Fetch today's transactions
-      const transactionsToday = await Transaction.find({
-        createdAt: { $gte: start, $lte: end },
-      }).sort({ createdAt: -1 });
-
-      // Aggregate the total money spent today
-      const totalMoneySpentToday = transactionsToday.reduce((sum, t) => sum + t.amount, 0);
-
-      // Fetch users and players created today
-      const usersCreatedToday = await User.find({
-        createdAt: { $gte: start, $lte: end },
-      }).sort({ createdAt: -1 });
-
-      const playersCreatedToday = await Player.find({
-        createdAt: { $gte: start, $lte: end },
-      }).sort({ createdAt: -1 });
-
-
-      // Prepare the report
-      const report = {
-        moneySpent: totalMoneySpentToday,
-        users: usersCreatedToday,
-        players: playersCreatedToday,
-        transactions: transactionsToday,
+      const roleHierarchy = {
+        company: ["master", "distributor", "subdistributor", "store", "player"],
+        master: ["distributor"],
+        distributor: ["subdistributor"],
+        subdistributor: ["store"],
+        store: ["player"]
       };
 
-      res.status(200).json(report);
+      const currentUser = await User.findOne({ username });
+
+      if (!currentUser) {
+        throw createHttpError(401, "User not found")
+      }
+
+      if (!allowedAdmins.includes(currentUser.role)) {
+        throw createHttpError(400, "Access denied : Invalid User ")
+      }
+
+
+      if (currentUser.role === "company") {
+
+        // Total Recharge Amount
+        const totalRechargedAmt = await Transaction.aggregate([
+          {
+            $match: {
+              $and: [
+                {
+                  createdAt: {
+                    $gte: start,
+                    $lte: end
+                  }
+                },
+                {
+                  type: "recharge"
+                }
+              ]
+            }
+          }, {
+            $group: {
+              _id: null,
+              totalAmount: {
+                $sum: "$amount"
+              }
+            }
+          }
+        ]);
+
+        // Total Redeem Amount
+        const totalRedeemedAmt = await Transaction.aggregate([
+          {
+            $match: {
+              $and: [
+                {
+                  createdAt: {
+                    $gte: start,
+                    $lte: end
+                  }
+                },
+                {
+                  type: "redeem"
+                }
+              ]
+            }
+          }, {
+            $group: {
+              _id: null,
+              totalAmount: {
+                $sum: "$amount"
+              }
+            }
+          }
+        ]);
+
+
+        const users = await User.aggregate([
+          {
+            $match: {
+              $and: [
+                {
+                  role: { $ne: currentUser.role }
+                },
+                {
+                  createdAt: { $gte: start, $lte: end }
+                }
+              ]
+            }
+          },
+          {
+            $group: {
+              _id: "$role",
+              count: { $sum: 1 }
+            }
+          }
+        ]);
+
+        const players = await Player.countDocuments({ role: "player", createdAt: { $gte: start, $lte: end } })
+
+        const counts = users.reduce((acc: Record<string, number>, curr) => {
+          acc[curr._id] = curr.count;
+          return acc;
+        }, {});
+
+        counts["player"] = players;
+
+
+        // Transactions
+        const transactions = await Transaction.find({
+          createdAt: { $gte: start, $lte: end },
+        }).sort({ createdAt: -1 }).limit(10);
+
+
+
+        return res.status(200).json({
+          username: currentUser.username,
+          role: currentUser.role,
+          recharge: totalRechargedAmt[0]?.totalAmount || 0,
+          redeem: totalRedeemedAmt[0]?.totalAmount || 0,
+          users: counts,
+          transactions: transactions
+        });
+      }
+      else {
+
+        const userRechargeAmt = await Transaction.aggregate([
+          {
+            $match: {
+              $and: [
+                {
+                  createdAt: {
+                    $gte: start,
+                    $lte: end
+                  }
+                },
+                {
+                  type: "recharge"
+                },
+                {
+                  creditor: currentUser.username
+                }
+              ]
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              totalAmount: {
+                $sum: "$amount"
+              }
+            }
+          }
+        ]);
+
+
+        const userRedeemAmt = await Transaction.aggregate([
+          {
+            $match: {
+              $and: [
+                {
+                  createdAt: {
+                    $gte: start,
+                    $lte: end
+                  }
+                },
+                {
+                  type: "redeem"
+                },
+                {
+                  debtor: currentUser.username
+                }
+              ]
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              totalAmount: {
+                $sum: "$amount"
+              }
+            }
+          }
+        ])
+
+
+        const userTransactions = await Transaction.find({ $or: [{ debtor: currentUser.username }, { creditor: currentUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
+
+
+        let users;
+        if (currentUser.role === "store") {
+          users = await Player.aggregate([
+            {
+              $match: {
+                $and: [
+                  {
+                    createdBy: currentUser._id
+                  },
+                  {
+                    createdAt: { $gte: start, $lte: end }
+                  }
+                ]
+              }
+            },
+            {
+              $group: {
+                _id: "$role",
+                count: { $sum: 1 }
+              }
+            }
+          ])
+        }
+        else {
+          users = await User.aggregate([
+            {
+              $match: {
+                $and: [
+                  {
+                    createdBy: currentUser._id
+                  },
+                  {
+                    createdAt: { $gte: start, $lte: end }
+                  }
+                ]
+              }
+            },
+            {
+              $group: {
+                _id: "$role",
+                count: { $sum: 1 }
+              }
+            }
+          ])
+        }
+
+        const counts = users.reduce((acc: Record<string, number>, curr) => {
+          acc[curr._id] = curr.count;
+          return acc;
+        }, {});
+
+        return res.status(200).json({
+          username: currentUser.username,
+          role: currentUser.role,
+          recharge: userRechargeAmt[0]?.totalAmount || 0,
+          redeem: userRedeemAmt[0]?.totalAmount || 0,
+          users: counts,
+          transactions: userTransactions
+        })
+      }
 
     }
     catch (error) {
