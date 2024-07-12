@@ -32,6 +32,9 @@ exports.gameSettings = {
                 weightedRandomness: 0,
                 useWildSub: false,
                 multiplier: [],
+                defaultAmount: [],
+                symbolsCount: [],
+                increaseValue: []
             },
         ],
     },
@@ -80,6 +83,7 @@ exports.gameSettings = {
     },
     reels: [[]],
     initiate: (GameData, clientID) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log(exports.gameSettings.currentGamedata, "fullPayTable");
         // console.log(GameData)
         exports.gameSettings.bonusPayTable = [];
         exports.gameSettings.scatterPayTable = [];
@@ -132,7 +136,7 @@ exports.playerData = {
     // haveUsed: 0
 };
 exports.UiInitData = {
-    paylines: (0, gameUtils_1.convertSymbols)(exports.gameSettings.currentGamedata.Symbols),
+    paylines: (0, gameUtils_1.convertSymbols)(exports.gameSettings.currentGamedata),
     spclSymbolTxt: [],
     AbtLogo: {
         logoSprite: "https://iili.io/JrMCqPf.png",
@@ -219,7 +223,7 @@ function handleSpecialSymbols(symbol) {
 }
 //CHECKMOOLAH
 function spinResult(clientID) {
-    console.log(exports.gameSettings._winData, ":gameSettings._winData");
+    // console.log(gameSettings._winData, ":gameSettings._winData");
     if (exports.gameSettings.currentGamedata.bonus.isEnabled &&
         exports.gameSettings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.tap)
         exports.gameSettings.bonus.game = new bonusResults_1.bonusGame(exports.gameSettings.currentGamedata.bonus.noOfItem, clientID);

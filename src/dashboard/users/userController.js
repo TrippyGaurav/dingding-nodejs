@@ -356,16 +356,9 @@ class UserController {
             try {
                 const _req = req;
                 const { username, role } = _req.user;
-                const { type } = req.query;
+                const { type, userId } = req.query;
                 const { start, end } = UserController.getStartAndEndOfPeriod(type);
                 const allowedAdmins = ["company", "master", "distributor", "subdistributor", "store"];
-                const roleHierarchy = {
-                    company: ["master", "distributor", "subdistributor", "store", "player"],
-                    master: ["distributor"],
-                    distributor: ["subdistributor"],
-                    subdistributor: ["store"],
-                    store: ["player"]
-                };
                 const currentUser = yield userModel_1.User.findOne({ username });
                 if (!currentUser) {
                     throw (0, http_errors_1.default)(401, "User not found");
@@ -373,7 +366,20 @@ class UserController {
                 if (!allowedAdmins.includes(currentUser.role)) {
                     throw (0, http_errors_1.default)(400, "Access denied : Invalid User ");
                 }
-                if (currentUser.role === "company") {
+                let targetUser = currentUser;
+                if (userId) {
+                    let subordinate = yield userModel_1.User.findById(userId);
+                    console.log("Sub : ", subordinate);
+                    if (!subordinate) {
+                        subordinate = yield userModel_1.Player.findById(userId);
+                        if (!subordinate) {
+                            throw (0, http_errors_1.default)(404, "Subordinate user not found");
+                        }
+                    }
+                    console.log("Sub : ", subordinate);
+                    targetUser = subordinate;
+                }
+                if (targetUser.role === "company") {
                     // Total Recharge Amount
                     const totalRechargedAmt = yield transactionModel_1.default.aggregate([
                         {
@@ -429,7 +435,7 @@ class UserController {
                             $match: {
                                 $and: [
                                     {
-                                        role: { $ne: currentUser.role }
+                                        role: { $ne: targetUser.role }
                                     },
                                     {
                                         createdAt: { $gte: start, $lte: end }
@@ -455,8 +461,8 @@ class UserController {
                         createdAt: { $gte: start, $lte: end },
                     }).sort({ createdAt: -1 }).limit(10);
                     return res.status(200).json({
-                        username: currentUser.username,
-                        role: currentUser.role,
+                        username: targetUser.username,
+                        role: targetUser.role,
                         recharge: ((_a = totalRechargedAmt[0]) === null || _a === void 0 ? void 0 : _a.totalAmount) || 0,
                         redeem: ((_b = totalRedeemedAmt[0]) === null || _b === void 0 ? void 0 : _b.totalAmount) || 0,
                         users: counts,
@@ -478,7 +484,7 @@ class UserController {
                                         type: "recharge"
                                     },
                                     {
-                                        creditor: currentUser.username
+                                        creditor: targetUser.username
                                     }
                                 ]
                             }
@@ -506,7 +512,7 @@ class UserController {
                                         type: "redeem"
                                     },
                                     {
-                                        debtor: currentUser.username
+                                        debtor: targetUser.username
                                     }
                                 ]
                             }
@@ -520,15 +526,15 @@ class UserController {
                             }
                         }
                     ]);
-                    const userTransactions = yield transactionModel_1.default.find({ $or: [{ debtor: currentUser.username }, { creditor: currentUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
+                    const userTransactions = yield transactionModel_1.default.find({ $or: [{ debtor: targetUser.username }, { creditor: targetUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
                     let users;
-                    if (currentUser.role === "store") {
+                    if (targetUser.role === "store" || targetUser.role === "player") {
                         users = yield userModel_1.Player.aggregate([
                             {
                                 $match: {
                                     $and: [
                                         {
-                                            createdBy: currentUser._id
+                                            createdBy: targetUser._id
                                         },
                                         {
                                             createdAt: { $gte: start, $lte: end }
@@ -550,7 +556,7 @@ class UserController {
                                 $match: {
                                     $and: [
                                         {
-                                            createdBy: currentUser._id
+                                            createdBy: targetUser._id
                                         },
                                         {
                                             createdAt: { $gte: start, $lte: end }
@@ -571,8 +577,8 @@ class UserController {
                         return acc;
                     }, {});
                     return res.status(200).json({
-                        username: currentUser.username,
-                        role: currentUser.role,
+                        username: targetUser.username,
+                        role: targetUser.role,
                         recharge: ((_c = userRechargeAmt[0]) === null || _c === void 0 ? void 0 : _c.totalAmount) || 0,
                         redeem: ((_d = userRedeemAmt[0]) === null || _d === void 0 ? void 0 : _d.totalAmount) || 0,
                         users: counts,

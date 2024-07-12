@@ -36,7 +36,7 @@ class SocketUser {
                 // Use "SL-VIK" as default tagName if messageData.Data.GameID is not present
                 const tagName = messageData.Data.GameID;
                 const game = yield gameModel_2.default.findOne({ tagName: tagName });
-                console.log(game, "Game");
+                // console.log(game, "Game");
                 if (!game || !game.payout) {
                     console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
                     global_1.gameSettings.initiate(testData_1.gameData[0], this.socket.id);
@@ -111,7 +111,6 @@ class SocketUser {
         this.socket.emit("alert" /* MESSAGETYPE.ALERT */, message);
     }
     sendMessage(id, message) {
-        console.log(id, message, "send");
         this.socket.emit("message" /* MESSAGETYPE.MESSAGE */, JSON.stringify({ id, message }));
     }
     //to get the player initial balance after socket connection
