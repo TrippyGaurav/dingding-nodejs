@@ -199,7 +199,7 @@ export function convertSymbols(data) {
       defaultAmount: element.defaultAmount || {},
       symbolsCount: element.symbolsCount || element.symbolCount || {},
       increaseValue: element.increaseValue || {},
-      freeSpin: element.freeSpin
+      freeSpin: element.freeSpin || 0
     };
     if (element.multiplier) {
       const multiplierObject = {};
