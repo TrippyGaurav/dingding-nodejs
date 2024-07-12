@@ -18,13 +18,17 @@ function sendInitdata(clientID) {
         global_1.gameSettings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.spin)
         global_1.gameSettings.bonus.game = new bonusResults_1.bonusGame(global_1.gameSettings.currentGamedata.bonus.noOfItem, clientID);
     let specialSymbols = global_1.gameSettings.currentGamedata.Symbols.filter((element) => !element.useWildSub);
-    for (let i = 0; i < specialSymbols.length; i++) {
-        const strng = "Player has the right to start the slot machine without using their funds for a certain number of times. The size of the bet is determined by the";
-        global_1.UiInitData.spclSymbolTxt.push(strng);
-    }
+    // for (let i = 0; i < specialSymbols.length; i++) {
+    //   const strng =
+    //     "Player has the right to start the slot machine without using their funds for a certain number of times. The size of the bet is determined by the";
+    //   UiInitData.spclSymbolTxt.push(strng);
+    // }
     const dataToSend = {
         GameData: {
             Reel: global_1.gameSettings.reels,
+            // freeSpin: gameSettings.currentGamedata.Symbols[9],
+            // Scatter: gameSettings.currentGamedata.Symbols[11],
+            // Jackpot: gameSettings.currentGamedata.Symbols[12],
             Lines: global_1.gameSettings.currentGamedata.linesApiData,
             Bets: global_1.gameSettings.currentGamedata.bets,
             canSwitchLines: false,
