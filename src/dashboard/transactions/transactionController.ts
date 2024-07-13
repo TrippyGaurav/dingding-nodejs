@@ -25,7 +25,6 @@ export class TransactionController {
   async createTransaction(type: string, debtor: IUser, creditor: IUser | IPlayer, amount: number, session: mongoose.ClientSession): Promise<ITransaction> {
     try {
       const transaction = await this.transactionService.createTransaction(type, debtor, creditor, amount, session);
-      console.log(`Transaction created: ${transaction._id}`);
       return transaction;
     } catch (error) {
       console.error(`Error creating transaction: ${error.message}`);
@@ -124,13 +123,11 @@ export class TransactionController {
           throw createHttpError(404, "Transaction not found");
         }
         res.status(200).json({ message: "Transaction deleted successfully" });
-        console.log(`Transaction deleted: ${id}`);
       } else {
         if (!deletedTransaction) {
           throw createHttpError(404, "Transaction not found");
         }
         res.status(200).json({ message: "Transaction deleted successfully" });
-        console.log(`Transaction deleted: ${id}`);
       }
     } catch (error) {
       await session.abortTransaction();

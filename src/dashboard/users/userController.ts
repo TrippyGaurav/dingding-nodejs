@@ -81,7 +81,6 @@ export class UserController {
   async loginUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;
-      console.log("Login Request : ", username, password);
 
 
       if (!username || !password) {
@@ -98,9 +97,6 @@ export class UserController {
           throw createHttpError(401, "User not found")
         }
       }
-
-
-      console.log("Logged : ", user);
 
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -319,8 +315,6 @@ export class UserController {
       const { clientId } = req.params;
       const { status, credits, password, existingPassword } = req.body;
 
-      console.log("Upadating for : ", clientId);
-
 
       if (!clientId) {
         throw createHttpError(400, "Client Id is required");
@@ -379,8 +373,6 @@ export class UserController {
       const { subordinateId } = req.params;
       const { username: loggedUserName, role: loggedUserRole } = _req.user;
 
-      console.log(loggedUserName, loggedUserRole);
-
 
       const subordinateObjectId = new mongoose.Types.ObjectId(subordinateId);
       const loggedUser = await this.userService.findUserByUsername(loggedUserName);
@@ -409,9 +401,7 @@ export class UserController {
             const userSubordinates = await User.find({ createdBy: subordinateId })
 
             const playerSubordinates = await Player.find({ createdBy: subordinateId })
-            console.log("userSubordinates", userSubordinates);
-            console.log("playerSubordinates", playerSubordinates);
-
+        
 
             client = client.toObject(); // Convert Mongoose Document to plain JavaScript object
             client.subordinates = [...userSubordinates, ...playerSubordinates];
@@ -574,7 +564,7 @@ export class UserController {
         // Transactions
         const transactions = await Transaction.find({
           createdAt: { $gte: start, $lte: end },
-        }).sort({ createdAt: -1 }).limit(10);
+        }).sort({ createdAt: -1 }).limit(9);
 
 
 
@@ -649,7 +639,7 @@ export class UserController {
         ])
 
 
-        const userTransactions = await Transaction.find({ $or: [{ debtor: targetUser.username }, { creditor: targetUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
+        const userTransactions = await Transaction.find({ $or: [{ debtor: targetUser.username }, { creditor: targetUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(9);
 
 
         let users;
@@ -669,7 +659,7 @@ export class UserController {
             },
             {
               $group: {
-                _id: "$role",
+                _id: "$status",
                 count: { $sum: 1 }
               }
             }
@@ -691,17 +681,24 @@ export class UserController {
             },
             {
               $group: {
-                _id: "$role",
+                _id: "$status",
                 count: { $sum: 1 }
               }
             }
           ])
         }
 
-        const counts = users.reduce((acc: Record<string, number>, curr) => {
-          acc[curr._id] = curr.count;
+
+
+        const counts = users.reduce((acc: { active: number, inactive: number }, curr) => {
+          if (curr._id === "active") {
+            acc.active += curr.count;
+          } else {
+            acc.inactive += curr.count;
+          }
           return acc;
-        }, {});
+        }, { active: 0, inactive: 0 });
+
 
         return res.status(200).json({
           username: targetUser.username,

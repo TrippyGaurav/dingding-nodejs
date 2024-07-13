@@ -13,8 +13,6 @@ export function checkPermission(req: Request, res: Response, next: NextFunction)
 
         const requiredPermission = req.route.path;
 
-        console.log(requiredPermission);
-
         next()
 
     } catch (error) {
