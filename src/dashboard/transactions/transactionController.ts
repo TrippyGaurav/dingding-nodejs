@@ -82,6 +82,10 @@ export class TransactionController {
       const user = await User.findOne({ username });
       const subordinate = await User.findOne({ _id: subordinateId });
 
+
+      console.log("SUb : ", subordinate);
+
+
       if (!user) {
         throw createHttpError(404, "Unable to find logged in user");
       }

@@ -294,6 +294,11 @@ export class UserController {
     try {
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
+      const { id } = req.query;
+
+      console.log("Subor : ", id);
+      
+
 
       const currentUser = await User.findOne({ username });
       if (!currentUser) {
@@ -304,18 +309,33 @@ export class UserController {
       const limit = parseInt(req.query.limit as string) || 10;
       const skip = (page - 1) * limit;
 
+      let userToCheck = currentUser;
+
+      if (id) {
+        userToCheck = await User.findById(id);
+        if (!userToCheck) {
+          userToCheck = await Player.findById(id);
+          if (!userToCheck) {
+            return res.status(404).json({ message: "User not found" });
+          }
+        }
+      }
+
+
       let subordinates;
       let totalSubordinates;
 
-      if (currentUser.role === "role") {
-        totalSubordinates = await Player.countDocuments({ createdBy: currentUser._id });
-        subordinates = await Player.find({ createdBy: currentUser._id })
+
+
+      if (userToCheck.role === "role") {
+        totalSubordinates = await Player.countDocuments({ createdBy: userToCheck._id });
+        subordinates = await Player.find({ createdBy: userToCheck._id })
           .skip(skip)
           .limit(limit)
           .select('name username status role totalRecharged totalRedeemed credits');
       } else {
-        totalSubordinates = await User.countDocuments({ createdBy: currentUser._id });
-        subordinates = await User.find({ createdBy: currentUser._id })
+        totalSubordinates = await User.countDocuments({ createdBy: userToCheck._id });
+        subordinates = await User.find({ createdBy: userToCheck._id })
           .skip(skip)
           .select('name username status role totalRecharged totalRedeemed credits');
       }
@@ -473,6 +493,8 @@ export class UserController {
       const _req = req as AuthRequest;
       const { subordinateId } = req.params;
       const { username: loggedUserName, role: loggedUserRole } = _req.user;
+
+
 
 
       const subordinateObjectId = new mongoose.Types.ObjectId(subordinateId);
