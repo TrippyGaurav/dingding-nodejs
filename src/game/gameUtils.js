@@ -96,7 +96,7 @@ function convertSymbols(data) {
         let symbolData = {
             ID: element.Id,
             Name: element.Name || {},
-            multiplier: {},
+            multiplier: element.multiplier || {},
             defaultAmount: element.defaultAmount || {},
             symbolsCount: element.symbolsCount || element.symbolCount || {},
             increaseValue: element.increaseValue || {},
