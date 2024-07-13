@@ -33,7 +33,6 @@ class TransactionController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const transaction = yield this.transactionService.createTransaction(type, debtor, creditor, amount, session);
-                console.log(`Transaction created: ${transaction._id}`);
                 return transaction;
             }
             catch (error) {
@@ -129,14 +128,12 @@ class TransactionController {
                         throw (0, http_errors_1.default)(404, "Transaction not found");
                     }
                     res.status(200).json({ message: "Transaction deleted successfully" });
-                    console.log(`Transaction deleted: ${id}`);
                 }
                 else {
                     if (!deletedTransaction) {
                         throw (0, http_errors_1.default)(404, "Transaction not found");
                     }
                     res.status(200).json({ message: "Transaction deleted successfully" });
-                    console.log(`Transaction deleted: ${id}`);
                 }
             }
             catch (error) {

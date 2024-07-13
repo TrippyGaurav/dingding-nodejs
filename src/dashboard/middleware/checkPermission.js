@@ -10,7 +10,6 @@ function checkPermission(req, res, next) {
             player: ["read"]
         };
         const requiredPermission = req.route.path;
-        console.log(requiredPermission);
         next();
     }
     catch (error) {
