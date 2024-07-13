@@ -49,8 +49,24 @@ class TransactionController {
             try {
                 const _req = req;
                 const { username, role } = _req.user;
-                const transactions = yield this.transactionService.getTransactions(username);
-                res.status(200).json(transactions);
+                const page = parseInt(req.query.page) || 1;
+                const limit = parseInt(req.query.limit) || 10;
+                const { transactions, totalTransactions, totalPages, currentPage, outOfRange } = yield this.transactionService.getTransactions(username, page, limit);
+                if (outOfRange) {
+                    return res.status(400).json({
+                        message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+                        totalTransactions,
+                        totalPages,
+                        currentPage: page,
+                        transactions: []
+                    });
+                }
+                res.status(200).json({
+                    totalTransactions,
+                    totalPages,
+                    currentPage,
+                    transactions
+                });
             }
             catch (error) {
                 console.error(`Error fetching transactions: ${error.message}`);
@@ -67,8 +83,11 @@ class TransactionController {
                 const _req = req;
                 const { username, role } = _req.user;
                 const { subordinateId } = req.params;
+                const page = parseInt(req.query.page) || 1;
+                const limit = parseInt(req.query.limit) || 10;
                 const user = yield userModel_1.User.findOne({ username });
                 const subordinate = yield userModel_1.User.findOne({ _id: subordinateId });
+                console.log("SUb : ", subordinate);
                 if (!user) {
                     throw (0, http_errors_1.default)(404, "Unable to find logged in user");
                 }
@@ -76,8 +95,22 @@ class TransactionController {
                     throw (0, http_errors_1.default)(404, "User not found");
                 }
                 if (user.role === "company" || user.subordinates.includes(new mongoose_1.default.Types.ObjectId(subordinateId))) {
-                    const transactions = yield this.transactionService.getTransactionsBySubName(subordinate.username);
-                    res.status(200).json(transactions);
+                    const { transactions, totalTransactions, totalPages, currentPage, outOfRange } = yield this.transactionService.getTransactions(subordinate.username, page, limit);
+                    if (outOfRange) {
+                        return res.status(400).json({
+                            message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+                            totalTransactions,
+                            totalPages,
+                            currentPage: page,
+                            transactions: []
+                        });
+                    }
+                    res.status(200).json({
+                        totalTransactions,
+                        totalPages,
+                        currentPage,
+                        transactions
+                    });
                 }
                 else {
                     throw (0, http_errors_1.default)(403, "Forbidden: You do not have the necessary permissions to access this resource.");
@@ -100,8 +133,30 @@ class TransactionController {
                 if (role != "company") {
                     throw (0, http_errors_1.default)(403, "Access denied. Only users with the role 'company' can access this resource.");
                 }
-                const transactions = yield transactionModel_1.default.find();
-                res.status(200).json(transactions);
+                const page = parseInt(req.query.page) || 1;
+                const limit = parseInt(req.query.limit) || 10;
+                const skip = (page - 1) * limit;
+                const totalTransactions = yield transactionModel_1.default.countDocuments();
+                const totalPages = Math.ceil(totalTransactions / limit);
+                // Check if the requested page is out of range
+                if (page > totalPages) {
+                    return res.status(400).json({
+                        message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+                        totalTransactions,
+                        totalPages,
+                        currentPage: page,
+                        transactions: []
+                    });
+                }
+                const transactions = yield transactionModel_1.default.find()
+                    .skip(skip)
+                    .limit(limit);
+                res.status(200).json({
+                    totalTransactions,
+                    totalPages,
+                    currentPage: page,
+                    transactions
+                });
             }
             catch (error) {
                 console.error(`Error fetching transactions by client ID: ${error.message}`);

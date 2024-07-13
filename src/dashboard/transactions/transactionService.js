@@ -51,17 +51,47 @@ class TransactionService {
             return transaction;
         });
     }
-    getTransactions(username) {
+    getTransactions(username, page, limit) {
         return __awaiter(this, void 0, void 0, function* () {
+            const skip = (page - 1) * limit;
             const user = yield userModel_1.User.findOne({ username });
-            const transactions = yield transactionModel_1.default.find({ $or: [{ debtor: user.username }, { creditor: user.username }] });
-            return transactions;
-        });
-    }
-    getTransactionsBySubName(subordinateName) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const transactions = yield transactionModel_1.default.find({ $or: [{ debtor: subordinateName }, { creditor: subordinateName }] });
-            return transactions;
+            if (!user) {
+                throw new Error("User not found");
+            }
+            const totalTransactions = yield transactionModel_1.default.countDocuments({
+                $or: [{ debtor: user.username }, { creditor: user.username }]
+            });
+            const totalPages = Math.ceil(totalTransactions / limit);
+            if (totalTransactions === 0) {
+                return {
+                    transactions: [],
+                    totalTransactions: 0,
+                    totalPages: 0,
+                    currentPage: 0,
+                    outOfRange: false
+                };
+            }
+            if (page > totalPages) {
+                return {
+                    transactions: [],
+                    totalTransactions,
+                    totalPages,
+                    currentPage: page,
+                    outOfRange: true
+                };
+            }
+            const transactions = yield transactionModel_1.default.find({
+                $or: [{ debtor: user.username }, { creditor: user.username }]
+            })
+                .skip(skip)
+                .limit(limit);
+            return {
+                transactions,
+                totalTransactions,
+                totalPages,
+                currentPage: page,
+                outOfRange: false
+            };
         });
     }
     deleteTransaction(id, session) {

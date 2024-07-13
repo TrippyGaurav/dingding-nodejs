@@ -59,7 +59,7 @@ class GameController {
                         if (!player) {
                             throw (0, http_errors_1.default)(404, "Player not found");
                         }
-                        const favouriteGames = yield gameModel_2.default.find({ _id: { $in: player.favouriteGames } });
+                        const favouriteGames = yield gameModel_2.default.find({ _id: { $in: player.favouriteGames } }).select('-url');
                         return res.status(200).json({ featured: [], others: favouriteGames });
                     }
                     else {
@@ -75,8 +75,8 @@ class GameController {
                             },
                             {
                                 $facet: {
-                                    featured: [{ $limit: 5 }],
-                                    others: [{ $skip: 5 }]
+                                    featured: [{ $limit: 5 }, { $project: { url: 0 } }],
+                                    others: [{ $skip: 5 }, { $project: { url: 0 } }]
                                 }
                             }
                         ]);
@@ -92,7 +92,8 @@ class GameController {
                         });
                         const games = yield gameModel_2.default.aggregate([
                             { $match: Object.assign({ _id: { $in: allGames } }, matchStage) },
-                            { $sort: { createdAt: -1 } }
+                            { $sort: { createdAt: -1 } },
+                            { $project: { url: 0 } }
                         ]);
                         return res.status(200).json(games);
                     }
@@ -102,7 +103,8 @@ class GameController {
                             const platformGames = platformDoc.games;
                             const games = yield gameModel_2.default.aggregate([
                                 { $match: { _id: { $in: platformGames.map(game => game._id) } } },
-                                { $sort: { createdAt: -1 } }
+                                { $sort: { createdAt: -1 } },
+                                { $project: { url: 0 } }
                             ]);
                             return res.status(200).json(games);
                         }

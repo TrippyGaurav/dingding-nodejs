@@ -12,7 +12,7 @@ const gameController = new gameController_1.GameController();
 const gameRoutes = express_1.default.Router();
 const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage() });
 // GET : Get all Games
-gameRoutes.get("/", checkUser_1.checkUser, gameController.getGames);
+gameRoutes.get("/", middlware_1.validateApiKey, checkUser_1.checkUser, gameController.getGames);
 // POST : Add a Game
 gameRoutes.post('/', upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), checkUser_1.checkUser, gameController.addGame);
 // GET : Get All Platforms
@@ -21,7 +21,7 @@ gameRoutes.get("/platforms", checkUser_1.checkUser, gameController.getPlatforms)
 gameRoutes.post("/platforms", checkUser_1.checkUser, gameController.addPlatform);
 gameRoutes.put("/:gameId", upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), middlware_1.extractRoleFromCookie, gameController_1.updateGame);
 gameRoutes.delete("/:gameId", middlware_1.extractRoleFromCookie, gameController_1.deleteGame);
-gameRoutes.get("/:gameId", middlware_1.extractRoleFromCookie, gameController_1.getGameById);
+gameRoutes.get("/:gameId", middlware_1.validateApiKey, middlware_1.extractRoleFromCookie, gameController_1.getGameById);
 gameRoutes.post("/thumbnail", middlware_1.extractRoleFromCookie, gameController_1.uploadThubnail);
 gameRoutes.put("/favourite/:playerId", middlware_1.extractRoleFromCookie, gameController_1.addFavouriteGame);
 exports.default = gameRoutes;

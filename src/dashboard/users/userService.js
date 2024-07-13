@@ -72,5 +72,9 @@ class UserService {
             return userModel_1.Player.findByIdAndDelete(id).session(session || null);
         });
     }
+    getAll() {
+        return __awaiter(this, void 0, void 0, function* () {
+        });
+    }
 }
 exports.default = UserService;
