@@ -70,7 +70,6 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { username, password } = req.body;
-                console.log("Login Request : ", username, password);
                 if (!username || !password) {
                     throw (0, http_errors_1.default)(400, "Username, password are required");
                 }
@@ -82,7 +81,6 @@ class UserController {
                         throw (0, http_errors_1.default)(401, "User not found");
                     }
                 }
-                console.log("Logged : ", user);
                 const isPasswordValid = yield bcrypt_1.default.compare(password, user.password);
                 if (!isPasswordValid) {
                     throw (0, http_errors_1.default)(401, "Invalid username or password");
@@ -257,7 +255,6 @@ class UserController {
                 const { username, role } = _req.user;
                 const { clientId } = req.params;
                 const { status, credits, password, existingPassword } = req.body;
-                console.log("Upadating for : ", clientId);
                 if (!clientId) {
                     throw (0, http_errors_1.default)(400, "Client Id is required");
                 }
@@ -303,7 +300,6 @@ class UserController {
                 const _req = req;
                 const { subordinateId } = req.params;
                 const { username: loggedUserName, role: loggedUserRole } = _req.user;
-                console.log(loggedUserName, loggedUserRole);
                 const subordinateObjectId = new mongoose_1.default.Types.ObjectId(subordinateId);
                 const loggedUser = yield this.userService.findUserByUsername(loggedUserName);
                 let user;
@@ -321,8 +317,6 @@ class UserController {
                             client = yield userModel_1.User.findById(subordinateId).populate({ path: "transactions", model: transactionModel_1.default });
                             const userSubordinates = yield userModel_1.User.find({ createdBy: subordinateId });
                             const playerSubordinates = yield userModel_1.Player.find({ createdBy: subordinateId });
-                            console.log("userSubordinates", userSubordinates);
-                            console.log("playerSubordinates", playerSubordinates);
                             client = client.toObject(); // Convert Mongoose Document to plain JavaScript object
                             client.subordinates = [...userSubordinates, ...playerSubordinates];
                             console.log("client", client.subordinates);
@@ -459,7 +453,7 @@ class UserController {
                     // Transactions
                     const transactions = yield transactionModel_1.default.find({
                         createdAt: { $gte: start, $lte: end },
-                    }).sort({ createdAt: -1 }).limit(10);
+                    }).sort({ createdAt: -1 }).limit(9);
                     return res.status(200).json({
                         username: targetUser.username,
                         role: targetUser.role,
@@ -526,7 +520,7 @@ class UserController {
                             }
                         }
                     ]);
-                    const userTransactions = yield transactionModel_1.default.find({ $or: [{ debtor: targetUser.username }, { creditor: targetUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
+                    const userTransactions = yield transactionModel_1.default.find({ $or: [{ debtor: targetUser.username }, { creditor: targetUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(9);
                     let users;
                     if (targetUser.role === "store" || targetUser.role === "player") {
                         users = yield userModel_1.Player.aggregate([
@@ -544,7 +538,7 @@ class UserController {
                             },
                             {
                                 $group: {
-                                    _id: "$role",
+                                    _id: "$status",
                                     count: { $sum: 1 }
                                 }
                             }
@@ -566,16 +560,21 @@ class UserController {
                             },
                             {
                                 $group: {
-                                    _id: "$role",
+                                    _id: "$status",
                                     count: { $sum: 1 }
                                 }
                             }
                         ]);
                     }
                     const counts = users.reduce((acc, curr) => {
-                        acc[curr._id] = curr.count;
+                        if (curr._id === "active") {
+                            acc.active += curr.count;
+                        }
+                        else {
+                            acc.inactive += curr.count;
+                        }
                         return acc;
-                    }, {});
+                    }, { active: 0, inactive: 0 });
                     return res.status(200).json({
                         username: targetUser.username,
                         role: targetUser.role,

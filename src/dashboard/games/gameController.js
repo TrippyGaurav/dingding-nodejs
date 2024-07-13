@@ -60,7 +60,6 @@ class GameController {
                             throw (0, http_errors_1.default)(404, "Player not found");
                         }
                         const favouriteGames = yield gameModel_2.default.find({ _id: { $in: player.favouriteGames } });
-                        console.log("FAv : ", favouriteGames);
                         return res.status(200).json({ featured: [], others: favouriteGames });
                     }
                     else {
@@ -69,7 +68,6 @@ class GameController {
                             throw (0, http_errors_1.default)(404, `Platform ${platform} not found`);
                         }
                         const platformGames = platformDoc.games;
-                        console.log("Platform Games : ", platformGames);
                         const games = yield gameModel_2.default.aggregate([
                             { $match: Object.assign({ _id: { $in: platformGames.map(game => game._id) } }, matchStage) },
                             {
@@ -204,8 +202,6 @@ class GameController {
                     throw (0, http_errors_1.default)(401, "Access denied: You don't have permission to add games");
                 }
                 const { name } = req.body;
-                console.log(req.body);
-                console.log("Platform Name ", name);
                 if (!name) {
                     throw (0, http_errors_1.default)(400, "Platform name is required");
                 }
@@ -372,7 +368,6 @@ const getGameById = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
             throw (0, http_errors_1.default)(400, "Game ID is required");
         }
         const game = yield gameModel_2.default.findOne({ slug: gameId });
-        console.log("Game : ", game);
         if (!game) {
             throw (0, http_errors_1.default)(404, "Game not found");
         }
