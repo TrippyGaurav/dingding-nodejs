@@ -56,7 +56,6 @@ export class GameController {
           }
 
           const favouriteGames = await Game.find({ _id: { $in: player.favouriteGames } });
-          console.log("FAv : ", favouriteGames);
 
           return res.status(200).json({ featured: [], others: favouriteGames });
         }
@@ -68,7 +67,6 @@ export class GameController {
 
           const platformGames = platformDoc.games;
 
-          console.log("Platform Games : ", platformGames);
 
 
 
@@ -232,10 +230,6 @@ export class GameController {
       }
 
       const { name } = req.body;
-      console.log(req.body);
-
-
-      console.log("Platform Name ", name);
 
 
       if (!name) {
@@ -454,10 +448,7 @@ export const getGameById = async (
       throw createHttpError(400, "Game ID is required");
     }
 
-
     const game = await Game.findOne({ slug: gameId });
-    console.log("Game : ", game);
-
 
     if (!game) {
       throw createHttpError(404, "Game not found");
