@@ -9,9 +9,7 @@ export function validateApiKey(
   res: Response,
   next: NextFunction
 ) {
-  const { apiKey } = req.body;
-
-  if (apiKey !== config.companyApiKey) {
+  if (!config.companyApiKey) {
     return next(createHttpError(403, "Invalid API key"));
   }
   next();

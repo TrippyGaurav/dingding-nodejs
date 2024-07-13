@@ -55,7 +55,7 @@ export class GameController {
             throw createHttpError(404, "Player not found")
           }
 
-          const favouriteGames = await Game.find({ _id: { $in: player.favouriteGames } });
+          const favouriteGames = await Game.find({ _id: { $in: player.favouriteGames } }).select('-url');
 
           return res.status(200).json({ featured: [], others: favouriteGames });
         }
@@ -67,9 +67,6 @@ export class GameController {
 
           const platformGames = platformDoc.games;
 
-
-
-
           const games = await Game.aggregate([
             { $match: { _id: { $in: platformGames.map(game => game._id) }, ...matchStage } },
             {
@@ -77,8 +74,8 @@ export class GameController {
             },
             {
               $facet: {
-                featured: [{ $limit: 5 }],
-                others: [{ $skip: 5 }]
+                featured: [{ $limit: 5 }, { $project: { url: 0 } }],
+                others: [{ $skip: 5 }, { $project: { url: 0 } }]
               }
             }
           ]);
@@ -96,7 +93,8 @@ export class GameController {
 
           const games = await Game.aggregate([
             { $match: { _id: { $in: allGames }, ...matchStage } },
-            { $sort: { createdAt: -1 } }
+            { $sort: { createdAt: -1 } },
+            { $project: { url: 0 } }
           ]);
           return res.status(200).json(games);
 
@@ -109,7 +107,8 @@ export class GameController {
 
             const games = await Game.aggregate([
               { $match: { _id: { $in: platformGames.map(game => game._id) } } },
-              { $sort: { createdAt: -1 } }
+              { $sort: { createdAt: -1 } },
+              { $project: { url: 0 } }
             ])
 
             return res.status(200).json(games);

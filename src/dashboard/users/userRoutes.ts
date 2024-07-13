@@ -20,6 +20,9 @@ userRoutes.get("/", checkUser, userController.getCurrentUser);
 // // GET all subordinates
 userRoutes.get("/all", checkUser, userController.getAllSubordinates);
 
+// GET Current User subordinate
+userRoutes.get("/subordinates", checkUser, userController.getCurrentUserSubordinates)
+
 // GET Report
 userRoutes.get("/report", checkUser, userController.getReport)
 
