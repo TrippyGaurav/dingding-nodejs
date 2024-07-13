@@ -195,19 +195,19 @@ export function convertSymbols(data) {
     let symbolData = {
       ID: element.Id,
       Name: element.Name || {},
-      multiplier: {},
+      multiplier: element.multiplier || {},
       defaultAmount: element.defaultAmount || {},
       symbolsCount: element.symbolsCount || element.symbolCount || {},
       increaseValue: element.increaseValue || {},
       freeSpin: element.freeSpin || 0
     };
-    if (element.multiplier) {
-      const multiplierObject = {};
-      element.multiplier.forEach((item, index) => {
-        multiplierObject[(5 - index).toString() + "x"] = item;
-      });
-      symbolData.multiplier = multiplierObject;
-    }
+    // if (element.multiplier) {
+    //   const multiplierObject = {};
+    //   element.multiplier.forEach((item, index) => {
+    //     multiplierObject[(5 - index).toString() + "x"] = item;
+    //   });
+    //   symbolData.multiplier = multiplierObject;
+    // }
     uiData.symbols.push(symbolData);
   });
 
