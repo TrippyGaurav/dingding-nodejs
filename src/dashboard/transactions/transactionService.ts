@@ -44,16 +44,55 @@ export class TransactionService {
     return transaction;
   }
 
-  async getTransactions(username: string) {
+  async getTransactions(username: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+
     const user = await User.findOne({ username });
-    const transactions = await Transaction.find({ $or: [{ debtor: user.username }, { creditor: user.username }] })
-    return transactions;
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const totalTransactions = await Transaction.countDocuments({
+      $or: [{ debtor: user.username }, { creditor: user.username }]
+    });
+
+    const totalPages = Math.ceil(totalTransactions / limit);
+
+    if (totalTransactions === 0) {
+      return {
+        transactions: [],
+        totalTransactions: 0,
+        totalPages: 0,
+        currentPage: 0,
+        outOfRange: false
+      };
+    }
+
+    if (page > totalPages) {
+      return {
+        transactions: [],
+        totalTransactions,
+        totalPages,
+        currentPage: page,
+        outOfRange: true
+      };
+    }
+
+    const transactions = await Transaction.find({
+      $or: [{ debtor: user.username }, { creditor: user.username }]
+    })
+      .skip(skip)
+      .limit(limit);
+
+    return {
+      transactions,
+      totalTransactions,
+      totalPages,
+      currentPage: page,
+      outOfRange: false
+    };
   }
 
-  async getTransactionsBySubName(subordinateName: string) {
-    const transactions = await Transaction.find({ $or: [{ debtor: subordinateName }, { creditor: subordinateName }] })
-    return transactions
-  }
 
   deleteTransaction(id: string, session: mongoose.ClientSession) {
     return Transaction.findByIdAndDelete(id).session(session);

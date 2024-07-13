@@ -39,7 +39,7 @@ export class UserController {
     this.updateClient = this.updateClient.bind(this)
     this.getReport = this.getReport.bind(this);
     this.getASubordinateReport = this.getASubordinateReport.bind(this)
-    // this.getUserSubordinates = this.getUserSubordinates.bind(this);
+    this.getCurrentUserSubordinates = this.getCurrentUserSubordinates.bind(this)
   }
 
   public static getSubordinateRoles(role: string): string[] {
@@ -232,24 +232,145 @@ export class UserController {
       if (loggedUser.role !== "company") {
         throw createHttpError(403, "Access denied. Only users with the role 'company' can access this resource.");
       }
-      const users = await User.find({ role: { $ne: "company" } });
-      const players = await Player.find({});
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      const userCount = await User.countDocuments({ role: { $ne: "company" } });
+      const playerCount = await Player.countDocuments();
+      const totalSubordinates = userCount + playerCount;
+      const totalPages = Math.ceil(totalSubordinates / limit);
+
+      if (totalSubordinates === 0) {
+        return res.status(200).json({
+          message: "No subordinates found",
+          totalSubordinates: 0,
+          totalPages: 0,
+          currentPage: 0,
+          subordinates: []
+        });
+      }
+
+      if (page > totalPages) {
+        return res.status(400).json({
+          message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+          totalSubordinates,
+          totalPages,
+          currentPage: page,
+          subordinates: []
+        });
+      }
+
+      // Determine how many users to fetch based on the skip and limit
+      let users = [];
+      if (skip < userCount) {
+        users = await User.find({ role: { $ne: "company" } }).skip(skip).limit(limit);
+      }
+
+      const remainingLimit = limit - users.length;
+      let players = [];
+      if (remainingLimit > 0) {
+        const playerSkip = Math.max(0, skip - userCount);
+        players = await Player.find({}).skip(playerSkip).limit(remainingLimit);
+      }
 
       const allSubordinates = [...users, ...players];
+      console.log(allSubordinates.length);
 
 
-
-      // let userWithSubordinates;
-      // if(loggedUser.role === "store"){
-      //   userWithSubordinates = await User.findById(loggedUser._id).populate({path:"subordinates", model:Player});
-      // }
-      // else{
-      //   userWithSubordinates = await User.findById(loggedUser._id).populate({path:"subordinates", model:User});
-      // }
-
-      res.status(200).json(allSubordinates);
+      res.status(200).json({
+        totalSubordinates,
+        totalPages,
+        currentPage: page,
+        subordinates: allSubordinates
+      });
     } catch (error) {
       next(error);
+    }
+  }
+
+  async getCurrentUserSubordinates(req: Request, res: Response, next: NextFunction) {
+    try {
+      const _req = req as AuthRequest;
+      const { username, role } = _req.user;
+      const { id } = req.query;
+
+      console.log("Subor : ", id);
+      
+
+
+      const currentUser = await User.findOne({ username });
+      if (!currentUser) {
+        throw createHttpError(401, "User not found")
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      let userToCheck = currentUser;
+
+      if (id) {
+        userToCheck = await User.findById(id);
+        if (!userToCheck) {
+          userToCheck = await Player.findById(id);
+          if (!userToCheck) {
+            return res.status(404).json({ message: "User not found" });
+          }
+        }
+      }
+
+
+      let subordinates;
+      let totalSubordinates;
+
+
+
+      if (userToCheck.role === "role") {
+        totalSubordinates = await Player.countDocuments({ createdBy: userToCheck._id });
+        subordinates = await Player.find({ createdBy: userToCheck._id })
+          .skip(skip)
+          .limit(limit)
+          .select('name username status role totalRecharged totalRedeemed credits');
+      } else {
+        totalSubordinates = await User.countDocuments({ createdBy: userToCheck._id });
+        subordinates = await User.find({ createdBy: userToCheck._id })
+          .skip(skip)
+          .select('name username status role totalRecharged totalRedeemed credits');
+      }
+
+      const totalPages = Math.ceil(totalSubordinates / limit);
+
+      if (totalSubordinates === 0) {
+        return res.status(200).json({
+          message: "No subordinates found",
+          totalSubordinates: 0,
+          totalPages: 0,
+          currentPage: 0,
+          subordinates: []
+        });
+      }
+
+      if (page > totalPages) {
+        return res.status(400).json({
+          message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+          totalSubordinates,
+          totalPages,
+          currentPage: page,
+          subordinates: []
+        });
+      }
+
+      res.status(200).json({
+        totalSubordinates,
+        totalPages,
+        currentPage: page,
+        subordinates
+      });
+
+    } catch (error) {
+      next(error)
     }
   }
 
@@ -374,6 +495,8 @@ export class UserController {
       const { username: loggedUserName, role: loggedUserRole } = _req.user;
 
 
+
+
       const subordinateObjectId = new mongoose.Types.ObjectId(subordinateId);
       const loggedUser = await this.userService.findUserByUsername(loggedUserName);
 
@@ -401,11 +524,10 @@ export class UserController {
             const userSubordinates = await User.find({ createdBy: subordinateId })
 
             const playerSubordinates = await Player.find({ createdBy: subordinateId })
-        
+
 
             client = client.toObject(); // Convert Mongoose Document to plain JavaScript object
             client.subordinates = [...userSubordinates, ...playerSubordinates];
-            console.log("client", client.subordinates);
 
             break;
 
@@ -425,6 +547,9 @@ export class UserController {
         if (!client) {
           throw createHttpError(404, "Client not found");
         }
+
+        console.log(client);
+
 
         res.status(200).json(client);
       } else {
@@ -459,8 +584,6 @@ export class UserController {
       if (userId) {
         let subordinate = await User.findById(userId);
 
-        console.log("Sub : ", subordinate);
-
         if (!subordinate) {
           subordinate = await Player.findById(userId);
 
@@ -468,8 +591,6 @@ export class UserController {
             throw createHttpError(404, "Subordinate user not found");
           }
         }
-
-        console.log("Sub : ", subordinate);
 
         targetUser = subordinate;
       }
@@ -784,9 +905,6 @@ export class UserController {
         players: playersCreatedToday
       };
 
-      console.log(report);
-
-
       res.status(200).json(report)
     } catch (error) {
       console.log(error);
@@ -795,39 +913,5 @@ export class UserController {
     }
   }
 
-  // async getUserSubordinates(req: Request, res: Response, next: NextFunction) {
-  //   try {
-  //     const _req = req as AuthRequest;
-  //     const {username:loggedInUserName, role:loggedInUserRole} = _req.user;
-  //     const { subordinateId } = req.params;
-  //     const userObjectId = new mongoose.Types.ObjectId(subordinateId);
-
-  //     const loggedUser = await this.userService.findUserByUsername(loggedInUserName);
-  //     const accessUser = await this.userService.findUserById(userObjectId);
-
-  //     if(!accessUser){
-  //       throw createHttpError(404, "User not found")
-  //     }
-
-
-  //     if(loggedUser._id.toString() === accessUser._id.toString() || loggedInUserRole === "company" || loggedUser.subordinates.includes(userObjectId)){
-  //       const subordinateModels = UserController.rolesHierarchy[accessUser.role];
-  //       const subordinates = await Promise.all(
-  //         subordinateModels.map(async (model) => {
-  //           if (model === "Player") {
-  //             return await this.userService.findPlayersByIds(accessUser.subordinates);
-  //           } else {
-  //             return await this.userService.findUsersByIds(accessUser.subordinates);
-  //           }
-  //         })
-  //       );
-  //       return res.status(200).json(subordinates.flat());
-  //     }
-
-  //     throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
 }
 

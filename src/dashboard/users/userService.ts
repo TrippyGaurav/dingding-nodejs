@@ -10,32 +10,32 @@ export default class UserService {
     return User.findOne({ username }).session(session || null);
   }
 
-  async findPlayerByUsername(username:string, session?:mongoose.ClientSession){
-    return Player.findOne({username}).session(session || null);
+  async findPlayerByUsername(username: string, session?: mongoose.ClientSession) {
+    return Player.findOne({ username }).session(session || null);
   }
 
-  async findUserById(id:mongoose.Types.ObjectId, session?:mongoose.ClientSession){
+  async findUserById(id: mongoose.Types.ObjectId, session?: mongoose.ClientSession) {
     return User.findById(id).session(session || null);
   }
 
-  async findPlayerById(id:mongoose.Types.ObjectId, session?:mongoose.ClientSession){
+  async findPlayerById(id: mongoose.Types.ObjectId, session?: mongoose.ClientSession) {
     return Player.findById(id).session(session || null)
   }
 
-  async createUser(userData: Partial<IUser>, credits:number, hashedPassword: string, session: mongoose.ClientSession) {
+  async createUser(userData: Partial<IUser>, credits: number, hashedPassword: string, session: mongoose.ClientSession) {
     const user = new User({
       ...userData,
-      credits:credits,
+      credits: credits,
       password: hashedPassword,
     });
     await user.save({ session });
     return user;
   }
 
-  async createPlayer(userData: Partial<IPlayer>, credits:number, hashedPassword: string, session: mongoose.ClientSession) {
+  async createPlayer(userData: Partial<IPlayer>, credits: number, hashedPassword: string, session: mongoose.ClientSession) {
     const player = new Player({
       ...userData,
-      credits:credits,
+      credits: credits,
       password: hashedPassword,
     });
     await player.save({ session });
@@ -60,5 +60,9 @@ export default class UserService {
 
   async deletePlayerById(id: mongoose.Types.ObjectId, session?: mongoose.ClientSession) {
     return Player.findByIdAndDelete(id).session(session || null);
+  }
+
+  async getAll() {
+    
   }
 }
