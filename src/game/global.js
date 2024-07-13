@@ -83,7 +83,7 @@ exports.gameSettings = {
     },
     reels: [[]],
     initiate: (GameData, clientID) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log(exports.gameSettings.currentGamedata, "fullPayTable");
+        // console.log(gameSettings.currentGamedata, "fullPayTable")
         // console.log(GameData)
         exports.gameSettings.bonusPayTable = [];
         exports.gameSettings.scatterPayTable = [];

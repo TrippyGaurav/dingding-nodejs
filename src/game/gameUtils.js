@@ -105,7 +105,7 @@ function convertSymbols(data) {
         if (element.multiplier) {
             const multiplierObject = {};
             element.multiplier.forEach((item, index) => {
-                multiplierObject[(5 - index).toString() + "x"] = item[0];
+                multiplierObject[(5 - index).toString() + "x"] = item;
             });
             symbolData.multiplier = multiplierObject;
         }
