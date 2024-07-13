@@ -16,6 +16,8 @@ userRoutes.post("/", checkUser_1.checkUser, userController.createUser);
 userRoutes.get("/", checkUser_1.checkUser, userController.getCurrentUser);
 // // GET all subordinates
 userRoutes.get("/all", checkUser_1.checkUser, userController.getAllSubordinates);
+// GET Current User subordinate
+userRoutes.get("/subordinates", checkUser_1.checkUser, userController.getCurrentUserSubordinates);
 // GET Report
 userRoutes.get("/report", checkUser_1.checkUser, userController.getReport);
 // GET a client Report

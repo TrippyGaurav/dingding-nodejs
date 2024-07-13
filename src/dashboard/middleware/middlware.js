@@ -9,8 +9,7 @@ const config_1 = require("../../config/config");
 const http_errors_1 = __importDefault(require("http-errors"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 function validateApiKey(req, res, next) {
-    const { apiKey } = req.body;
-    if (apiKey !== config_1.config.companyApiKey) {
+    if (!config_1.config.companyApiKey) {
         return next((0, http_errors_1.default)(403, "Invalid API key"));
     }
     next();
