@@ -1,20 +1,9 @@
 // import { Alerts } from "./Alerts";
 // import { sendMessageToClient } from "./App";
-import { gameSettings, gameWining, getCurrentRTP, playerData, startFreeSpin } from "./global";
-import { RandomResultGenerator } from "./slotDataInit";
-import {
-  ScatterPayEntry,
-  BonusPayEntry,
-  specialIcons,
-  bonusGameType,
-  removeRecurringIndexSymbols,
-} from "./gameUtils";
-import { bonusGame } from "./bonusResults";
-import { getClient } from "../socket/userSocket";
-import { middleware } from "../utils/middleware";
-import { startInfiniteSpins } from "./reel";
-import { gameData } from "./testData";
-import { log } from "console";
+import { slotGameSettings, gameWining, getCurrentRTP, startFreeSpin } from "./_global";
+import { removeRecurringIndexSymbols } from "./slotUtils";
+import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "./slotTypes";
+import { GData } from "../Global.";
 export class CheckResult {
   scatter: string;
   useScatter: boolean;
@@ -33,14 +22,14 @@ export class CheckResult {
   bonusResult: string[];
 
   constructor() {
-    gameSettings._winData = new WinData(playerData.playerId);
+    slotGameSettings._winData = new WinData();
     this.scatter = specialIcons.scatter;
-    this.useScatter = gameSettings.useScatter && this.scatter !== null;
-    this.jackpot = gameSettings.jackpot;
+    this.useScatter = slotGameSettings.useScatter && this.scatter !== null;
+    this.jackpot = slotGameSettings.jackpot;
     this.useJackpot = this.jackpot !== null;
-    this.scatterPayTable = gameSettings.scatterPayTable;
-    this.bonusPaytable = gameSettings.bonusPayTable;
-    this.reels = gameSettings.resultSymbolMatrix;
+    this.scatterPayTable = slotGameSettings.scatterPayTable;
+    this.bonusPaytable = slotGameSettings.bonusPayTable;
+    this.reels = slotGameSettings.resultSymbolMatrix;
     console.log("SCATTER PAYTABLE : ", this.scatterPayTable);
     console.log("Bonus PAYTABLE : ", this.bonusPaytable);
 
@@ -88,22 +77,22 @@ export class CheckResult {
     //     gameSettings._winData.winningSymbols.splice(excludeindexModified[i], 1);
     // }
 
-    gameSettings._winData.winningLines =
-      gameSettings._winData.winningLines.filter(
+    slotGameSettings._winData.winningLines =
+      slotGameSettings._winData.winningLines.filter(
         (value, index, array) => array.indexOf(value) === index
       );
-    console.log("winning symbols", gameSettings._winData.winningSymbols);
+    console.log("winning symbols", slotGameSettings._winData.winningSymbols);
 
-    gameSettings._winData.updateBalance();
-    console.log("result :", gameSettings.resultSymbolMatrix);
-    console.log("win data", gameSettings._winData);
-    console.log("Bonus start", gameSettings.bonus.start);
+    slotGameSettings._winData.updateBalance();
+    console.log("result :", slotGameSettings.resultSymbolMatrix);
+    console.log("win data", slotGameSettings._winData);
+    console.log("Bonus start", slotGameSettings.bonus.start);
 
-    if (!gameSettings.freeSpinStarted && gameSettings._winData.freeSpins != 0)
+    if (!slotGameSettings.freeSpinStarted && slotGameSettings._winData.freeSpins != 0)
       startFreeSpin();
 
     // Math.round(num * 100) / 100).toFixed(2)
-    console.log("TOTAL WINING : " + gameSettings._winData.totalWinningAmount);
+    console.log("TOTAL WINING : " + slotGameSettings._winData.totalWinningAmount);
     // console.log(gameWining.WinningLines);
     // console.log(gameWining.winningSymbols);
     console.log("PT BETS :" + getCurrentRTP.playerTotalBets);
@@ -119,7 +108,7 @@ export class CheckResult {
     console.log("_____________RESULT_END________________");
   }
   checkForBonus() {
-    if (!gameSettings.currentGamedata.bonus.isEnabled) return;
+    if (!slotGameSettings.currentGamedata.bonus.isEnabled) return;
 
     let bonusSymbols = [];
     // gameSettings.totalBonuWinAmount=[];
@@ -132,17 +121,17 @@ export class CheckResult {
         bonusSymbols.length >= element.symbolCount
       ) {
         // bonuswin = new WinData(bonusSymbols, 0, 0);
-        gameSettings._winData.winningSymbols.push(bonusSymbols);
+        slotGameSettings._winData.winningSymbols.push(bonusSymbols);
         // gameSettings._winData.bonus=true;
-        gameSettings.bonus.start = true;
-        gameSettings.noOfBonus++;
-        if (gameSettings.currentGamedata.bonus.type == bonusGameType.tap)
-          this.bonusResult = gameSettings.bonus.game.generateData(
-            gameSettings.bonusPayTable[0]?.pay
+        slotGameSettings.bonus.start = true;
+        slotGameSettings.noOfBonus++;
+        if (slotGameSettings.currentGamedata.bonus.type == bonusGameType.tap)
+          this.bonusResult = slotGameSettings.bonus.game.generateData(
+            slotGameSettings.bonusPayTable[0]?.pay
           );
-        let temp = gameSettings.bonus.game.setRandomStopIndex();
-        gameSettings.totalBonuWinAmount.push(temp);
-        gameSettings._winData.totalWinningAmount += temp;
+        let temp = slotGameSettings.bonus.game.setRandomStopIndex();
+        slotGameSettings.totalBonuWinAmount.push(temp);
+        slotGameSettings._winData.totalWinningAmount += temp;
 
       }
     });
@@ -151,11 +140,11 @@ export class CheckResult {
   checkForWin() {
     let allComboWin = [];
 
-    gameSettings.lineData.slice(0, gameSettings.currentLines).forEach((lb, index) => {
+    slotGameSettings.lineData.slice(0, slotGameSettings.currentLines).forEach((lb, index) => {
       let win = null;
       console.log("Lines Index : :" + index);
 
-      gameSettings.fullPayTable.forEach((Payline: PayLines) => {
+      slotGameSettings.fullPayTable.forEach((Payline: PayLines) => {
         //  find max win (or win with max symbols count)
         const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
 
@@ -166,7 +155,7 @@ export class CheckResult {
               win = winTemp;
           }
           // gameWining.WinningLines.push(index);
-          gameSettings._winData.winningLines.push(index);
+          slotGameSettings._winData.winningLines.push(index);
 
           console.log(`Line Index : ${index} : ` + lb + " - line win: " + win);
         }
@@ -176,13 +165,13 @@ export class CheckResult {
     const filteredArray = this.checkforDuplicate(allComboWin);
     let BonusArray = [];
     filteredArray.forEach((element) => {
-      gameSettings._winData.winningSymbols.push(element.pos);
+      slotGameSettings._winData.winningSymbols.push(element.pos);
       // if(gameSettings.bonus.id>=0 && element.symbol==gameSettings.bonus.id.toString())
       //   BonusArray.push(element)
 
-      gameSettings._winData.totalWinningAmount +=
-        element.pay * gameSettings.BetPerLines;
-      gameSettings._winData.freeSpins += element.freeSpin;
+      slotGameSettings._winData.totalWinningAmount +=
+        element.pay * slotGameSettings.BetPerLines;
+      slotGameSettings._winData.freeSpins += element.freeSpin;
     });
 
 
@@ -243,9 +232,9 @@ export class CheckResult {
           sPL.symbolCount > 0 &&
           sPL.symbolCount == this.scatterWinSymbols.length
         ) {
-          gameSettings._winData.winningSymbols.push(this.scatterWinSymbols);
-          gameSettings._winData.freeSpins += sPL.freeSpins;
-          gameSettings._winData.totalWinningAmount += sPL.pay;
+          slotGameSettings._winData.winningSymbols.push(this.scatterWinSymbols);
+          slotGameSettings._winData.freeSpins += sPL.freeSpins;
+          slotGameSettings._winData.totalWinningAmount += sPL.pay;
         }
       });
 
@@ -267,9 +256,9 @@ export class CheckResult {
         this.jackpot.symbolsCount > 0 &&
         this.jackpot.symbolsCount == this.jackpotWinSymbols.length
       ) {
-        gameSettings._winData.winningSymbols.push(this.jackpotWinSymbols);
-        gameSettings._winData.totalWinningAmount += this.jackpot.defaultAmount;
-        gameSettings._winData.jackpotwin += this.jackpot.defaultAmount;
+        slotGameSettings._winData.winningSymbols.push(this.jackpotWinSymbols);
+        slotGameSettings._winData.totalWinningAmount += this.jackpot.defaultAmount;
+        slotGameSettings._winData.jackpotwin += this.jackpot.defaultAmount;
         //TODO :ADD JACKPOT WIN PAYMENT FOR THE FINAL JSON (done)
       }
     }
@@ -340,15 +329,15 @@ export class CheckResult {
 
   getSymbolOnMatrix(index: number) {
     let symbolsOnGrid = [];
-    for (let i = 0; i < gameSettings.matrix.y; i++) {
-      const symbol = gameSettings.resultSymbolMatrix[i][index];
+    for (let i = 0; i < slotGameSettings.matrix.y; i++) {
+      const symbol = slotGameSettings.resultSymbolMatrix[i][index];
       symbolsOnGrid.push(symbol);
     }
     return symbolsOnGrid;
   }
 
   getIndexForResult(index: number) {
-    for (let i = 0; i < gameSettings.matrix.y; i++) {
+    for (let i = 0; i < slotGameSettings.matrix.y; i++) {
       let symbolIndex = index.toString() + "," + i.toString();
       return symbolIndex;
     }
@@ -358,13 +347,13 @@ export class CheckResult {
     let symbolId: number = -1;
     let foundArray = [];
 
-    gameSettings.currentGamedata.Symbols.forEach((element) => {
+    slotGameSettings.currentGamedata.Symbols.forEach((element) => {
       if (SymbolName == element.Name) symbolId = element.Id;
     });
 
-    for (let i = 0; i < gameSettings.resultSymbolMatrix.length; i++) {
-      for (let j = 0; j < gameSettings.resultSymbolMatrix[i].length; j++) {
-        if (gameSettings.resultSymbolMatrix[i][j] == symbolId.toString())
+    for (let i = 0; i < slotGameSettings.resultSymbolMatrix.length; i++) {
+      for (let j = 0; j < slotGameSettings.resultSymbolMatrix[i].length; j++) {
+        if (slotGameSettings.resultSymbolMatrix[i][j] == symbolId.toString())
           foundArray.push(j.toString() + "," + i.toString());
       }
     }
@@ -373,45 +362,39 @@ export class CheckResult {
 
   makeResultJson(isResult: ResultType, iconsToFill: number[][] = []) {
     //TODO : Try to send the jackpot win data without initializie a variable;
-    gameSettings._winData.totalWinningAmount =
-      Math.round(gameSettings._winData.totalWinningAmount * 100) / 100;
+    slotGameSettings._winData.totalWinningAmount =
+      Math.round(slotGameSettings._winData.totalWinningAmount * 100) / 100;
     const ResultData = {
       GameData: {
-        ResultReel: gameSettings.resultSymbolMatrix,
-        linesToEmit: gameSettings._winData.winningLines,
-        // linesToEmit: gameWining.WinningLines,
+        ResultReel: slotGameSettings.resultSymbolMatrix,
+        linesToEmit: slotGameSettings._winData.winningLines,  
         symbolsToEmit: removeRecurringIndexSymbols(
-          gameSettings._winData.winningSymbols
+          slotGameSettings._winData.winningSymbols
         ),
-        // symbolsToEmit: gameWining.winningSymbols,
-        WinAmout: gameSettings._winData.totalWinningAmount,
-        // WinAmout: gameWining.TotalWinningAmount,
-        freeSpins: gameSettings._winData.freeSpins,
-        // freeSpins: gameWining.freeSpins,
-        jackpot: gameSettings._winData.jackpotwin,
-        isBonus: gameSettings.bonus.start,
-        BonusStopIndex: gameSettings.bonus.stopIndex,
+        WinAmout: slotGameSettings._winData.totalWinningAmount,
+        freeSpins: slotGameSettings._winData.freeSpins,
+        jackpot: slotGameSettings._winData.jackpotwin,
+        isBonus: slotGameSettings.bonus.start,
+        BonusStopIndex: slotGameSettings.bonus.stopIndex,
         BonusResult: this.bonusResult,
       },
-      PlayerData: playerData,
+      PlayerData: GData.playerSocket.playerData,
     };
-    getClient(playerData.playerId).updateCreditsInDb(playerData.Balance);
+    GData.playerSocket.updateCreditsInDb();
     if (isResult == ResultType.normal)
-      getClient(playerData.playerId).sendMessage("ResultData", ResultData);
+      GData.playerSocket.sendMessage("ResultData", ResultData);
     if (isResult == ResultType.moolah) {
       ResultData.GameData['iconstoFill'] = iconsToFill;
-      getClient(playerData.playerId).sendMessage("MoolahResultData", ResultData);
+      GData.playerSocket.sendMessage("MoolahResultData", ResultData);
     }
-
-    // sendMessageToClient(this.clientID, "ResultData", ResultData);
   }
 
   // return symbols from windows
   getWindowsSymbols(reel: number) {
     let vSymbols = [];
-    for (let si = 0; si < gameSettings.matrix.y; si++) {
+    for (let si = 0; si < slotGameSettings.matrix.y; si++) {
       const order = si;
-      vSymbols.push(gameSettings.resultSymbolMatrix[reel]);
+      vSymbols.push(slotGameSettings.resultSymbolMatrix[reel]);
     }
     return vSymbols;
   }
@@ -488,7 +471,7 @@ export class PayLines {
 
   getWildLines() {
     let res: PayLines[] = [];
-    if (!gameSettings.useWild) return res; // return empty list
+    if (!slotGameSettings.useWild) return res; // return empty list
 
     let wPoss = this.getPositionsForWild();
 
@@ -529,7 +512,7 @@ export class PayLines {
     let wPoss: any[] = [];
     let counter = 0;
     let symbolsDict: any[] = [];
-    gameSettings.currentGamedata.Symbols.forEach((name) => {
+    slotGameSettings.currentGamedata.Symbols.forEach((name) => {
       const data = {
         name: name.Name,
         Id: name.Id,
@@ -580,35 +563,28 @@ export class WinData {
   winningLines: any[];
   totalWinningAmount: number;
   jackpotwin: number;
-  clientId: string;
   resultReelIndex: number[] = [];
-  constructor(clientId: string) {
+  constructor() {
     this.freeSpins = 0;
     this.winningLines = [];
     this.winningSymbols = [];
     this.totalWinningAmount = 0;
     this.jackpotwin = 0;
-    this.clientId = clientId;
   }
 
   updateBalance() {
     // gameWining.TotalWinningAmount += this.pay;
-    playerData.Balance += this.totalWinningAmount;
-    playerData.haveWon += this.totalWinningAmount;
-    playerData.currentWining = this.totalWinningAmount;
-
+    GData.playerSocket.updatePlayerBalance(this.totalWinningAmount);
     getCurrentRTP.playerWon += this.totalWinningAmount;
-    console.log("BETS " + gameSettings.currentBet);
+    console.log("BETS " + slotGameSettings.currentBet);
 
-    if (!gameSettings.freeSpinStarted)
-      getCurrentRTP.playerTotalBets += gameSettings.currentBet;
+    if (!slotGameSettings.freeSpinStarted)
+      getCurrentRTP.playerTotalBets += slotGameSettings.currentBet;
     else
       getCurrentRTP.playerTotalBets += 0;
 
   }
 }
 
-export enum ResultType {
-  moolah = "moolah",
-  normal = "normal",
-}
+export { ResultType };
+

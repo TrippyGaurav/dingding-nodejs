@@ -1,25 +1,23 @@
 import { Socket } from "socket.io";
 import { MESSAGEID, MESSAGETYPE } from "../utils/utils";
-import {
-  checkforMoolah,
-  gameSettings,
-  playerData,
-  spinResult,
-} from "../game/global";
-import { CheckResult } from "../game/slotResults";
-import { getRTP } from "../game/rtpgenerator";
 import { verifySocketToken } from "../utils/playerAuth";
 import { Player } from "../dashboard/users/userModel";
 export let users: Map<string, SocketUser> = new Map();
-import { Payouts } from "../dashboard/games/gameModel";
-// import { clientData } from "../dashboard/user/userController";
-import { gameData } from "../game/testData";
-import Game from "../dashboard/games/gameModel";
+import { gameData } from "../game/slotBackend/testData";
+import Game, { Payouts } from "../dashboard/games/gameModel";
+import { GData } from "../game/Global.";
+import { GAMETYPE } from "../game/Utils/globalTypes";
+import { slotMessages } from "../game/slotBackend/slotMessages";
+import { slotGameSettings } from "../game/slotBackend/_global";
+
+
 export class SocketUser {
   socket: Socket;
+  playerData: userData;
   isAlive: boolean = false;
   username: string;
   designation: string;
+  gameTag : string;
   constructor(socket: Socket, public GameData: any) {
     this.isAlive = true;
     this.socket = socket;
@@ -27,8 +25,8 @@ export class SocketUser {
     this.designation = socket?.data?.designation;
     this.handleAuth();
     this.socket.on("pong", this.heartbeat);
-    this.socket.on("message", this.messageHandler());
     this.socket.on(MESSAGEID.AUTH, this.initGameData);
+    this.socket.on("message", this.messageHandler());
     this.socket.on("disconnect", () => this.deleteUserFromMap());
   }
 
@@ -38,19 +36,27 @@ export class SocketUser {
 
       // Use "SL-VIK" as default tagName if messageData.Data.GameID is not present
       const tagName = messageData.Data.GameID;
+
       const game = await Game.findOne({ tagName: tagName });
-      // console.log(game, "Game");
+      console.log(tagName, "Game");
 
       if (!game || !game.payout) {
         console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
-        gameSettings.initiate(gameData[0], this.socket.id);
+        slotGameSettings.initiate(gameData[0], this.socket.id);
         return;
       }
 
       // Retrieve the payout JSON data
       const payoutData = await Payouts.find({ _id: { $in: game.payout } });
-      console.log(payoutData, "payout")
-      gameSettings.initiate(payoutData[0].data, this.socket.id);
+      console.log(payoutData)
+      const gameType = tagName.map(ts => ts.split('-')[0]);
+      this.gameTag = gameType;
+      if(gameType ==  GAMETYPE.SLOT)
+      slotGameSettings.initiate(payoutData[0].data, this.socket.id);
+      if(gameType == GAMETYPE.KENO)
+      {
+        console.log("KENO  GAME INITITATED");
+      }
     } catch (error) {
       console.error('Error initializing game data:', error);
       // Handle error (e.g., send error response, disconnect socket, etc.)
@@ -82,27 +88,10 @@ export class SocketUser {
     return (message: any) => {
       const messageData = JSON.parse(message);
       console.log("message " + JSON.stringify(messageData));
+      if(this.gameTag == GAMETYPE.SLOT)
+      slotMessages(messageData);
 
-      if (messageData.id === "checkMoolah") {
-        checkforMoolah();
-      }
-      if (messageData.id === MESSAGEID.SPIN && gameSettings.startGame) {
-        gameSettings.currentLines = messageData.data.currentLines;
-        gameSettings.BetPerLines = betMultiplier[messageData.data.currentBet];
-        gameSettings.currentBet = betMultiplier[messageData.data.currentBet] * gameSettings.currentLines;
-
-        spinResult(this.socket.id);
-      }
-      if (messageData.id == MESSAGEID.GENRTP) {
-        gameSettings.currentLines = messageData.data.currentLines;
-        gameSettings.BetPerLines = betMultiplier[messageData.data.currentBet];
-        gameSettings.currentBet = betMultiplier[messageData.data.currentBet] * gameSettings.currentLines;
-
-        getRTP(this.socket.id, messageData.data.spins);
-      }
-
-      if (messageData.id === MESSAGEID.GAMBLE) {
-      }
+     
     };
   };
 
@@ -114,8 +103,8 @@ export class SocketUser {
         username: this.username,
       }).exec();
       if (CurrentUser) {
-        playerData.Balance = CurrentUser.credits;
-        console.log("BALANCE " + playerData.Balance);
+        this.playerData.Balance = CurrentUser.credits;
+        console.log("BALANCE " + this.playerData.Balance);
         // console.log(this.username);
         // console.log("Player Balance users", CurrentUser.credits);
         this.sendMessage(MESSAGEID.AUTH, CurrentUser.credits);
@@ -127,11 +116,25 @@ export class SocketUser {
       this.sendError("AUTH_ERROR", "An error occurred during authentication");
     }
   }
+  deductPlayerBalance(credit : number)
+  {
+    this.checkBalance();
+    this.playerData.Balance -= credit;
+    this.updateCreditsInDb();
+    
+  }
+  updatePlayerBalance(credit : number)
+  {
+    this.playerData.Balance += credit;
+    this.playerData.haveWon += credit;
+    this.playerData.currentWining = credit;
+    this.updateCreditsInDb();
+  }
 
   deleteUserFromMap = () => {
     // Attempt to delete the user from the map
     const clientID = this.socket.id;
-    if (getClient(clientID)) {
+    if (users.get(clientID)) {
       users.delete(clientID);
       console.log(`User with ID ${clientID} was successfully removed.`);
     } else {
@@ -140,16 +143,28 @@ export class SocketUser {
   };
 
   //Update player credits case win ,bet,and lose;
-  async updateCreditsInDb(finalBalance: number) {
-    const formattedNumber = finalBalance.toFixed(1);
-    console.log(formattedNumber, "finalba;")
-
+  async updateCreditsInDb() {
+    console.log(this.playerData.Balance, "finalbalance")
     await Player.findOneAndUpdate(
       { username: this.username },
       {
-        credits: formattedNumber,
+        credits: this.playerData.Balance,
       }
     );
+  }
+  checkBalance() {
+    // if(playerData.Balance < gameWining.currentBet)
+    if (this.playerData.Balance < slotGameSettings.currentBet) {
+      // Alerts(clientID, "Low Balance");
+      this.sendMessage("low-balance", true)
+      console.log(this.playerData.Balance, "player balance")
+
+
+      console.log(slotGameSettings.currentBet, "currentbet")
+      console.warn("LOW BALANCE ALErt");
+      console.error("Low Balance ALErt");
+      return;
+    }
   }
 }
 
@@ -157,9 +172,10 @@ export async function initializeUser(socket: Socket) {
   try {
     const decoded = await verifySocketToken(socket);
     socket.data.username = decoded.username;
+
     socket.data.designation = decoded.designation;
-    const user = new SocketUser(socket, socket);
-    users.set(user.socket.id, user);
+    GData.playerSocket= new SocketUser(socket, socket);
+    users.set(GData.playerSocket.socket.id, GData.playerSocket);
     // Send the game and payout data to the client
     // socket.emit("initialize", { game, payoutData });
   } catch (err) {
@@ -168,8 +184,11 @@ export async function initializeUser(socket: Socket) {
   }
 }
 
-export function getClient(clientId: string) {
-  const user = users.get(clientId);
-  return user;
+
+export const betMultiplier = [0.1, 0.5, 0.7, 1];
+
+interface userData {
+  Balance: number;
+  haveWon: number;
+  currentWining: number;
 }
-export const betMultiplier = [0.1, 0.25, 0.5, 0.75, 1]
