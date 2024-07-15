@@ -1,6 +1,7 @@
 // import { Alerts } from "./Alerts";
 // import { sendMessageToClient } from "./App";
-import { slotGameSettings, gameWining, getCurrentRTP, startFreeSpin } from "./_global";
+import { slotGameSettings, gameWining, getCurrentRTP, } from "./_global";
+import { startFreeSpin } from "./slotUtils";
 import { removeRecurringIndexSymbols } from "./slotUtils";
 import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "./slotTypes";
 import { GData } from "../Global.";
@@ -367,7 +368,7 @@ export class CheckResult {
     const ResultData = {
       GameData: {
         ResultReel: slotGameSettings.resultSymbolMatrix,
-        linesToEmit: slotGameSettings._winData.winningLines,  
+        linesToEmit: slotGameSettings._winData.winningLines,
         symbolsToEmit: removeRecurringIndexSymbols(
           slotGameSettings._winData.winningSymbols
         ),

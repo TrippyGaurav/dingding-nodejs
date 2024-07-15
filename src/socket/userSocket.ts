@@ -9,6 +9,7 @@ import { GData } from "../game/Global.";
 import { GAMETYPE } from "../game/Utils/globalTypes";
 import { slotMessages } from "../game/slotBackend/slotMessages";
 import { slotGameSettings } from "../game/slotBackend/_global";
+import { kenoMessages } from "../game/kenoBackend/kenoMessages";
 
 
 export class SocketUser {
@@ -17,7 +18,7 @@ export class SocketUser {
   isAlive: boolean = false;
   username: string;
   designation: string;
-  gameTag : string;
+  gameTag: string;
   constructor(socket: Socket, public GameData: any) {
     this.isAlive = true;
     this.socket = socket;
@@ -51,10 +52,9 @@ export class SocketUser {
       console.log(payoutData)
       const gameType = tagName.map(ts => ts.split('-')[0]);
       this.gameTag = gameType;
-      if(gameType ==  GAMETYPE.SLOT)
-      slotGameSettings.initiate(payoutData[0].data, this.socket.id);
-      if(gameType == GAMETYPE.KENO)
-      {
+      if (gameType == GAMETYPE.SLOT)
+        slotGameSettings.initiate(payoutData[0].data, this.socket.id);
+      if (gameType == GAMETYPE.KENO) {
         console.log("KENO  GAME INITITATED");
       }
     } catch (error) {
@@ -88,10 +88,10 @@ export class SocketUser {
     return (message: any) => {
       const messageData = JSON.parse(message);
       console.log("message " + JSON.stringify(messageData));
-      if(this.gameTag == GAMETYPE.SLOT)
-      slotMessages(messageData);
-
-     
+      if (this.gameTag == GAMETYPE.SLOT)
+        slotMessages(messageData);
+      if (this.gameTag == GAMETYPE.KENO)
+        kenoMessages(messageData);
     };
   };
 
@@ -116,15 +116,13 @@ export class SocketUser {
       this.sendError("AUTH_ERROR", "An error occurred during authentication");
     }
   }
-  deductPlayerBalance(credit : number)
-  {
+  deductPlayerBalance(credit: number) {
     this.checkBalance();
     this.playerData.Balance -= credit;
     this.updateCreditsInDb();
-    
+
   }
-  updatePlayerBalance(credit : number)
-  {
+  updatePlayerBalance(credit: number) {
     this.playerData.Balance += credit;
     this.playerData.haveWon += credit;
     this.playerData.currentWining = credit;
@@ -174,7 +172,7 @@ export async function initializeUser(socket: Socket) {
     socket.data.username = decoded.username;
 
     socket.data.designation = decoded.designation;
-    GData.playerSocket= new SocketUser(socket, socket);
+    GData.playerSocket = new SocketUser(socket, socket);
     users.set(GData.playerSocket.socket.id, GData.playerSocket);
     // Send the game and payout data to the client
     // socket.emit("initialize", { game, payoutData });

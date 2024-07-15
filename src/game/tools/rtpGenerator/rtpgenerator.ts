@@ -1,4 +1,5 @@
-import { slotGameSettings, getCurrentRTP, spinResult } from "../../slotBackend/_global";
+import { slotGameSettings, getCurrentRTP } from "../../slotBackend/_global";
+import { spinResult } from "../../slotBackend/slotUtils";
 import { CheckResult } from "../../slotBackend/slotResults";
 
 export function getRTP(client: string, spins: number) {
