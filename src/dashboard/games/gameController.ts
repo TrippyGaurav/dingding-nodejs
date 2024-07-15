@@ -1,13 +1,20 @@
 import { NextFunction, Request, Response } from "express";
-import { Payouts, Platform } from "./gameModel";
+import { NewPlatform, Payouts, Platform } from "./gameModel";
 import Game from "./gameModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import { AuthRequest, uploadImage } from "../../utils/utils";
 import { Player } from "../users/userModel";
-import { v2 as cloudinary } from "cloudinary";
+import cloudinary from 'cloudinary';
 import { config } from "../../config/config";
+import { IGame } from "./gameType";
 
+
+cloudinary.v2.config({
+  cloud_name: config.cloud_name,
+  api_key: config.api_key,
+  api_secret: config.api_secret,
+});
 
 interface GameRequest extends Request {
   files?: {
@@ -132,6 +139,8 @@ export class GameController {
     const session = await mongoose.startSession();
     session.startTransaction();
 
+    let thumbnailUploadResult: cloudinary.UploadApiResponse | undefined;
+
     try {
       const _req = req as AuthRequest;
       const { role } = _req.user;
@@ -140,45 +149,42 @@ export class GameController {
         throw createHttpError(401, "Access denied: You don't have permission to add games")
       }
 
-      const { name, thumbnail, url, type, category, status, tagName, slug, platform } = req.body;
+      const { name, url, type, category, status, tagName, slug, platformName } = req.body;
 
-
-      if (!name || !url || !type || !category || !status || !tagName || !slug || !req.files.thumbnail || !req.files.payoutFile || !platform) {
+      if (!name || !url || !type || !category || !status || !tagName || !slug || !req.files.thumbnail || !req.files.payoutFile || !platformName) {
         throw createHttpError(400, "All required fields must be provided, including the payout file and platform");
       }
 
-
-      const existingGame = await Game.findOne({ $or: [{ name }, { slug }] }).session(session);
-      if (existingGame) {
-        throw createHttpError(
-          409,
-          "Game with the same name or slug already exists"
-        );
+      const platform = await NewPlatform.findOne({ name: platformName });
+      if (!platform) {
+        throw createHttpError(404, "Platform not found")
       }
 
-      // Find the platform
-      const platformDoc = await Platform.findOne({ name: platform }).session(session);
-      if (!platformDoc) {
-        throw createHttpError(400, `Platform ${platform} not found`);
-      }
+      const existingGame = await NewPlatform.aggregate([
+        { $match: { _id: platform._id } },
+        { $unwind: '$games' }, // Deconstruct the games array
+        { $match: { $or: [{ 'games.name': name }, { 'games.slug': slug }] } },
+        { $limit: 1 } // Limit the result to 1 document for performance
+      ])
 
-      cloudinary.config({
-        cloud_name: config.cloud_name,
-        api_key: config.api_key,
-        api_secret: config.api_secret,
-      });
+      if (existingGame.length > 0) {
+        throw createHttpError(400, "Game already exists in the platform")
+      }
 
       // Upload thumbnail to Cloudinary
       const thumbnailBuffer = req.files.thumbnail[0].buffer;
-      const thumbnailUploadResult = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
-        cloudinary.uploader.upload_stream({ resource_type: 'image', folder: platform }, (error, result) => {
-          if (error) {
-            return reject(error);
-          }
-          resolve(result as CloudinaryUploadResult);
-        }).end(thumbnailBuffer);
-      });
-
+      try {
+        thumbnailUploadResult = await new Promise<cloudinary.UploadApiResponse>((resolve, reject) => {
+          cloudinary.v2.uploader.upload_stream({ resource_type: 'image', folder: platformName }, (error, result) => {
+            if (error) {
+              return reject(error);
+            }
+            resolve(result as cloudinary.UploadApiResponse);
+          }).end(thumbnailBuffer);
+        });
+      } catch (uploadError) {
+        throw createHttpError(500, "Failed to upload thumbnail");
+      }
 
       // Handle file for payout
       const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString('utf-8'));
@@ -187,11 +193,12 @@ export class GameController {
         data: jsonData,
       });
 
+
       await newPayout.save({ session });
 
-      const game = new Game({
+      const newGame = {
         name,
-        thumbnail: thumbnailUploadResult.secure_url, // Save the Cloudinary URL
+        thumbnail: thumbnailUploadResult.secure_url,
         url,
         type,
         category,
@@ -199,20 +206,30 @@ export class GameController {
         tagName,
         slug,
         payout: newPayout._id,
-      });
+      };
 
-      const savedGame = await game.save({ session });
-      platformDoc.games.push(savedGame._id as mongoose.Types.ObjectId)
-      await platformDoc.save({ session });
+
+      platform.games.push(newGame as any);
+      await platform.save({ session });
 
       await session.commitTransaction();
       session.endSession();
 
-      res.status(201).json(savedGame);
+      res.status(201).json(platform);
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
-      console.log(error);
+
+      // If thumbnail was uploaded but an error occurred afterward, delete the thumbnail
+      if (thumbnailUploadResult && thumbnailUploadResult.public_id) {
+        cloudinary.v2.uploader.destroy(thumbnailUploadResult.public_id, (destroyError, result) => {
+          if (destroyError) {
+            console.log("Failed to delete thumbnail from Cloudinary:", destroyError);
+          } else {
+            console.log("Thumbnail deleted from Cloudinary:", result);
+          }
+        });
+      }
 
       next(error);
     }
@@ -235,11 +252,11 @@ export class GameController {
         throw createHttpError(400, "Platform name is required");
       }
 
-      const existingPlatform = await Platform.findOne({ name });
+      const existingPlatform = await NewPlatform.findOne({ name });
       if (existingPlatform) {
         throw createHttpError(400, "Platform with the same name already exists")
       }
-      const newPlatform = new Platform({ name, games: [] });
+      const newPlatform = new NewPlatform({ name, games: [] });
       const savedPlatform = await newPlatform.save();
 
       res.status(201).json(savedPlatform);
@@ -259,7 +276,7 @@ export class GameController {
         throw createHttpError(401, "Access denied: You don't have permission to add games");
       }
 
-      const platforms = await Platform.find();
+      const platforms = await NewPlatform.find();
       res.status(200).json(platforms)
     } catch (error) {
       console.error("Error fetching platforms:", error);
@@ -361,19 +378,13 @@ export const updateGame = async (
     if (req.files?.thumbnail) {
       const thumbnailBuffer = req.files.thumbnail[0].buffer;
 
-      const thumbnailUploadResult = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          {
-            resource_type: 'image',
-            folder: platform.name // Specify the folder name based on the platform name
-          },
-          (error, result) => {
-            if (error) {
-              return reject(error);
-            }
-            resolve(result as CloudinaryUploadResult);
+      const thumbnailUploadResult = await new Promise<cloudinary.UploadApiResponse>((resolve, reject) => {
+        cloudinary.v2.uploader.upload_stream({ resource_type: 'image', folder: platform.name }, (error, result) => {
+          if (error) {
+            return reject(error);
           }
-        ).end(thumbnailBuffer);
+          resolve(result as cloudinary.UploadApiResponse);
+        }).end(thumbnailBuffer);
       });
 
       fieldsToUpdate.thumbnail = thumbnailUploadResult.secure_url; // Save the Cloudinary URL

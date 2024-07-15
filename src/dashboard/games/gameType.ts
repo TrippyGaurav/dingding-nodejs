@@ -16,3 +16,9 @@ export interface IGame extends Document {
   slug: string;
   payout: Types.ObjectId;
 }
+
+
+export interface INewPlatform extends Document {
+  name: string;
+  games: IGame[]
+}
