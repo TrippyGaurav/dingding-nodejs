@@ -7,7 +7,6 @@ import { AuthRequest, uploadImage } from "../../utils/utils";
 import { Player } from "../users/userModel";
 import cloudinary from 'cloudinary';
 import { config } from "../../config/config";
-import { IGame } from "./gameType";
 
 
 cloudinary.v2.config({
@@ -35,6 +34,7 @@ export class GameController {
     this.addGame = this.addGame.bind(this);
     this.addPlatform = this.addPlatform.bind(this);
     this.getPlatforms = this.getPlatforms.bind(this);
+    this.updateGame = this.updateGame.bind(this);
   }
 
   // GET : Games
@@ -282,6 +282,152 @@ export class GameController {
       console.error("Error fetching platforms:", error);
       next(error);
     }
+  }
+
+  // PUT : Update a Game
+  async updateGame(req: GameRequest, res: Response, next: NextFunction) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    let thumbnailUploadResult: cloudinary.UploadApiResponse | undefined;
+
+    try {
+      const _req = req as AuthRequest;
+      const { username, role } = _req.user;
+      const { gameId } = req.params;
+      const { status, slug, platformName, ...updateFields } = req.body;
+
+      if (!gameId) {
+        throw createHttpError(400, "Game ID is required");
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(gameId)) {
+        throw createHttpError(400, "Invalid Game ID format");
+      }
+
+      if (role !== "company") {
+        throw createHttpError(401, "Access denied: You don't have permission to update games");
+      }
+
+      const existingGame = await NewPlatform.aggregate([
+        { $match: { name: platformName } },
+        { $unwind: '$games' },
+        { $match: { 'games._id': new mongoose.Types.ObjectId(gameId) } },
+        { $limit: 1 }
+      ]);
+
+      if (!existingGame || existingGame.length === 0) {
+        throw createHttpError(404, "Game not found");
+      }
+
+      const game = existingGame[0].games;
+
+      // Validate the status field
+      if (status && !["active", "inactive"].includes(status)) {
+        throw createHttpError(400, "Invalid status value. It should be either 'active' or 'inactive'");
+      }
+
+      // Ensure slug is unique if it is being updated
+      if (slug && slug !== game.slug) {
+        const existingGameWithSlug = await Game.findOne({ slug });
+        if (existingGameWithSlug) {
+          throw createHttpError(400, "Slug must be unique");
+        }
+      }
+
+      // Ensure only existing fields in the document are updated
+      const fieldsToUpdate = Object.keys(updateFields).reduce((acc: any, key) => {
+        if (game[key] !== undefined) {
+          acc[key] = updateFields[key];
+        }
+        return acc;
+      }, {} as { [key: string]: any });
+
+      // Include status and slug fields if they are valid
+      if (status) {
+        fieldsToUpdate.status = status;
+      }
+      if (slug) {
+        fieldsToUpdate.slug = slug;
+      }
+
+      // Handle file for payout update
+      if (req.files?.payoutFile) {
+        // Delete the old payout
+        if (game.payout) {
+          await Payouts.findByIdAndDelete(game.payout);
+        }
+
+        // Add the new payout
+        const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString("utf-8"));
+        const newPayout = new Payouts({
+          gameName: game.name,
+          data: jsonData,
+        });
+
+        await newPayout.save({ session });
+        fieldsToUpdate.payout = newPayout._id;
+      }
+
+      // Handle file for thumbnail update
+      if (req.files?.thumbnail) {
+        const thumbnailBuffer = req.files.thumbnail[0].buffer;
+
+        thumbnailUploadResult = await new Promise<cloudinary.UploadApiResponse>((resolve, reject) => {
+          cloudinary.v2.uploader.upload_stream({ resource_type: 'image', folder: platformName }, (error, result) => {
+            if (error) {
+              return reject(error);
+            }
+            resolve(result as cloudinary.UploadApiResponse);
+          }).end(thumbnailBuffer);
+        });
+
+        fieldsToUpdate.thumbnail = thumbnailUploadResult.secure_url; // Save the Cloudinary URL
+      }
+
+      // If no valid fields to update, return an error
+      if (Object.keys(fieldsToUpdate).length === 0) {
+        throw createHttpError(400, "No valid fields to update");
+      }
+
+      const updatedPlatform = await NewPlatform.findOneAndUpdate(
+        { name: platformName, 'games._id': new mongoose.Types.ObjectId(gameId) },
+        {
+          $set: {
+            'games.$': { ...game, ...fieldsToUpdate }
+          }
+        },
+        { new: true, session }
+      );
+
+      if (!updatedPlatform) {
+        throw createHttpError(404, "Platform not found");
+      }
+
+      await session.commitTransaction();
+      res.status(200).json(updatedPlatform);
+    } catch (error) {
+      await session.abortTransaction();
+
+      if (thumbnailUploadResult && thumbnailUploadResult.public_id) {
+        cloudinary.v2.uploader.destroy(thumbnailUploadResult.public_id, (destroyError, result) => {
+          if (destroyError) {
+            console.log("Failed to delete thumbnail from Cloudinary:", destroyError);
+          } else {
+            console.log("Thumbnail deleted from Cloudinary:", result);
+          }
+        });
+      }
+
+      if (error instanceof mongoose.Error.CastError) {
+        next(createHttpError(400, "Invalid Game ID"));
+      } else {
+        next(error);
+      }
+    } finally {
+      session.endSession();
+    }
+
   }
 }
 
