@@ -297,7 +297,7 @@ export class UserController {
       const { id } = req.query;
 
       console.log("Subor : ", id);
-      
+
 
 
       const currentUser = await User.findOne({ username });
@@ -327,7 +327,7 @@ export class UserController {
 
 
 
-      if (userToCheck.role === "role") {
+      if (userToCheck.role === "store") {
         totalSubordinates = await Player.countDocuments({ createdBy: userToCheck._id });
         subordinates = await Player.find({ createdBy: userToCheck._id })
           .skip(skip)

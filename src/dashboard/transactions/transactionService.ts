@@ -3,7 +3,7 @@ import { ITransaction } from "./transactionType";
 import { rolesHierarchy } from "../../utils/utils";
 import createHttpError from "http-errors";
 import Transaction from "./transactionModel";
-import { User } from "../users/userModel";
+import { Player, User } from "../users/userModel";
 
 export class TransactionService {
   async createTransaction(type: string, manager: any, client: any, amount: number, session: mongoose.ClientSession): Promise<ITransaction> {
@@ -47,7 +47,7 @@ export class TransactionService {
   async getTransactions(username: string, page: number, limit: number) {
     const skip = (page - 1) * limit;
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }) || await Player.findOne({ username });
     if (!user) {
       throw new Error("User not found");
     }
