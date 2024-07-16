@@ -54,7 +54,7 @@ class TransactionService {
     getTransactions(username, page, limit) {
         return __awaiter(this, void 0, void 0, function* () {
             const skip = (page - 1) * limit;
-            const user = yield userModel_1.User.findOne({ username });
+            const user = (yield userModel_1.User.findOne({ username })) || (yield userModel_1.Player.findOne({ username }));
             if (!user) {
                 throw new Error("User not found");
             }

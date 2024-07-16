@@ -8,9 +8,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.betMultiplier = exports.SocketUser = exports.users = void 0;
 exports.initializeUser = initializeUser;
@@ -24,7 +21,6 @@ exports.users = new Map();
 const gameModel_1 = require("../dashboard/games/gameModel");
 // import { clientData } from "../dashboard/user/userController";
 const testData_1 = require("../game/testData");
-const gameModel_2 = __importDefault(require("../dashboard/games/gameModel"));
 class SocketUser {
     constructor(socket, GameData) {
         var _a, _b;
@@ -35,7 +31,17 @@ class SocketUser {
                 const messageData = JSON.parse(message);
                 // Use "SL-VIK" as default tagName if messageData.Data.GameID is not present
                 const tagName = messageData.Data.GameID;
-                const game = yield gameModel_2.default.findOne({ tagName: tagName });
+                const platform = yield gameModel_1.Platform.aggregate([
+                    { $unwind: "$games" },
+                    { $match: { "games.tagName": tagName } },
+                    {
+                        $project: {
+                            _id: 0,
+                            game: "$games"
+                        }
+                    }
+                ]);
+                const game = platform[0].game;
                 // console.log(game, "Game");
                 if (!game || !game.payout) {
                     console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');

@@ -266,7 +266,7 @@ class UserController {
                 }
                 let subordinates;
                 let totalSubordinates;
-                if (userToCheck.role === "role") {
+                if (userToCheck.role === "store") {
                     totalSubordinates = yield userModel_1.Player.countDocuments({ createdBy: userToCheck._id });
                     subordinates = yield userModel_1.Player.find({ createdBy: userToCheck._id })
                         .skip(skip)
