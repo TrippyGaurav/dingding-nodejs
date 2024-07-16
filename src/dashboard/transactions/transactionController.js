@@ -86,8 +86,7 @@ class TransactionController {
                 const page = parseInt(req.query.page) || 1;
                 const limit = parseInt(req.query.limit) || 10;
                 const user = yield userModel_1.User.findOne({ username });
-                const subordinate = yield userModel_1.User.findOne({ _id: subordinateId });
-                console.log("SUb : ", subordinate);
+                const subordinate = (yield userModel_1.User.findOne({ _id: subordinateId })) || (yield userModel_1.Player.findOne({ _id: subordinateId }));
                 if (!user) {
                     throw (0, http_errors_1.default)(404, "Unable to find logged in user");
                 }

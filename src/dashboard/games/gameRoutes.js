@@ -19,9 +19,8 @@ gameRoutes.post('/', upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' 
 gameRoutes.get("/platforms", checkUser_1.checkUser, gameController.getPlatforms);
 // POST : Add a Platform
 gameRoutes.post("/platforms", checkUser_1.checkUser, gameController.addPlatform);
-gameRoutes.put("/:gameId", upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), middlware_1.extractRoleFromCookie, gameController_1.updateGame);
-gameRoutes.delete("/:gameId", middlware_1.extractRoleFromCookie, gameController_1.deleteGame);
-gameRoutes.get("/:gameId", middlware_1.validateApiKey, middlware_1.extractRoleFromCookie, gameController_1.getGameById);
-gameRoutes.post("/thumbnail", middlware_1.extractRoleFromCookie, gameController_1.uploadThubnail);
-gameRoutes.put("/favourite/:playerId", middlware_1.extractRoleFromCookie, gameController_1.addFavouriteGame);
+gameRoutes.put("/:gameId", upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), checkUser_1.checkUser, gameController.updateGame);
+gameRoutes.delete("/:gameId", checkUser_1.checkUser, gameController.deleteGame);
+gameRoutes.get("/:gameId", middlware_1.validateApiKey, middlware_1.extractRoleFromCookie, gameController.getGameBySlug);
+gameRoutes.put("/favourite/:playerId", middlware_1.extractRoleFromCookie, gameController.addFavouriteGame);
 exports.default = gameRoutes;

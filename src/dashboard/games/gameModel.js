@@ -25,50 +25,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Platform = exports.Payouts = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const PlatformSchema = new mongoose_1.Schema({
-    name: { type: String, required: true, unique: true },
-    games: [{ type: mongoose_1.default.Types.ObjectId, ref: "Game" }]
-});
-const GameSchema = new mongoose_1.Schema({
-    name: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    thumbnail: {
-        type: String,
-        required: true,
-        default: "https://res.cloudinary.com/dhl5hifpz/image/upload/v1718447154/casinoGames/jiddczkc9oxak77h88kg.png",
-    },
-    url: {
-        type: String,
-        required: true,
-    },
-    type: {
-        type: String,
-    },
-    category: {
-        type: String,
-        required: true,
-    },
-    status: {
-        type: String,
-        default: "active",
-    },
-    tagName: {
-        type: String,
-        required: true,
-    },
-    slug: {
-        type: String,
-        required: true,
-        unique: true, // Ensure slug is unique
-    },
-    payout: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: "Payouts",
-    },
-}, { timestamps: true });
 const PayoutsSchema = new mongoose_1.Schema({
     gameName: {
         type: String,
@@ -80,9 +36,62 @@ const PayoutsSchema = new mongoose_1.Schema({
         required: true,
     },
 }, { timestamps: true });
-const Game = mongoose_1.default.model("Game", GameSchema);
+const newGameSchema = new mongoose_1.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    thumbnail: {
+        type: String,
+        required: true
+    },
+    url: {
+        type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        required: true
+    },
+    category: {
+        type: String,
+        required: true
+    },
+    status: {
+        type: String,
+        required: true
+    },
+    tagName: {
+        type: String,
+        required: true
+    },
+    slug: {
+        type: String,
+        required: true
+    },
+    payout: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Payout'
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+const PlatformSchema = new mongoose_1.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    games: {
+        type: [newGameSchema],
+    }
+});
+// Create an index on the games.slug field
+PlatformSchema.index({ 'games.slug': 1 });
+PlatformSchema.index({ 'games.category': 1 });
 const Payouts = mongoose_1.default.model("Payouts", PayoutsSchema);
 exports.Payouts = Payouts;
 const Platform = mongoose_1.default.model("Platform", PlatformSchema);
 exports.Platform = Platform;
-exports.default = Game;
