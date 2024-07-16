@@ -156,7 +156,7 @@ export class UserController {
       }
 
 
-      let existingUser = user.role === "player" ? await this.userService.findPlayerByUsername(user.username, session) : await this.userService.findUserByUsername(user.username, session);
+      let existingUser = await this.userService.findPlayerByUsername(user.username, session) || await this.userService.findUserByUsername(user.username, session);
       if (existingUser) {
         throw createHttpError(409, "User already exists")
       }
