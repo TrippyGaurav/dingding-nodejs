@@ -1,13 +1,6 @@
 import express from "express";
 import { extractRoleFromCookie, validateApiKey } from "../middleware/middlware";
-import {
-  GameController,
-  addFavouriteGame,
-  deleteGame,
-  getGameById,
-  updateGame,
-  uploadThubnail,
-} from "./gameController";
+import { GameController } from "./gameController";
 import multer from "multer";
 import { checkUser } from "../middleware/checkUser";
 
@@ -30,13 +23,12 @@ gameRoutes.post("/platforms", checkUser, gameController.addPlatform)
 
 gameRoutes.put("/:gameId", upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), checkUser, gameController.updateGame);
 
-gameRoutes.delete("/:gameId", extractRoleFromCookie, deleteGame);
-gameRoutes.get("/:gameId", validateApiKey, extractRoleFromCookie, getGameById);
-gameRoutes.post("/thumbnail", extractRoleFromCookie, uploadThubnail);
+gameRoutes.delete("/:gameId", checkUser, gameController.deleteGame);
+gameRoutes.get("/:gameId", validateApiKey, extractRoleFromCookie, gameController.getGameBySlug);
 gameRoutes.put(
   "/favourite/:playerId",
   extractRoleFromCookie,
-  addFavouriteGame
+  gameController.addFavouriteGame
 );
 
 

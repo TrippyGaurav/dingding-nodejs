@@ -1,55 +1,5 @@
-import mongoose, { Schema, Types } from "mongoose";
-import { IGame, INewPlatform, IPlatform } from "./gameType";
-
-const PlatformSchema = new Schema<IPlatform>({
-  name: { type: String, required: true, unique: true },
-  games: [{ type: mongoose.Types.ObjectId, ref: "Game" }]
-})
-
-const GameSchema = new Schema<IGame>(
-  {
-    name: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    thumbnail: {
-      type: String,
-      required: true,
-      default:
-        "https://res.cloudinary.com/dhl5hifpz/image/upload/v1718447154/casinoGames/jiddczkc9oxak77h88kg.png",
-    },
-    url: {
-      type: String,
-      required: true,
-    },
-    type: {
-      type: String,
-    },
-    category: {
-      type: String,
-      required: true,
-    },
-    status: {
-      type: String,
-      default: "active",
-    },
-    tagName: {
-      type: String,
-      required: true,
-    },
-    slug: {
-      type: String,
-      required: true,
-      unique: true, // Ensure slug is unique
-    },
-    payout: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Payouts",
-    },
-  },
-  { timestamps: true }
-);
+import mongoose, { Schema } from "mongoose";
+import { IPlatform } from "./gameType";
 
 const PayoutsSchema = new Schema(
   {
@@ -103,10 +53,14 @@ const newGameSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'Payout'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
-const newPlatformSchema = new Schema<INewPlatform>({
+const PlatformSchema = new Schema<IPlatform>({
   name: {
     type: String,
     required: true
@@ -116,11 +70,12 @@ const newPlatformSchema = new Schema<INewPlatform>({
   }
 });
 
+// Create an index on the games.slug field
+PlatformSchema.index({ 'games.slug': 1 })
+PlatformSchema.index({ 'games.category': 1 });
 
-const Game = mongoose.model<IGame>("Game", GameSchema);
+
 const Payouts = mongoose.model("Payouts", PayoutsSchema);
-const Platform = mongoose.model("Platform", PlatformSchema);
-const NewPlatform = mongoose.model("NewPlatform", newPlatformSchema)
+const Platform = mongoose.model("Platform", PlatformSchema)
 
-export { Payouts, Platform, NewPlatform };
-export default Game;
+export { Payouts, Platform };

@@ -1,9 +1,6 @@
 import mongoose, { Document, Types } from "mongoose";
 
-export interface IPlatform extends Document {
-  name: string;
-  games: mongoose.Types.ObjectId[];
-}
+
 
 export interface IGame extends Document {
   name: string;
@@ -15,10 +12,13 @@ export interface IGame extends Document {
   tagName: string;
   slug: string;
   payout: Types.ObjectId;
+  createdAt: Date
 }
 
 
-export interface INewPlatform extends Document {
+export interface IPlatform extends Document {
   name: string;
   games: IGame[]
 }
+
+
