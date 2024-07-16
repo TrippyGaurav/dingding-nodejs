@@ -228,13 +228,21 @@ export class GameController {
 
       // Handle file for payout
       const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString('utf-8'));
-      const newPayout = new Payouts({
-        gameName: tagName,
-        data: jsonData,
-      });
 
+      // Check if a Payout with the same gameName already exists
+      let payoutId;
 
-      await newPayout.save({ session });
+      let existingPayout = await Payouts.findOne({ gameName: tagName });
+      if (existingPayout) {
+        payoutId = existingPayout._id;
+      } else {
+        const newPayout = new Payouts({
+          gameName: tagName,
+          data: jsonData,
+        });
+        await newPayout.save({ session });
+        payoutId = newPayout._id;
+      }
 
       const newGame = {
         name,
@@ -245,7 +253,7 @@ export class GameController {
         status,
         tagName,
         slug,
-        payout: newPayout._id,
+        payout: payoutId,
       };
 
 
@@ -525,9 +533,9 @@ export class GameController {
       }
 
       // Delete the payout document
-      if (game.payout) {
-        await Payouts.findByIdAndDelete(game.payout)
-      }
+      // if (game.payout) {
+      //   await Payouts.findByIdAndDelete(game.payout)
+      // }
 
       // Remove the game from platform's game array
       platform.games.splice(gameIndex, 1);
