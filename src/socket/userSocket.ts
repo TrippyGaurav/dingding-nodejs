@@ -11,10 +11,10 @@ import { getRTP } from "../game/rtpgenerator";
 import { verifySocketToken } from "../utils/playerAuth";
 import { Player } from "../dashboard/users/userModel";
 export let users: Map<string, SocketUser> = new Map();
-import { Payouts } from "../dashboard/games/gameModel";
+import { Platform, Payouts } from "../dashboard/games/gameModel";
 // import { clientData } from "../dashboard/user/userController";
 import { gameData } from "../game/testData";
-import Game from "../dashboard/games/gameModel";
+
 export class SocketUser {
   socket: Socket;
   isAlive: boolean = false;
@@ -38,7 +38,18 @@ export class SocketUser {
 
       // Use "SL-VIK" as default tagName if messageData.Data.GameID is not present
       const tagName = messageData.Data.GameID;
-      const game = await Game.findOne({ tagName: tagName });
+      const platform = await Platform.aggregate([
+        { $unwind: "$games" },
+        { $match: { "games.tagName": tagName } },
+        {
+          $project: {
+            _id: 0,
+            game: "$games"
+          }
+        }
+      ]);
+
+      const game = platform[0].game;
       // console.log(game, "Game");
 
       if (!game || !game.payout) {

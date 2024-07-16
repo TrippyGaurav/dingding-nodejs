@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { User } from "../users/userModel";
+import { Player, User } from "../users/userModel";
 import Transaction from "./transactionModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
@@ -80,11 +80,7 @@ export class TransactionController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       const user = await User.findOne({ username });
-      const subordinate = await User.findOne({ _id: subordinateId });
-
-
-      console.log("SUb : ", subordinate);
-
+      const subordinate = await User.findOne({ _id: subordinateId }) || await Player.findOne({ _id: subordinateId })
 
       if (!user) {
         throw createHttpError(404, "Unable to find logged in user");
