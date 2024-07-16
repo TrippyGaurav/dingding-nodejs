@@ -124,7 +124,7 @@ class UserController {
                 if (!admin) {
                     throw (0, http_errors_1.default)(404, "Admin not found");
                 }
-                let existingUser = user.role === "player" ? yield this.userService.findPlayerByUsername(user.username, session) : yield this.userService.findUserByUsername(user.username, session);
+                let existingUser = (yield this.userService.findPlayerByUsername(user.username, session)) || (yield this.userService.findUserByUsername(user.username, session));
                 if (existingUser) {
                     throw (0, http_errors_1.default)(409, "User already exists");
                 }
