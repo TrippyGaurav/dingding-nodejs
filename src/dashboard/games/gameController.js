@@ -215,11 +215,20 @@ class GameController {
                 }
                 // Handle file for payout
                 const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString('utf-8'));
-                const newPayout = new gameModel_1.Payouts({
-                    gameName: tagName,
-                    data: jsonData,
-                });
-                yield newPayout.save({ session });
+                // Check if a Payout with the same gameName already exists
+                let payoutId;
+                let existingPayout = yield gameModel_1.Payouts.findOne({ gameName: tagName });
+                if (existingPayout) {
+                    payoutId = existingPayout._id;
+                }
+                else {
+                    const newPayout = new gameModel_1.Payouts({
+                        gameName: tagName,
+                        data: jsonData,
+                    });
+                    yield newPayout.save({ session });
+                    payoutId = newPayout._id;
+                }
                 const newGame = {
                     name,
                     thumbnail: thumbnailUploadResult.secure_url,
@@ -229,7 +238,7 @@ class GameController {
                     status,
                     tagName,
                     slug,
-                    payout: newPayout._id,
+                    payout: payoutId,
                 };
                 platform.games.push(newGame);
                 yield platform.save({ session });
@@ -466,9 +475,9 @@ class GameController {
                     });
                 }
                 // Delete the payout document
-                if (game.payout) {
-                    yield gameModel_1.Payouts.findByIdAndDelete(game.payout);
-                }
+                // if (game.payout) {
+                //   await Payouts.findByIdAndDelete(game.payout)
+                // }
                 // Remove the game from platform's game array
                 platform.games.splice(gameIndex, 1);
                 yield platform.save({ session });
