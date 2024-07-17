@@ -12,6 +12,7 @@ const userRoutes = express_1.default.Router();
 userRoutes.post("/login", userController.loginUser);
 // ADD User
 userRoutes.post("/", checkUser_1.checkUser, userController.createUser);
+userRoutes.get("/generatePassword", checkUser_1.checkUser, userController.generatePassword);
 // // GET all details about the current user
 userRoutes.get("/", checkUser_1.checkUser, userController.getCurrentUser);
 // // GET all subordinates

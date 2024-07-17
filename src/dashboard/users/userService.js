@@ -76,5 +76,17 @@ class UserService {
         return __awaiter(this, void 0, void 0, function* () {
         });
     }
+    getRandomChar(characters) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        return characters[randomIndex];
+    }
+    shuffleString(str) {
+        const arr = str.split("");
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr.join("");
+    }
 }
 exports.default = UserService;

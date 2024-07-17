@@ -376,7 +376,7 @@ class GameController {
                     // Add the new payout
                     const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString("utf-8"));
                     const newPayout = new gameModel_1.Payouts({
-                        gameName: game.name,
+                        gameName: game.tagName,
                         data: jsonData,
                     });
                     yield newPayout.save({ session });
