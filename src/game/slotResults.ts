@@ -34,6 +34,7 @@ export class CheckResult {
 
   constructor() {
     gameSettings._winData = new WinData(playerData.playerId);
+    console.log(playerData.playerId, "dfsdfasdfds")
     this.scatter = specialIcons.scatter;
     this.useScatter = gameSettings.useScatter && this.scatter !== null;
     this.jackpot = gameSettings.jackpot;

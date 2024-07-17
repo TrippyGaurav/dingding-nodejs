@@ -83,7 +83,8 @@ export const gameSettings: GameSettings = {
   reels: [[]],
 
   initiate: async (GameData: {}, clientID: string) => {
-    console.log(gameSettings.currentGamedata, "fullPayTable")
+    console.log(clientID, 'clientId')
+    // console.log(gameSettings.currentGamedata, "fullPayTable")
     // console.log(GameData)
     gameSettings.bonusPayTable = [];
     gameSettings.scatterPayTable = [];
