@@ -40,6 +40,8 @@ export class UserController {
     this.getReport = this.getReport.bind(this);
     this.getASubordinateReport = this.getASubordinateReport.bind(this)
     this.getCurrentUserSubordinates = this.getCurrentUserSubordinates.bind(this)
+    this.generatePassword = this.generatePassword.bind(this);
+
   }
 
   public static getSubordinateRoles(role: string): string[] {
@@ -75,6 +77,35 @@ export class UserController {
     }
 
     return { start, end };
+  }
+
+  async generatePassword(req: Request, res: Response, next: NextFunction) {
+    const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+    const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const digitChars = "0123456789";
+    const specialChars = '!@#$%^&()_/,.?":{}|<>';
+
+    let password = "";
+
+    password += this.userService.getRandomChar(lowercaseChars);
+    password += this.userService.getRandomChar(uppercaseChars);
+    password += this.userService.getRandomChar(digitChars);
+    password += this.userService.getRandomChar(specialChars);
+
+    const remainingLength = 8 - password.length;
+    for (let i = 0; i < remainingLength; i++) {
+      const randomSet = Math.floor(Math.random() * 3);
+      if (randomSet === 0) {
+        password += this.userService.getRandomChar(lowercaseChars);
+      } else if (randomSet === 1) {
+        password += this.userService.getRandomChar(uppercaseChars);
+      } else {
+        password += this.userService.getRandomChar(digitChars);
+      }
+    }
+
+    password = this.userService.shuffleString(password);
+    res.status(200).json({ password });
   }
 
 
@@ -333,7 +364,29 @@ export class UserController {
           .skip(skip)
           .limit(limit)
           .select('name username status role totalRecharged totalRedeemed credits');
-      } else {
+      }
+      else if (userToCheck.role === "company") {
+        const userSubordinatesCount = await User.countDocuments({ createdBy: userToCheck._id });
+        const playerSubordinatesCount = await Player.countDocuments({ createdBy: userToCheck._id });
+
+        totalSubordinates = userSubordinatesCount + playerSubordinatesCount;
+
+        const userSubordinates = await User.find({ createdBy: userToCheck._id })
+          .skip(skip)
+          .limit(limit)
+          .select('name username status role totalRecharged totalRedeemed credits');
+
+        const remainingLimit = limit - userSubordinates.length;
+
+        const playerSubordinates = remainingLimit > 0 ? await Player.find({ createdBy: userToCheck._id })
+          .skip(Math.max(skip - userSubordinatesCount, 0))
+          .limit(remainingLimit)
+          .select('name username status role totalRecharged totalRedeemed credits') : [];
+
+        subordinates = [...userSubordinates, ...playerSubordinates];
+
+      }
+      else {
         totalSubordinates = await User.countDocuments({ createdBy: userToCheck._id });
         subordinates = await User.find({ createdBy: userToCheck._id })
           .skip(skip)
