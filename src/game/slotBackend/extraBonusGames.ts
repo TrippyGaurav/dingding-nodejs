@@ -1,7 +1,9 @@
+import { Socket } from "socket.io";
 import { GData } from "../Global.";
 import { slotGameSettings} from "./_global";
 // import { sendMessageToClient } from "./App";
 import { bonusGameType } from "./slotTypes";
+import { sendMessage } from "../../socket/userSocket";
 
 
 export class bonusGame{
@@ -234,7 +236,7 @@ export class GambleGame {
   gambleCount: number;
   maxgambleCount: number;
 
-  constructor(clientId: string, multiplier: number = 2) {
+  constructor(public playerSkt : Socket,clientId: string, multiplier: number = 2) {
     this.clientId = clientId;
     this.multiplier = multiplier;
     this.gambleCount = 0;
@@ -276,7 +278,7 @@ export class GambleGame {
     };
 
     //TODO : ADD MESSAGE FOR CLIENT
-    GData.playerSocket.sendMessage("GambleResult", ResultData);
+  sendMessage(this.playerSkt,"GambleResult", ResultData);
     // sendMessageToClient(clientId, "GambleResult", ResultData);
   }
 

@@ -1,9 +1,11 @@
 // import { Alerts } from "./Alerts";
 // import { sendMessageToClient } from "./App";
-import { slotGameSettings, gameWining, getCurrentRTP, startFreeSpin } from "./_global";
-import { removeRecurringIndexSymbols } from "./slotUtils";
+import { slotGameSettings, gameWining, getCurrentRTP} from "./_global";
+import { removeRecurringIndexSymbols, startFreeSpin } from "./slotUtils";
 import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "./slotTypes";
 import { GData } from "../Global.";
+import { Socket } from "socket.io";
+import { sendMessage } from "../../socket/userSocket";
 export class CheckResult {
   scatter: string;
   useScatter: boolean;
@@ -21,7 +23,7 @@ export class CheckResult {
 
   bonusResult: string[];
 
-  constructor() {
+  constructor(public playerSkt : Socket) {
     slotGameSettings._winData = new WinData();
     this.scatter = specialIcons.scatter;
     this.useScatter = slotGameSettings.useScatter && this.scatter !== null;
@@ -89,7 +91,7 @@ export class CheckResult {
     console.log("Bonus start", slotGameSettings.bonus.start);
 
     if (!slotGameSettings.freeSpinStarted && slotGameSettings._winData.freeSpins != 0)
-      startFreeSpin();
+      startFreeSpin(this.playerSkt);
 
     // Math.round(num * 100) / 100).toFixed(2)
     console.log("TOTAL WINING : " + slotGameSettings._winData.totalWinningAmount);
@@ -360,7 +362,7 @@ export class CheckResult {
     return foundArray;
   }
 
-  makeResultJson(isResult: ResultType, iconsToFill: number[][] = []) {
+  makeResultJson(playerSkt : Socket,isResult: ResultType, iconsToFill: number[][] = []) {
     //TODO : Try to send the jackpot win data without initializie a variable;
     slotGameSettings._winData.totalWinningAmount =
       Math.round(slotGameSettings._winData.totalWinningAmount * 100) / 100;
@@ -382,10 +384,10 @@ export class CheckResult {
     };
     GData.playerSocket.updateCreditsInDb();
     if (isResult == ResultType.normal)
-      GData.playerSocket.sendMessage("ResultData", ResultData);
+      sendMessage(playerSkt,"ResultData", ResultData);
     if (isResult == ResultType.moolah) {
       ResultData.GameData['iconstoFill'] = iconsToFill;
-      GData.playerSocket.sendMessage("MoolahResultData", ResultData);
+      sendMessage(playerSkt,"MoolahResultData", ResultData);
     }
   }
 

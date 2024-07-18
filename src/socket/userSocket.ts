@@ -42,7 +42,7 @@ export class SocketUser {
 
       if (!game || !game.payout) {
         console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
-        slotGameSettings.initiate(gameData[0], this.socket.id);
+        slotGameSettings.initiate(this.socket,gameData[0], this.socket.id);
         return;
       }
 
@@ -52,7 +52,7 @@ export class SocketUser {
       const gameType = tagName.map(ts => ts.split('-')[0]);
       this.gameTag = gameType;
       if(gameType ==  GAMETYPE.SLOT)
-      slotGameSettings.initiate(payoutData[0].data, this.socket.id);
+      slotGameSettings.initiate(this.socket,payoutData[0].data, this.socket.id);
       if(gameType == GAMETYPE.KENO)
       {
         console.log("KENO  GAME INITITATED");
@@ -72,13 +72,6 @@ export class SocketUser {
     this.socket.emit(MESSAGETYPE.ERROR, params);
   }
 
-  sendAlert(message: string) {
-    this.socket.emit(MESSAGETYPE.ALERT, message);
-  }
-
-  sendMessage(id: string, message: any) {
-    this.socket.emit(MESSAGETYPE.MESSAGE, JSON.stringify({ id, message }));
-  }
 
   heartbeat = () => {
     this.isAlive = true;
@@ -89,7 +82,7 @@ export class SocketUser {
       const messageData = JSON.parse(message);
       console.log("message " + JSON.stringify(messageData));
       if(this.gameTag == GAMETYPE.SLOT)
-      slotMessages(messageData);
+      slotMessages(this.socket,messageData);
 
      
     };
@@ -107,7 +100,7 @@ export class SocketUser {
         console.log("BALANCE " + this.playerData.Balance);
         // console.log(this.username);
         // console.log("Player Balance users", CurrentUser.credits);
-        this.sendMessage(MESSAGEID.AUTH, CurrentUser.credits);
+        sendMessage(this.socket,MESSAGEID.AUTH, CurrentUser.credits);
       } else {
         this.sendError("USER_NOT_FOUND", "User not found in the database");
       }
@@ -156,7 +149,7 @@ export class SocketUser {
     // if(playerData.Balance < gameWining.currentBet)
     if (this.playerData.Balance < slotGameSettings.currentBet) {
       // Alerts(clientID, "Low Balance");
-      this.sendMessage("low-balance", true)
+      sendMessage(this.socket,"low-balance", true)
       console.log(this.playerData.Balance, "player balance")
 
 
@@ -184,6 +177,13 @@ export async function initializeUser(socket: Socket) {
   }
 }
 
+export function sendAlert(skt : Socket, message: string) {
+  this.socket.emit(MESSAGETYPE.ALERT, message);
+}
+
+export function sendMessage(skt : Socket, id: string, message: any) {
+  this.socket.emit(MESSAGETYPE.MESSAGE, JSON.stringify({ id, message }));
+}
 
 export const betMultiplier = [0.1, 0.5, 0.7, 1];
 

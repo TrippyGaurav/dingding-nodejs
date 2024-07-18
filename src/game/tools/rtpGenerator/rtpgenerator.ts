@@ -1,14 +1,16 @@
-import { slotGameSettings, getCurrentRTP, spinResult } from "../../slotBackend/_global";
+import { Socket } from "socket.io";
+import { slotGameSettings, getCurrentRTP} from "../../slotBackend/_global";
 import { CheckResult } from "../../slotBackend/slotResults";
+import { spinResult } from "../../slotBackend/slotUtils";
 
-export function getRTP(client: string, spins: number) {
+export function getRTP(playerSkt : Socket, client: string, spins: number) {
   let moneySpend: number = 0;
   let moneyWon: number = 0;
   getCurrentRTP.playerWon = 0;
   getCurrentRTP.playerTotalBets = 0;
   for (let i = 0; i < spins; i++) {
 
-    spinResult(client);
+    spinResult(playerSkt,client);
     moneySpend += slotGameSettings.currentBet;
     moneyWon += slotGameSettings._winData.totalWinningAmount;
   }

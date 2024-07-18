@@ -1,4 +1,5 @@
 
+import { Socket } from "socket.io";
 import { bonusGame, GambleGame } from "./extraBonusGames";
 import { WinData } from "./slotResults";
 
@@ -106,7 +107,7 @@ export interface SymbolData {
     BetPerLines: number,
     currentLines: number,
     startGame: boolean;
-    initiate: (arg: any, arg2: string) => void;
+    initiate: (playerSkt : Socket ,arg: any, arg2: string) => void;
     gamble: {
       game: GambleGame;
       maxCount: number;

@@ -1,3 +1,5 @@
+import { Socket } from "socket.io";
+import { sendMessage } from "../../socket/userSocket";
 import { middleware } from "../../utils/middleware";
 import { GData } from "../Global.";
 import { slotGameSettings } from "./_global";
@@ -79,7 +81,7 @@ function handleSpecialSymbols(symbol) {
 }
 
 //CHECKMOOLAH
-export function spinResult(clientID: string) {
+export function spinResult(playerSkt : Socket ,clientID: string) {
   // console.log(gameSettings._winData, ":gameSettings._winData");
 
   if (
@@ -102,33 +104,33 @@ export function spinResult(clientID: string) {
   slotGameSettings.bonus.start = false;
 
   new RandomResultGenerator();
-  const result = new CheckResult();
-  result.makeResultJson(ResultType.normal);
+  const result = new CheckResult(playerSkt);
+  result.makeResultJson(playerSkt,ResultType.normal);
 }
 
-export function startFreeSpin() {
+export function startFreeSpin(playerSkt : Socket) {
   console.log(
     "____----Started FREE SPIN ----_____" + " :::  FREE SPINSS ::::",
     slotGameSettings._winData.freeSpins
   );
-  GData.playerSocket.sendMessage("StartedFreeSpin", {});
+  sendMessage(playerSkt,"StartedFreeSpin", {});
   slotGameSettings.freeSpinStarted = true;
   for (let i = 0; i <= slotGameSettings._winData.freeSpins; i++) {
     slotGameSettings.bonus.start = false;
     new RandomResultGenerator();
-    new CheckResult();
+    new CheckResult(playerSkt);
     console.log(
       "FREE SPINS LEFTTT ::::" + (slotGameSettings._winData.freeSpins - i)
     );
   }
   slotGameSettings._winData.freeSpins = 0;
 
-  GData.playerSocket.sendMessage("StoppedFreeSpins", {});
+  sendMessage(playerSkt,"StoppedFreeSpins", {});
   slotGameSettings.freeSpinStarted = false;
 
   console.log("____----Stopped FREE SPIN ----_____");
 }
-export function checkforMoolah() {
+export function checkforMoolah(playerSkt : Socket) {
   console.log("_______-------CALLED FOR CHECK FOR MOOLAHHHH-------_______");
 
 
@@ -177,8 +179,8 @@ export function checkforMoolah() {
   console.log("iconsTofill", iconsToFill);
   slotGameSettings.resultSymbolMatrix = matrix;
 
-  const result = new CheckResult();
-  result.makeResultJson(ResultType.moolah, iconsToFill);
+  const result = new CheckResult(playerSkt);
+  result.makeResultJson(playerSkt,ResultType.moolah, iconsToFill);
 }
 
 function getLastindex(reelIndex: number, index: number) {
@@ -317,6 +319,8 @@ export function convertSymbols(data) {
   let uiData = {
     symbols: [],
   };
+  console.log(data);
+  
   if (!Array.isArray(data)) {
     console.error("Input data is not an array");
     return uiData;
