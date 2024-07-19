@@ -1,5 +1,6 @@
-import { gameSettings, getCurrentRTP, spinResult } from "./global";
-import { CheckResult } from "./slotResults";
+import { slotGameSettings, getCurrentRTP } from "../../slotBackend/_global";
+import { spinResult } from "../../slotBackend/slotUtils";
+import { CheckResult } from "../../slotBackend/slotResults";
 
 export function getRTP(client: string, spins: number) {
   let moneySpend: number = 0;
@@ -9,8 +10,8 @@ export function getRTP(client: string, spins: number) {
   for (let i = 0; i < spins; i++) {
 
     spinResult(client);
-    moneySpend += gameSettings.currentBet;
-    moneyWon += gameSettings._winData.totalWinningAmount;
+    moneySpend += slotGameSettings.currentBet;
+    moneyWon += slotGameSettings._winData.totalWinningAmount;
   }
 
   // Calculate RTP only if moneySpend is not zero to avoid division by zero
@@ -19,7 +20,7 @@ export function getRTP(client: string, spins: number) {
 
   console.log(
     "Bet : ",
-    gameSettings.currentBet,
+    slotGameSettings.currentBet,
     "Players Total bet  : ",
     moneySpend,
     "Player Won : ",
@@ -28,8 +29,8 @@ export function getRTP(client: string, spins: number) {
   if (moneySpend > 0) {
     rtp = (moneyWon / moneySpend); // Use toFixed to limit decimal places
   }
-  console.log(gameSettings.noOfBonus, "bonus")
-  console.log(gameSettings.totalBonuWinAmount, "totalBonus")
+  console.log(slotGameSettings.noOfBonus, "bonus")
+  console.log(slotGameSettings.totalBonuWinAmount, "totalBonus")
   console.log("GENERATED RTP : ", rtp);
 
   return;

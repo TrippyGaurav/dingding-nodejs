@@ -1,8 +1,8 @@
-import { bonusGame } from "./bonusResults";
-import { GambleGame } from "./gambleResults";
-import { gameSettings } from "./global";
-import { WinData } from "./slotResults";
 
+import { bonusGame } from "./slotBackend/extraBonusGames";
+import { GambleGame } from "./slotBackend/extraBonusGames";
+import { slotGameSettings } from "./slotBackend/_global";
+import { WinData } from "./slotBackend/slotResults";
 export interface SymbolData {
   symbolName: string;
   symbolID: number;
@@ -67,7 +67,7 @@ export interface winning {
   currentBet: number;
 }
 
-export interface GameSettings {
+export interface slotGameSettings {
   currentGamedata: any;
   matrix: { x: number; y: number };
   payLine: PayLine[];
@@ -156,7 +156,7 @@ export function generateMatrix(n_Rows: number, n_Columns: number): any[][] {
   for (let i = 0; i < n_Rows; i++) {
     const row: any[] = [];
     for (let j = 0; j < n_Columns; j++) {
-      const result = weightedRandom(gameSettings.Symbols, gameSettings.Weights);
+      const result = weightedRandom(slotGameSettings.Symbols, slotGameSettings.Weights);
       row.push(result.item);
     }
     matrix.push(row);

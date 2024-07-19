@@ -1,6 +1,8 @@
-import { gameSettings,playerData  } from "./global";
-import { bonusGameType } from "./gameUtils";
-
+import { GData } from "../Global.";
+import { slotGameSettings} from "./_global";
+// import { sendMessageToClient } from "./App";
+import { bonusGameType } from "./slotTypes";
+import { PlayerData } from "../Global.";
 export class bonusGame{
     type:String;
     noOfItems:number;
@@ -11,8 +13,6 @@ export class bonusGame{
     maxPay:number;
     clientId: string;
 
-
-
     constructor(nosOfItem:number, clientId: string) {
         this.noOfItems=nosOfItem;
         this.type= bonusGameType.default;
@@ -21,7 +21,6 @@ export class bonusGame{
         // this.noise=noise;
     }
 
-    
     generateData( totalPay:number=0):string[] {
         
         this.result=[];
@@ -32,7 +31,7 @@ export class bonusGame{
         //    this.result.push(gameSettings.currentGamedata.bonus.payOut[i]);
             
         // }
-        this.result=gameSettings.currentGamedata.bonus.payOut;
+        this.result=slotGameSettings.currentGamedata.bonus.payOut;
         // this.shuffle(this.result);
         console.log("bonus result",this.result);
 
@@ -99,7 +98,7 @@ export class bonusGame{
 
        slot_array.forEach((element)=>{
         if(element===reelNum)
-            multiplier_array.push(gameSettings.currentGamedata.bonus.payTable[element]);
+            multiplier_array.push(slotGameSettings.currentGamedata.bonus.payTable[element]);
         else 
             multiplier_array.push(0);
        })
@@ -142,33 +141,33 @@ export class bonusGame{
         let amount: number=0;
 
         
-        if(gameSettings.bonus.start && gameSettings.currentGamedata.bonus.type==bonusGameType.spin){
+        if(slotGameSettings.bonus.start && slotGameSettings.currentGamedata.bonus.type==bonusGameType.spin){
             
-            gameSettings.bonus.stopIndex=this.getRandomPayoutIndex(gameSettings.currentGamedata.bonus.payOutProb);
-            amount=gameSettings.BetPerLines*this.result[gameSettings.bonus.stopIndex];
+            slotGameSettings.bonus.stopIndex=this.getRandomPayoutIndex(slotGameSettings.currentGamedata.bonus.payOutProb);
+            amount=slotGameSettings.BetPerLines*this.result[slotGameSettings.bonus.stopIndex];
             console.log("bonus amount", amount)
-            console.log("bonus index", gameSettings.bonus.stopIndex)
-            console.log("bonus result", this.result[gameSettings.bonus.stopIndex])
+            console.log("bonus index", slotGameSettings.bonus.stopIndex)
+            console.log("bonus result", this.result[slotGameSettings.bonus.stopIndex])
         }
-        else if(gameSettings.bonus.start && gameSettings.currentGamedata.bonus.type==bonusGameType.tap){
+        else if(slotGameSettings.bonus.start && slotGameSettings.currentGamedata.bonus.type==bonusGameType.tap){
             // gameSettings.bonus.stopIndex=-1;   
             this.shuffle(this.result);
             this.result.forEach((element)=>{
                 if(element<=0)
                     return;
-                amount+=gameSettings.BetPerLines*element;
+                amount+=slotGameSettings.BetPerLines*element;
 
                 
             }) 
-        }else if(gameSettings.bonus.start && gameSettings.currentGamedata.bonus.type=="slot"){
+        }else if(slotGameSettings.bonus.start && slotGameSettings.currentGamedata.bonus.type=="slot"){
             // gameSettings.bonus.stopIndex=-1;
             for (let index = 1; index < 4; index++) {
-                amount+=gameSettings.BetPerLines*this.result[this.result.length-index];
+                amount+=slotGameSettings.BetPerLines*this.result[this.result.length-index];
                 
             }   
             // amount=gameSettings.currentBet*this.result[this.result.length-1];
             console.log("amount",amount);
-            console.log("current bet",gameSettings.BetPerLines);
+            console.log("current bet",slotGameSettings.BetPerLines);
         }
 
         if(!amount || amount<0)
@@ -222,4 +221,79 @@ export class bonusGame{
     }
 
 
+}
+
+
+export class GambleGame {
+  type: String;
+  clientId: string;
+  currentWining: number;
+  totalWining: number;
+  multiplier: number;
+  gambleCount: number;
+  maxgambleCount: number;
+
+  constructor(clientId: string, multiplier: number = 2) {
+    this.clientId = clientId;
+    this.multiplier = multiplier;
+    this.gambleCount = 0;
+    this.totalWining = 0;
+    this.maxgambleCount = 5;
+  }
+
+  generateData(gambleAmount: number) {
+    console.log("triggered in gamble");
+
+    const num = Math.random();
+
+    // if(num>0.5){
+    //     gambleAmount*= this.multiplier;
+    // }else{
+    //     gambleAmount=0;
+    //     gameSettings.gamble.start=false;
+    //     // return;
+    // }
+    gambleAmount *= this.multiplier;
+    // gambleAmount*=0;
+    this.currentWining = gambleAmount;
+    this.totalWining += gambleAmount;
+    this.makeResultJson(this.clientId);
+    this.gambleCount++;
+    console.log("gamble amount", this.gambleCount);
+  }
+
+  makeResultJson(clientId: string) {
+    // const totalWinningAmount = (Math.round(amount * 100) / 100)
+    console.log("triggered in make resultjson");
+
+    const ResultData = {
+      GambleData: {
+        currentWining: this.currentWining,
+        totalWinningAmount: this.totalWining,
+      },
+      PlayerData: PlayerData,
+    };
+
+    //TODO : ADD MESSAGE FOR CLIENT
+    GData.playerSocket.sendMessage("GambleResult", ResultData);
+    // sendMessageToClient(clientId, "GambleResult", ResultData);
+  }
+
+  updateplayerBalance() {
+    GData.playerSocket.updatePlayerBalance(this.totalWining);
+    this.makeResultJson(this.clientId);
+  }
+
+  reset() {
+    this.gambleCount = 0;
+    this.totalWining = 0;
+    this.currentWining = 0;
+    slotGameSettings.gamble.game = null;
+    slotGameSettings.gamble.start = false;
+  }
+
+  checkIfClientExist(clients: Map<string, WebSocket>) {
+    if (clients.has(this.clientId)) return true;
+    else return false;
+  }
 }
