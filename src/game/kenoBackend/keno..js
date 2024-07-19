@@ -4,7 +4,7 @@ exports.defaultPayoutTable = void 0;
 exports.play = play;
 const crypto_1 = require("crypto"); // For random number generation
 const _global_1 = require("./_global");
-const Global_1 = require("../Global.");
+const Global_1 = require("../Global");
 exports.defaultPayoutTable = {
     1: { 0: 0, 1: 0 },
     2: { 0: 0, 1: 1, 2: 8 },

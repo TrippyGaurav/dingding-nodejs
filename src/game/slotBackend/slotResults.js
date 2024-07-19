@@ -7,7 +7,7 @@ const _global_1 = require("./_global");
 const slotUtils_1 = require("./slotUtils");
 const slotTypes_1 = require("./slotTypes");
 Object.defineProperty(exports, "ResultType", { enumerable: true, get: function () { return slotTypes_1.ResultType; } });
-const Global_1 = require("../Global.");
+const Global_1 = require("../Global");
 const userSocket_1 = require("../../socket/userSocket");
 class CheckResult {
     constructor(playerSkt) {
@@ -68,6 +68,7 @@ class CheckResult {
         // console.log(gameWining.WinningLines);
         // console.log(gameWining.winningSymbols);
         console.log("PT BETS :" + _global_1.getCurrentRTP.playerTotalBets);
+        // console.log(GData.playerSocket, "CurrentUserSocket")
         const winRate = (_global_1.getCurrentRTP.playerWon / _global_1.getCurrentRTP.playerTotalBets) * 100;
         console.log(`Total Spend : ${_global_1.getCurrentRTP.playerTotalBets}  Total Won : ${_global_1.getCurrentRTP.playerWon} 
       Current RTP : ${winRate.toFixed(2)}% `);

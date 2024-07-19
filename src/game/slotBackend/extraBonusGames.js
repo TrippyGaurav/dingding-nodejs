@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GambleGame = exports.bonusGame = void 0;
-const Global_1 = require("../Global.");
+const Global_1 = require("../Global");
 const _global_1 = require("./_global");
 // import { sendMessageToClient } from "./App";
 const slotTypes_1 = require("./slotTypes");
-const Global_2 = require("../Global.");
+const Global_2 = require("../Global");
 const userSocket_1 = require("../../socket/userSocket");
 class bonusGame {
     constructor(nosOfItem, clientId) {

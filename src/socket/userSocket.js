@@ -19,7 +19,7 @@ const userModel_1 = require("../dashboard/users/userModel");
 exports.users = new Map();
 const testData_1 = require("../game/slotBackend/testData");
 const gameModel_1 = require("../dashboard/games/gameModel");
-const Global_1 = require("../game/Global.");
+const Global_1 = require("../game/Global");
 const globalTypes_1 = require("../game/Utils/globalTypes");
 const slotMessages_1 = require("../game/slotBackend/slotMessages");
 const _global_1 = require("../game/slotBackend/_global");
@@ -184,4 +184,4 @@ function sendAlert(skt, message) {
 function sendMessage(skt, id, message) {
     skt.emit("message" /* MESSAGETYPE.MESSAGE */, JSON.stringify({ id, message }));
 }
-exports.betMultiplier = [0.1, 0.5, 0.7, 1];
+exports.betMultiplier = [0.1, 0.25, 0.5, 0.75, 1];
