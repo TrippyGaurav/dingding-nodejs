@@ -4,7 +4,7 @@
 import { slotGameSettings, gameWining, getCurrentRTP } from "./_global";
 import { removeRecurringIndexSymbols, startFreeSpin } from "./slotUtils";
 import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "./slotTypes";
-import { GData, PlayerData } from "../Global.";
+import { GData, PlayerData } from "../Global";
 import { Socket } from "socket.io";
 import { sendMessage } from "../../socket/userSocket";
 export class CheckResult {
@@ -100,7 +100,7 @@ export class CheckResult {
     // console.log(gameWining.WinningLines);
     // console.log(gameWining.winningSymbols);
     console.log("PT BETS :" + getCurrentRTP.playerTotalBets);
-
+    // console.log(GData.playerSocket, "CurrentUserSocket")
     const winRate: number =
       (getCurrentRTP.playerWon / getCurrentRTP.playerTotalBets) * 100;
     console.log(

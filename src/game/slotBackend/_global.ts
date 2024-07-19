@@ -1,7 +1,7 @@
 
 import { Socket } from "socket.io";
 import { middleware } from "../../utils/middleware";
-import { GData } from "../Global.";
+import { GData } from "../Global";
 import { bonusGame } from "./extraBonusGames";
 import { sendInitdata, RandomResultGenerator } from "./slotDataInit";
 import { WinData, CheckResult } from "./slotResults";
@@ -101,8 +101,6 @@ export const slotGameSettings: GameSettings = {
     // const currentGameData=gameData.filter((element)=>element.id==GameID)
 
     slotGameSettings.currentGamedata = GameData[0] || GameData;
-
-
     slotGameSettings.currentGamedata.Symbols.forEach((element) => {
       if (element.Name == "Bonus") {
         slotGameSettings.bonus.id = element.Id

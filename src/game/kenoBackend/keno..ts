@@ -1,6 +1,6 @@
 import { randomInt } from "crypto"; // For random number generation
 import { kenoCurrentGameData } from "./_global";
-import { GData } from "../Global.";
+import { GData } from "../Global";
 
 interface PayoutTable {
     [key: number]: { [key: number]: number };
@@ -46,15 +46,15 @@ export function play(count: number, payoutTable: PayoutTable = defaultPayoutTabl
     for (let i = 0; i <= count; i++) {
         matchCounts[i] = 0;
     }
-        GData.playerSocket.deductPlayerBalance(kenoCurrentGameData.currentBet);
-        const selectedNumbers = kenoCurrentGameData.currentSelectedNumbers;
-        const drawnNumbers = drawNumbers();
-        const winnings = calculateWinnings(selectedNumbers, drawnNumbers, payoutTable);
-        totalWinnings += winnings;
-        GData.playerSocket.updatePlayerBalance(totalWinnings);
-        const matches = selectedNumbers.filter(num => drawnNumbers.includes(num)).length;
-        matchCounts[matches] += 1;
- 
+    GData.playerSocket.deductPlayerBalance(kenoCurrentGameData.currentBet);
+    const selectedNumbers = kenoCurrentGameData.currentSelectedNumbers;
+    const drawnNumbers = drawNumbers();
+    const winnings = calculateWinnings(selectedNumbers, drawnNumbers, payoutTable);
+    totalWinnings += winnings;
+    GData.playerSocket.updatePlayerBalance(totalWinnings);
+    const matches = selectedNumbers.filter(num => drawnNumbers.includes(num)).length;
+    matchCounts[matches] += 1;
+
 
 
     // const rtp = totalWinnings / spins;
@@ -69,8 +69,7 @@ export function play(count: number, payoutTable: PayoutTable = defaultPayoutTabl
     // console.log(`RTP (Return to Player): ${rtp.toFixed(6)}`);
 }
 
-function sendResult()
-{
+function sendResult() {
 
 }
 // play(10000, 10);
