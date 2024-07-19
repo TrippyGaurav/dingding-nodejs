@@ -8,7 +8,7 @@ exports.convertData = convertData;
 exports.convertSymbols = convertSymbols;
 exports.removeRecurringIndexSymbols = removeRecurringIndexSymbols;
 exports.combineUniqueSymbols = combineUniqueSymbols;
-const global_1 = require("./global");
+const _global_1 = require("./slotBackend/_global");
 var specialIcons;
 (function (specialIcons) {
     specialIcons["bonus"] = "Bonus";
@@ -60,7 +60,7 @@ function generateMatrix(n_Rows, n_Columns) {
     for (let i = 0; i < n_Rows; i++) {
         const row = [];
         for (let j = 0; j < n_Columns; j++) {
-            const result = weightedRandom(global_1.gameSettings.Symbols, global_1.gameSettings.Weights);
+            const result = weightedRandom(_global_1.slotGameSettings.Symbols, _global_1.slotGameSettings.Weights);
             row.push(result.item);
         }
         matrix.push(row);
@@ -105,7 +105,7 @@ function convertSymbols(data) {
         // if (element.multiplier) {
         //   const multiplierObject = {};
         //   element.multiplier.forEach((item, index) => {
-        //     multiplierObject[(5 - index).toString() + "x"] = item;
+        //     multiplierObject[(5 - index).toString() + "x"] = item[0];
         //   });
         //   symbolData.multiplier = multiplierObject;
         // }
