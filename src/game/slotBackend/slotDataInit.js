@@ -8,7 +8,7 @@ const slotUtils_1 = require("./slotUtils");
 const slotTypes_1 = require("./slotTypes");
 const extraBonusGames_1 = require("./extraBonusGames");
 const userSocket_1 = require("../../socket/userSocket");
-const Global_1 = require("../Global.");
+const Global_1 = require("../Global");
 function sendInitdata(playerSkt, clientID) {
     var _a;
     // const matrix = generateMatrix(gameSettings.matrix.x, 18);
