@@ -14,6 +14,8 @@ userRoutes.post("/login", userController.loginUser);
 // ADD User
 userRoutes.post("/", checkUser, userController.createUser);
 
+userRoutes.get("/generatePassword", checkUser, userController.generatePassword);
+
 // // GET all details about the current user
 userRoutes.get("/", checkUser, userController.getCurrentUser);
 
