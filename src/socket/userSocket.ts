@@ -52,17 +52,19 @@ export class SocketUser {
 
       if (!game || !game.payout) {
         console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
-        slotGameSettings.initiate(gameData[0], this.socket.id);
+        slotGameSettings.initiate(this.socket, gameData[0], this.socket.id);
         return;
       }
 
       const payoutData = await Payouts.find({ _id: { $in: game.payout } });
+
       const gameType = tagName.split('-');
       this.gameTag = gameType[0];
       if (gameType == GAMETYPE.SLOT)
         console.log('SLOT INITITATED')
-      slotGameSettings.initiate(payoutData[0].data, this.socket.id);
+      slotGameSettings.initiate(this.socket, payoutData[0].data, this.socket.id);
       if (gameType == GAMETYPE.KENO) {
+
         console.log("KENO  GAME INITITATED");
       }
 
@@ -80,14 +82,6 @@ export class SocketUser {
     this.socket.emit(MESSAGETYPE.ERROR, params);
   };
 
-  sendAlert = (message: string) => {
-    this.socket.emit(MESSAGETYPE.ALERT, message);
-  };
-
-  sendMessage = (id: string, message: any) => {
-    this.socket.emit(MESSAGETYPE.MESSAGE, JSON.stringify({ id, message }));
-  };
-
   heartbeat = () => {
     this.isAlive = true;
   };
@@ -98,9 +92,9 @@ export class SocketUser {
       const messageData = JSON.parse(message);
       console.log("message " + JSON.stringify(messageData));
       if (this.gameTag == GAMETYPE.SLOT)
-        slotMessages(messageData, this.socket.id);
+        slotMessages(this.socket, this.socket.id, messageData);
       if (this.gameTag == GAMETYPE.KENO)
-        kenoMessages(messageData, this.socket.id);
+        kenoMessages(this.socket, messageData);
     };
 
   };
@@ -111,11 +105,11 @@ export class SocketUser {
         username: this.username,
       }).exec();
       if (CurrentUser) {
-
         PlayerData.Balance = CurrentUser.credits;
         console.log("BALANCE " + PlayerData.Balance);
-
-        this.sendMessage(MESSAGEID.AUTH, CurrentUser.credits);
+        // console.log(this.username);
+        // console.log("Player Balance users", CurrentUser.credits);
+        sendMessage(this.socket, MESSAGEID.AUTH, CurrentUser.credits);
       } else {
         this.sendError("USER_NOT_FOUND", "User not found in the database");
       }
@@ -165,7 +159,7 @@ export class SocketUser {
     // if(playerData.Balance < gameWining.currentBet)
     if (PlayerData.Balance < slotGameSettings.currentBet) {
       // Alerts(clientID, "Low Balance");
-      this.sendMessage("low-balance", true)
+      sendMessage(this.socket, "low-balance", true)
       console.log(PlayerData.Balance, "player balance")
       console.log(slotGameSettings.currentBet, "currentbet")
       console.warn("LOW BALANCE ALErt");
@@ -192,11 +186,11 @@ export async function initializeUser(socket: Socket) {
 }
 
 export function sendAlert(skt: Socket, message: string) {
-  this.socket.emit(MESSAGETYPE.ALERT, message);
+  skt.emit(MESSAGETYPE.ALERT, message);
 }
 
 export function sendMessage(skt: Socket, id: string, message: any) {
-  this.socket.emit(MESSAGETYPE.MESSAGE, JSON.stringify({ id, message }));
+  skt.emit(MESSAGETYPE.MESSAGE, JSON.stringify({ id, message }));
 }
 
 

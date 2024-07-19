@@ -5,8 +5,10 @@ import { shuffleArray } from "./slotUtils";
 import { bonusGameType } from "./slotTypes";
 import { GData } from "../Global.";
 import { bonusGame } from "./extraBonusGames";
+import { Socket } from "socket.io";
+import { sendMessage } from "../../socket/userSocket";
 import { PlayerData } from "../Global.";
-export function sendInitdata(clientID: string) {
+export function sendInitdata(playerSkt : Socket,clientID: string) {
   // const matrix = generateMatrix(gameSettings.matrix.x, 18);
   gameDataInit();
   slotGameSettings.reels = generateInitialreel();
@@ -50,7 +52,7 @@ export function sendInitdata(clientID: string) {
     UIData: UiInitData,
     PlayerData: PlayerData,
   };
-  GData.playerSocket.sendMessage("InitData", dataToSend);
+ sendMessage(playerSkt,"InitData", dataToSend);
 }
 
 export class RandomResultGenerator {

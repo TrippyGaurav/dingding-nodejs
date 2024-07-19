@@ -1,4 +1,5 @@
 
+import { Socket } from "socket.io";
 import { middleware } from "../../utils/middleware";
 import { GData } from "../Global.";
 import { bonusGame } from "./extraBonusGames";
@@ -70,7 +71,8 @@ export const slotGameSettings: GameSettings = {
   },
   reels: [[]],
 
-  initiate: async (GameData: {}, clientID: string) => {
+
+  initiate: async (playerSkt: Socket, GameData: {}, clientID: string) => {
     // console.log(slotGameSettings.currentGamedata, "fullPayTable")
     // console.log(GameData)
     slotGameSettings.bonusPayTable = [];
@@ -113,7 +115,7 @@ export const slotGameSettings: GameSettings = {
     slotGameSettings.startGame = true;
 
     makePayLines();
-    sendInitdata(clientID);
+    sendInitdata(playerSkt, clientID);
   },
 };
 
@@ -132,7 +134,7 @@ function initSymbols() {
 
 export const UiInitData = {
 
-  paylines: convertSymbols(slotGameSettings.currentGamedata),
+  paylines: null,
   spclSymbolTxt: [],
   AbtLogo: {
     logoSprite: "https://iili.io/JrMCqPf.png",
