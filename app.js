@@ -17,6 +17,7 @@ const db_1 = __importDefault(require("./src/config/db"));
 const config_1 = require("./src/config/config");
 const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
     yield (0, db_1.default)();
+    console.log("CALLLE");
     server_1.default.listen(config_1.config.port, () => {
         console.log("Listening on port : ", config_1.config.port);
     });
