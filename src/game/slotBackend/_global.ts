@@ -105,7 +105,6 @@ export const slotGameSettings: GameSettings = {
       if (element.Name == "Bonus") {
         slotGameSettings.bonus.id = element.Id
       }
-
     })
 
     initSymbols();

@@ -5,7 +5,7 @@ interface DecodedToken {
   role?: string;
 }
 
-export const verifySocketToken = (socket: Socket): Promise<DecodedToken> => {
+export const verifyPlayerToken = (socket: Socket): Promise<DecodedToken> => {
   return new Promise((resolve, reject) => {
     const token = socket.handshake.auth.token;
     if (token) {

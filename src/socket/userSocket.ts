@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { MESSAGEID, MESSAGETYPE } from "../utils/utils";
-import { verifySocketToken } from "../utils/playerAuth";
+import { verifyPlayerToken } from "../utils/playerAuth";
 import { Player } from "../dashboard/users/userModel";
 export let users: Map<string, SocketUser> = new Map();
 import { gameData } from "../game/slotBackend/testData";
@@ -11,8 +11,6 @@ import { slotMessages } from "../game/slotBackend/slotMessages";
 import { slotGameSettings } from "../game/slotBackend/_global";
 import { kenoMessages } from "../game/kenoBackend/kenoMessages";
 import { Platform } from "../dashboard/games/gameModel";
-
-
 
 export class SocketUser {
   socket: Socket;
@@ -35,6 +33,7 @@ export class SocketUser {
   initGameData = async (message: any) => {
     try {
       const messageData = JSON.parse(message);
+      console.log(messageData)
       const tagName = messageData.Data.GameID;
       const platform = await Platform.aggregate([
         { $unwind: "$games" },
@@ -171,7 +170,7 @@ export class SocketUser {
 
 export async function initializeUser(socket: Socket) {
   try {
-    const decoded = await verifySocketToken(socket);
+    const decoded = await verifyPlayerToken(socket);
     socket.data.username = decoded.username;
     socket.data.designation = decoded.role;
     GData.playerSocket = new SocketUser(socket, socket);
