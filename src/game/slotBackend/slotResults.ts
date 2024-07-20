@@ -568,6 +568,7 @@ export class WinData {
   totalWinningAmount: number;
   jackpotwin: number;
   resultReelIndex: number[] = [];
+
   constructor() {
     this.freeSpins = 0;
     this.winningLines = [];

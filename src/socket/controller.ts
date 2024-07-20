@@ -1,4 +1,5 @@
 import { initializeUser } from "./userSocket";
+
 const socketController = (io) => {
   io.use((socket, next) => {
     console.log("I'm Socket middleware");

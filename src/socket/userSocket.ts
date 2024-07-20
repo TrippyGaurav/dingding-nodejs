@@ -20,6 +20,7 @@ export class SocketUser {
   username: string;
   role: string;
   gameTag: string;
+
   constructor(socket: Socket, public GameData: any) {
     this.isAlive = true;
     this.socket = socket;

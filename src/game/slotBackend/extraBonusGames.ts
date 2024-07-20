@@ -5,6 +5,8 @@ import { slotGameSettings } from "./_global";
 import { bonusGameType } from "./slotTypes";
 import { PlayerData } from "../Global.";
 import { sendMessage } from "../../socket/userSocket";
+
+
 export class bonusGame {
   type: String;
   noOfItems: number;
