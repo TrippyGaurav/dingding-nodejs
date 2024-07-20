@@ -13,6 +13,7 @@ import mongoose from "mongoose";
 import { User, Player } from "./userModel";
 import UserService from "./userService";
 import Transaction from "../transactions/transactionModel";
+import { QueryParams } from "../../game/Utils/globalTypes";
 
 export class UserController {
   private userService: UserService;
@@ -291,13 +292,21 @@ export class UserController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const skip = (page - 1) * limit;
-      const filter = req.query.filter;
-
+      const filter = req.query.filter || "";
+      const search = req.query.search as string;
+      const parsedData: QueryParams = JSON.parse(search);
+      let role, status;
+      if (parsedData) {
+        role = parsedData.role;
+        status = parsedData.status;
+      }
       const userCount = await User.countDocuments(
         filter
           ? {
               role: { $ne: "company" },
               username: { $regex: filter, $options: "i" },
+              ...(role && { role }),
+              ...(status && { status }),
             }
           : { role: { $ne: "company" } }
       );
