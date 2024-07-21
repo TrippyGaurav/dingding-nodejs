@@ -48,7 +48,6 @@ export class SocketUser {
 
       const game = platform[0].game;
       // console.log(game, "Game");
-
       if (!game || !game.payout) {
         console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
         slotGameSettings.initiate(this.socket, gameData[0], this.socket.id);
