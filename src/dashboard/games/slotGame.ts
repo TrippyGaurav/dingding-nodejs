@@ -17,7 +17,7 @@ export default class SlotGame {
         socket: Socket
     }
 
-    constructor(player: { username: string, credits: number, socket: Socket }, GameData: GameData) {
+    constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
         this.player = { ...player, haveWon: 0, currentWining: 0 };
         this.settings = {
             currentGamedata: {
@@ -27,7 +27,7 @@ export default class SlotGame {
                     {
                         Name: "",
                         Id: null,
-                        weightedRandomness: 0,
+                        weightedRandomness: 0,  
                         useWildSub: false,
                         multiplier: [],
                         defaultAmount: [],
@@ -93,8 +93,33 @@ export default class SlotGame {
         this.initialize(GameData)
     }
 
+    private initialize(GameData: GameData) {
+        this.settings.bonusPayTable = [];
+        this.settings.scatterPayTable = [];
+        this.settings.Symbols = [];
+        this.settings.Weights = [];
+        this.settings._winData = new WinData(this);
+
+        this.settings.currentGamedata = GameData[0] || GameData;
+
+        this.settings.currentGamedata.Symbols.forEach((element) => {
+            if (element.Name === "Bonus") {
+                this.settings.bonus.id = element.Id
+            }
+        })
+        this.initSymbols();
+        UiInitData.paylines = convertSymbols(this.settings.currentGamedata.Symbols);
+        this.settings.startGame = true;
+
+        this.makePayLines();
+        this.sendInitdata()
+    }
+
     private sendMessage(action: string, message: any) {
-        this.player.socket.emit(messageType.MESSAGE, JSON.stringify({ id: action, message }))
+        console.log("action : ", action);
+        console.log("message : ", message);
+
+        this.player.socket.emit(messageType.MESSAGE, JSON.stringify({ id: action, message, username: this.player.username }))
     }
 
     async updatePlayerBalance(credit: number) {
@@ -122,26 +147,7 @@ export default class SlotGame {
         }
     }
 
-    private initialize(GameData: GameData) {
-        this.settings.bonusPayTable = [];
-        this.settings.scatterPayTable = [];
-        this.settings.Symbols = [];
-        this.settings.Weights = [];
-        this.settings._winData = new WinData(this);
 
-        this.settings.currentGamedata = GameData[0] || GameData;
-        this.settings.currentGamedata.Symbols.forEach((element) => {
-            if (element.Name === "Bonus") {
-                this.settings.bonus.id = element.Id
-            }
-        })
-        this.initSymbols();
-        UiInitData.paylines = convertSymbols(this.settings.currentGamedata.Symbols);
-        this.settings.startGame = true;
-
-        this.makePayLines();
-        this.sendInitdata()
-    }
 
     private initSymbols() {
         for (let i = 0; i < this.settings.currentGamedata.Symbols.length; i++) {
@@ -218,6 +224,7 @@ export default class SlotGame {
     }
 
     private sendInitdata() {
+
         this.gameDataInit();
         this.settings.reels = this.generateInitialreel();
 
@@ -244,6 +251,9 @@ export default class SlotGame {
                 currentWining: this.player.currentWining
             }
         };
+
+        console.log("Data to send : ", dataToSend);
+
 
         this.sendMessage("InitData", dataToSend)
     }

@@ -32,6 +32,11 @@ export const getCurrentRTP = {
 };
 
 
+export enum gameCategory {
+    SLOT = "SL",
+    KENO = "KN",
+}
+
 export const UiInitData = {
     paylines: null,
     spclSymbolTxt: [],

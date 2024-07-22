@@ -14,7 +14,7 @@ export class BonusGame {
 
     constructor(nosOfItem: number, parent: SlotGame) {
         this.noOfItems = nosOfItem;
-        this.type = bonusGameType.spin;
+        this.type = bonusGameType.default;
         this.result = [];
         this.clientId = parent.player.socket.id;
         this.parent = parent;
