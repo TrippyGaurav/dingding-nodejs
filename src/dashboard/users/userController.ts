@@ -294,25 +294,65 @@ export class UserController {
       const skip = (page - 1) * limit;
       const filter = req.query.filter || "";
       const search = req.query.search as string;
-      const parsedData: QueryParams = JSON.parse(search);
-      let role, status;
-      if (parsedData) {
-        role = parsedData.role;
-        status = parsedData.status;
+      let parsedData: QueryParams = {
+        role: "",
+        status: "",
+        totalRecharged: { From: 0, To: Infinity },
+        totalRedeemed: { From: 0, To: Infinity },
+        credits: { From: 0, To: Infinity },
+        updatedAt: { From: null, To: null },
+        type: "",
+        amount: { From: 0, To: 0 },
+      };
+
+      let role, status, redeem, recharge, credits;
+
+      if (search) {
+        parsedData = JSON.parse(search);
+        if (parsedData) {
+          role = parsedData.role;
+          status = parsedData.status;
+          redeem = parsedData.totalRedeemed;
+          recharge = parsedData.totalRecharged;
+          credits = parsedData.credits;
+        }
       }
-      const userCount = await User.countDocuments(
-        filter
-          ? {
-              role: { $ne: "company" },
-              username: { $regex: filter, $options: "i" },
-              ...(role && { role }),
-              ...(status && { status }),
-            }
-          : { role: { $ne: "company" } }
-      );
-      const playerCount = await Player.countDocuments(
-        filter ? { username: { $regex: filter, $options: "i" } } : {}
-      );
+
+      let query: any = {};
+      if (filter) {
+        query.username = { $regex: filter, $options: "i" };
+      }
+      if (role) {
+        query.role = { $ne: "company", $eq: role };
+      } else if (!role) {
+        query.role = { $ne: "company" };
+      }
+      if (status) {
+        query.status = status;
+      }
+      if (parsedData.totalRecharged) {
+        query.totalRecharged = {
+          $gte: parsedData.totalRecharged.From,
+          $lte: parsedData.totalRecharged.To,
+        };
+      }
+
+      if (parsedData.totalRedeemed) {
+        query.totalRedeemed = {
+          $gte: parsedData.totalRedeemed.From,
+          $lte: parsedData.totalRedeemed.To,
+        };
+      }
+
+      if (parsedData.credits) {
+        query.credits = {
+          $gte: parsedData.credits.From,
+          $lte: parsedData.credits.To,
+        };
+      }
+
+      const userCount = await User.countDocuments(query);
+      const playerCount = await Player.countDocuments(query);
 
       const totalSubordinates = userCount + playerCount;
       const totalPages = Math.ceil(totalSubordinates / limit);
@@ -337,28 +377,16 @@ export class UserController {
         });
       }
 
-      // Determine how many users to fetch based on the skip and limit
       let users = [];
       if (skip < userCount) {
-        users = await User.find(
-          filter
-            ? {
-                role: { $ne: "company" },
-                username: { $regex: filter, $options: "i" },
-              }
-            : { role: { $ne: "company" } }
-        )
-          .skip(skip)
-          .limit(limit);
+        users = await User.find(query).skip(skip).limit(limit);
       }
 
       const remainingLimit = limit - users.length;
       let players = [];
       if (remainingLimit > 0) {
         const playerSkip = Math.max(0, skip - userCount);
-        players = await Player.find(
-          filter ? { username: { $regex: filter, $options: "i" } } : {}
-        )
+        players = await Player.find(query)
           .skip(playerSkip)
           .limit(remainingLimit);
       }
@@ -385,7 +413,7 @@ export class UserController {
     try {
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
-      const { id, filter } = req.query;
+      const { id } = req.query;
 
       const currentUser = await User.findOne({ username });
       if (!currentUser) {
@@ -407,61 +435,82 @@ export class UserController {
           }
         }
       }
+      let filterRole, status, redeem, recharge, credits;
+      const filter = req.query.filter || "";
+      const search = req.query.search as string;
+      let parsedData: QueryParams = {
+        role: "",
+        status: "",
+        totalRecharged: { From: 0, To: Infinity },
+        totalRedeemed: { From: 0, To: Infinity },
+        credits: { From: 0, To: Infinity },
+        updatedAt: { From: new Date(), To: new Date() },
+        type: "",
+        amount: { From: 0, To: 0 },
+      };
+
+      if (search) {
+        parsedData = JSON.parse(search);
+        if (parsedData) {
+          filterRole = parsedData.role;
+          status = parsedData.status;
+          redeem = parsedData.totalRedeemed;
+          recharge = parsedData.totalRecharged;
+          credits = parsedData.credits;
+        }
+      }
+
+      let query: any = {};
+      query.createdBy = userToCheck._id;
+      if (filter) {
+        query.username = { $regex: filter, $options: "i" };
+      }
+      if (filterRole) {
+        query.role = { $ne: "company", $eq: filterRole };
+      } else if (!filterRole) {
+        query.role = { $ne: "company" };
+      }
+      if (status) {
+        query.status = status;
+      }
+      if (parsedData.totalRecharged) {
+        query.totalRecharged = {
+          $gte: parsedData.totalRecharged.From,
+          $lte: parsedData.totalRecharged.To,
+        };
+      }
+
+      if (parsedData.totalRedeemed) {
+        query.totalRedeemed = {
+          $gte: parsedData.totalRedeemed.From,
+          $lte: parsedData.totalRedeemed.To,
+        };
+      }
+
+      if (parsedData.credits) {
+        query.credits = {
+          $gte: parsedData.credits.From,
+          $lte: parsedData.credits.To,
+        };
+      }
 
       let subordinates;
       let totalSubordinates;
 
       if (userToCheck.role === "store") {
-        totalSubordinates = await Player.countDocuments(
-          filter
-            ? {
-                createdBy: userToCheck._id,
-                username: { $regex: filter, $options: "i" },
-              }
-            : {
-                createdBy: userToCheck._id,
-              }
-        );
-        subordinates = await Player.find(
-          filter
-            ? {
-                createdBy: userToCheck._id,
-                username: { $regex: filter, $options: "i" },
-              }
-            : { createdBy: userToCheck._id }
-        )
+        totalSubordinates = await Player.countDocuments(query);
+        subordinates = await Player.find(query)
           .skip(skip)
           .limit(limit)
           .select(
             "name username status role totalRecharged totalRedeemed credits"
           );
       } else if (userToCheck.role === "company") {
-        const userSubordinatesCount = await User.countDocuments(
-          filter
-            ? {
-                createdBy: userToCheck._id,
-                username: { $regex: filter, $options: "i" },
-              }
-            : { createdBy: userToCheck._id }
-        );
-        const playerSubordinatesCount = await Player.countDocuments(
-          filter
-            ? {
-                createdBy: userToCheck._id,
-                username: { $regex: filter, $options: "i" },
-              }
-            : { createdBy: userToCheck._id }
-        );
+        const userSubordinatesCount = await User.countDocuments(query);
+        const playerSubordinatesCount = await Player.countDocuments(query);
 
         totalSubordinates = userSubordinatesCount + playerSubordinatesCount;
-        const userSubordinates = await User.find(
-          filter
-            ? {
-                username: { $regex: filter, $options: "i" },
-                createdBy: userToCheck._id,
-              }
-            : { createdBy: userToCheck._id }
-        )
+        const userSubordinates = await User.find(query)
           .skip(skip)
           .limit(limit)
           .select(
@@ -472,14 +521,7 @@ export class UserController {
 
         const playerSubordinates =
           remainingLimit > 0
-            ? await Player.find(
-                filter
-                  ? {
-                      createdBy: userToCheck._id,
-                      username: { $regex: filter, $options: "i" },
-                    }
-                  : { createdBy: userToCheck._id }
-              )
+            ? await Player.find(query)
                 .skip(Math.max(skip - userSubordinatesCount, 0))
                 .limit(remainingLimit)
                 .select(
@@ -489,22 +531,8 @@ export class UserController {
 
         subordinates = [...userSubordinates, ...playerSubordinates];
       } else {
-        totalSubordinates = await User.countDocuments(
-          filter
-            ? {
-                createdBy: userToCheck._id,
-                username: { $regex: filter, $options: "i" },
-              }
-            : { createdBy: userToCheck._id }
-        );
-        subordinates = await User.find(
-          filter
-            ? {
-                createdBy: userToCheck._id,
-                username: { $regex: filter, $options: "i" },
-              }
-            : { createdBy: userToCheck._id }
-        )
+        totalSubordinates = await User.countDocuments(query);
+        subordinates = await User.find(query)
           .skip(skip)
           .select(
             "name username status role totalRecharged totalRedeemed credits"

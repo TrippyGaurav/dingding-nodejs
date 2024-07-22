@@ -14,7 +14,22 @@ export interface UserData {
   currentWining: number;
 }
 
+interface amount {
+  From: number;
+  To: number;
+}
+interface date {
+  From: Date;
+  To: Date;
+}
+
 export interface QueryParams {
   role: string;
   status: string;
+  totalRecharged: amount;
+  totalRedeemed: amount;
+  credits: amount;
+  updatedAt: date;
+  type: string;
+  amount: amount;
 }
