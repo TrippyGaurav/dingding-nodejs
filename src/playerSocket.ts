@@ -7,6 +7,7 @@ import { Platform } from "./dashboard/games/gameModel";
 import { Payouts } from "./dashboard/games/gameModel";
 import { slotMessages } from "./game/slotBackend/slotMessages";
 import { GAMETYPE } from "./game/Utils/globalTypes";
+import SlotGame from "./dashboard/games/slotGame";
 
 export let users: Map<string, SocketUser> = new Map();
 const RECONNECT_TIMEOUT = 60000;
@@ -38,11 +39,8 @@ export class SocketUser {
             this.username = platformData.username;
             this.role = platformData.role;
             this.credits = platformData.credits;
-
-            socket.on(MESSAGEID.AUTH, this.initGameData);
+            this.socket.on(MESSAGEID.AUTH, this.initGameData);
             this.socket.on("message", this.messageHandler());
-          
-
             socket.emit("socketState", this.socketReady);
             console.log(
                 `User ${this.username} initialized with socket ID: ${this.socketID}`
@@ -55,21 +53,19 @@ export class SocketUser {
     initGameData = async (message: any) => {
         try {
             const messageData = JSON.parse(message);
+            console.log(messageData)
             const tagName = messageData.Data.GameID;
             const platform = await Platform.aggregate([
                 { $unwind: "$games" },
                 { $match: { "games.tagName": tagName } },
                 { $project: { _id: 0, game: "$games" } },
             ]);
-
+            console.log(this.socket.id, 'playerSocket')
             const game = platform[0].game;
             const payoutData = await Payouts.find({ _id: { $in: game.payout } });
             this.gameSettings = { ...payoutData[0].data };
-            slotGameSettings.initiate(this.socket, this.gameSettings, this.socketID)
-            // console.log(
-            //     `Game settings initialized for user ${this.username}:`,
-            //     this.gameSettings
-            // );
+            new SlotGame({ username: this.username, credits: this.credits, socket: this.socket }, this.gameSettings)
+
         } catch (error) {
             console.error(
                 `Error initializing game data for user ${this.username}:`,
@@ -97,7 +93,6 @@ export class SocketUser {
 
     handleAuth = async () => {
         try {
-
             if (this.username) {
                 sendMessage(this.socket, MESSAGEID.AUTH, this.credits);
             } else {
@@ -208,7 +203,7 @@ async function handleDisconnect(socket: Socket) {
 function getGameSettings() {
     // Retrieve game settings from a database or configuration file
     return {
-        gameSetting: slotGameSettings,
+        gameSetting: {},
     };
 }
 export function sendMessage(skt: Socket, id: string, message: any) {

@@ -1,5 +1,5 @@
 import { initializeUser } from "./userSocket";
-
+import enterPlayer from "../playerSocket";
 
 
 const socketController = (io) => {
@@ -10,7 +10,7 @@ const socketController = (io) => {
 
   io.on("connection", (socket) => {
     io.emit("newConnectionAlert", "A new user has connected!");
-    initializeUser(socket);
+    enterPlayer(socket);
   });
 };
 

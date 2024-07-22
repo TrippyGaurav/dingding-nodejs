@@ -1,3 +1,4 @@
+import ComboCounter from "./ComboCounter";
 import { specialIcons } from "./gameUtils";
 import SlotGame from "./slotGame";
 
@@ -23,9 +24,44 @@ export default class PayLines {
 
     getWildLines() {
         let res: PayLines[] = [];
-        if (!this.currentGame.settings.useWild) return res; // return empty list
+        if (!this.currentGame.settings.useWild) return res;
 
-        let wPoss = this
+        let wPoss = this.getPositionsForWild();
+        const maxWildsCount = this.useWildInFirstPosition
+            ? wPoss.length - 1
+            : wPoss.length;
+
+        let minWildsCount = 1;
+        let maxCounterValues: any[] = [];
+
+        wPoss.forEach((p) => {
+            maxCounterValues.push(1);
+        });
+
+        let cC = new ComboCounter(maxCounterValues);
+        //HERE
+        while (cC.nextCombo()) {
+            let combo = cC.combo;
+            let comboSum = cC.sum(); // count of wilds in combo
+
+            if (comboSum >= minWildsCount && comboSum <= maxWildsCount) {
+                let p = new PayLines(
+                    Array.from(this.line),
+                    this.pay,
+                    this.freeSpins,
+                    this.wild,
+                    this.currentGame
+                );
+                for (let i = 0; i < wPoss.length; i++) {
+                    let pos = wPoss[i];
+                    if (combo[i] == 1) {
+                        p.line[pos] = this.wild;
+                    }
+                }
+                if (!this.isEqual(p) && !this.containEqualLine(res, p)) res.push(p);
+            }
+        }
+        return res;
     }
 
     getPositionsForWild() {

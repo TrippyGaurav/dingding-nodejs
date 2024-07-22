@@ -484,13 +484,17 @@ export class PayLines {
     const maxWildsCount = this.useWildInFirstPosition
       ? wPoss.length - 1
       : wPoss.length;
+
     let minWildsCount = 1;
     let maxCounterValues: any[] = [];
+
     wPoss.forEach((p) => {
       maxCounterValues.push(1);
     });
 
+    // HERE: 
     let cC = new ComboCounter(maxCounterValues);
+    
     while (cC.nextCombo()) {
       let combo = cC.combo;
       let comboSum = cC.sum(); // count of wilds in combo

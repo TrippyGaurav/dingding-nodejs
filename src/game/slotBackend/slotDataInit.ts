@@ -7,13 +7,8 @@ import { GData } from "../Global";
 import { bonusGame } from "./extraBonusGames";
 import { Socket } from "socket.io";
 import { sendMessage } from "../../socket/userSocket";
-<<<<<<< HEAD
+import { Player } from "../../dashboard/users/userModel";
 import { PlayerData } from "../Global";
-=======
-import { PlayerData } from "../Global.";
-
-
->>>>>>> dcbb1ac16f9a511730fc29b0f06b7c065498b388
 export function sendInitdata(playerSkt: Socket, clientID: string) {
   // const matrix = generateMatrix(gameSettings.matrix.x, 18);
   gameDataInit();

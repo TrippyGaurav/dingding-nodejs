@@ -5,6 +5,7 @@ import { BonusGame } from "./BonusGame";
 import { WinData } from "./WinData";
 import { Player } from "../users/userModel";
 import PayLines from "./PayLines";
+import { gameData } from "../../game/slotBackend/testData";
 
 export default class SlotGame {
     public settings: GameSettings;
@@ -27,7 +28,7 @@ export default class SlotGame {
                     {
                         Name: "",
                         Id: null,
-                        weightedRandomness: 0,  
+                        weightedRandomness: 0,
                         useWildSub: false,
                         multiplier: [],
                         defaultAmount: [],
@@ -94,6 +95,7 @@ export default class SlotGame {
     }
 
     private initialize(GameData: GameData) {
+
         this.settings.bonusPayTable = [];
         this.settings.scatterPayTable = [];
         this.settings.Symbols = [];
@@ -116,8 +118,8 @@ export default class SlotGame {
     }
 
     private sendMessage(action: string, message: any) {
-        console.log("action : ", action);
-        console.log("message : ", message);
+        // console.log("action : ", action);
+        // console.log("message : ", message);
 
         this.player.socket.emit(messageType.MESSAGE, JSON.stringify({ id: action, message, username: this.player.username }))
     }
@@ -127,15 +129,12 @@ export default class SlotGame {
             this.player.credits += credit;
             this.player.haveWon += credit;
             this.player.currentWining = credit;
-
             console.log("FINAL BALANCE : ", this.player.credits);
-
             const result = await Player.findOneAndUpdate(
                 { username: this.player.username },
                 { credits: this.player.credits },
                 { new: true }
             )
-
             if (!result) {
                 console.log(`Player with username ${this.player.username} not found in database.`);
             }
@@ -252,7 +251,7 @@ export default class SlotGame {
             }
         };
 
-        console.log("Data to send : ", dataToSend);
+        // console.log("Data to send : ", dataToSend);
 
 
         this.sendMessage("InitData", dataToSend)
@@ -283,26 +282,29 @@ export default class SlotGame {
     }
 
     private makeFullPayTable() {
-        let payTable: PayLines[] = [];
-        let payTableFull = [];
-
-        this.settings.payLine.forEach((pLine) => {
-            payTable.push(
-                new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolName, this)
-            )
-        });
-
-        for (let j = 0; j < payTable.length; j++) {
-            payTableFull.push(payTable[j]);
-            if (this.settings.useWild) {
-                let wildLines = payTable[j].getWildLines();
-                wildLines.forEach((wl) => {
-                    payTableFull.push(wl)
-                })
+        try {
+            let payTable: PayLines[] = [];
+            let payTableFull = [];
+            this.settings.payLine.forEach((pLine) => {
+                payTable.push(
+                    new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolName, this)
+                )
+            });
+            for (let j = 0; j < payTable.length; j++) {
+                payTableFull.push(payTable[j]);
+                if (this.settings.useWild) {
+                    let wildLines = payTable[j].getWildLines();
+                    wildLines.forEach((wl) => {
+                        payTableFull.push(wl)
+                    })
+                }
             }
+            this.settings.fullPayTable = payTableFull;
+        } catch (error) {
+            console.log("MAKE FULL PAY TABLE : ", error);
+
         }
 
-        this.settings.fullPayTable = payTableFull;
     }
 }
 

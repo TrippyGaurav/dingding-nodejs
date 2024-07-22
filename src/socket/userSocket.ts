@@ -34,7 +34,6 @@ export class SocketUser {
   initGameData = async (message: any) => {
     try {
       const messageData = JSON.parse(message);
-      console.log(messageData)
       const tagName = messageData.Data.GameID;
       const platform = await Platform.aggregate([
         { $unwind: "$games" },
