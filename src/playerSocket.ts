@@ -91,19 +91,7 @@ export class SocketUser {
     };
 
 
-    handleAuth = async () => {
-        try {
-            if (this.username) {
-                sendMessage(this.socket, MESSAGEID.AUTH, this.credits);
-            } else {
-                this.sendError("USER_NOT_FOUND", "User not found in the database");
-            }
-        } catch (error) {
-            console.error("Error handling AUTH message:", error);
-            this.sendError("AUTH_ERROR", "An error occurred during authentication");
-        }
 
-    }
     setReconnectTimeout(callback: () => void) {
         this.reconnectTimeout = setTimeout(callback, RECONNECT_TIMEOUT);
         console.log(`Reconnect timeout set for user ${this.username}`);
@@ -206,6 +194,5 @@ function getGameSettings() {
         gameSetting: {},
     };
 }
-export function sendMessage(skt: Socket, id: string, message: any) {
-    skt.emit(MESSAGETYPE.MESSAGE, JSON.stringify({ id, message }));
-}
+
+

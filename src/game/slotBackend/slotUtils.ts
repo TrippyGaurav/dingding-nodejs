@@ -104,6 +104,7 @@ export function spinResult(playerSkt: Socket, clientID: string) {
   slotGameSettings.bonus.start = false;
 
   new RandomResultGenerator();
+  // HERE: 
   const result = new CheckResult(playerSkt);
   result.makeResultJson(playerSkt, ResultType.normal);
 }
@@ -130,6 +131,7 @@ export function startFreeSpin(playerSkt: Socket) {
 
   console.log("____----Stopped FREE SPIN ----_____");
 }
+
 export function checkforMoolah(playerSkt: Socket) {
   console.log("_______-------CALLED FOR CHECK FOR MOOLAHHHH-------_______");
 

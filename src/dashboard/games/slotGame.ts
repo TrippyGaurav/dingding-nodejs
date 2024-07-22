@@ -1,11 +1,12 @@
 import { Socket } from "socket.io";
 import { GameData, GameSettings, WildSymbol } from "./gameType";
-import { messageType, bonusGameType, convertSymbols, shuffleArray, specialIcons, UiInitData } from "./gameUtils";
+import { messageType, bonusGameType, convertSymbols, shuffleArray, specialIcons, UiInitData, betMultiplier, ResultType } from "./gameUtils";
 import { BonusGame } from "./BonusGame";
 import { WinData } from "./WinData";
 import { Player } from "../users/userModel";
 import PayLines from "./PayLines";
-import { gameData } from "../../game/slotBackend/testData";
+import { RandomResultGenerator } from "./RandomResultGenerator";
+import { CheckResult } from "./CheckResult";
 
 export default class SlotGame {
     public settings: GameSettings;
@@ -16,6 +17,10 @@ export default class SlotGame {
         haveWon: number,
         currentWining: number,
         socket: Socket
+    }
+    public currentRTP: {
+        won: number
+        bets: number
     }
 
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
@@ -91,8 +96,16 @@ export default class SlotGame {
             },
             reels: [[]],
         };
-        this.initialize(GameData)
+        this.currentRTP = {
+            won: 0,
+            bets: 0
+        }
+
+        this.initialize(GameData);
+        this.messageHandler();
+
     }
+
 
     private initialize(GameData: GameData) {
 
@@ -117,11 +130,60 @@ export default class SlotGame {
         this.sendInitdata()
     }
 
-    private sendMessage(action: string, message: any) {
-        // console.log("action : ", action);
-        // console.log("message : ", message);
-
+    public sendMessage(action: string, message: any) {
         this.player.socket.emit(messageType.MESSAGE, JSON.stringify({ id: action, message, username: this.player.username }))
+    }
+
+    private messageHandler() {
+        this.player.socket.on("message", (message) => {
+            const res = JSON.parse(message)
+
+            if (res.id === "SPIN" && this.settings.startGame) {
+                this.settings.currentLines = res.data.currentLines;
+                this.settings.BetPerLines = betMultiplier[res.data.currentBet];
+                this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
+                this.spinResult()
+            }
+
+            if (res.id === "GENRTP") {
+                this.settings.currentLines = res.data.currentLines;
+                this.settings.BetPerLines = betMultiplier[res.data.currentBet];
+                this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
+                this.getRTP(res.data.spins)
+            }
+
+
+        })
+    }
+
+    public async updateDatabase() {
+        try {
+            const finalBalance = this.player.credits
+            const result = await Player.findOneAndUpdate(
+                { username: this.player.username },
+                { credits: finalBalance.toFixed(2) },
+                { new: true }
+            )
+
+            if (!result) {
+                console.log(`Player with username ${this.player.username} not found in database.`);
+            }
+            else {
+                console.log(`Updated credits for player ${this.player.username} to ${this.player.credits}.`);
+            }
+        } catch (error) {
+            console.log("ERROR UPDATE IN DB : ", error);
+        }
+    }
+
+    private checkPlayerBalance() {
+        if (this.player.credits < this.settings.currentBet) {
+            this.sendMessage("low-balance", true);
+            console.log("PLAYER BALANCE : ", this.player.credits);
+            console.log("CURRENT BET : ", this.settings.currentBet);
+            console.error("LOW BALANCE");
+            return;
+        }
     }
 
     async updatePlayerBalance(credit: number) {
@@ -130,23 +192,17 @@ export default class SlotGame {
             this.player.haveWon += credit;
             this.player.currentWining = credit;
             console.log("FINAL BALANCE : ", this.player.credits);
-            const result = await Player.findOneAndUpdate(
-                { username: this.player.username },
-                { credits: this.player.credits },
-                { new: true }
-            )
-            if (!result) {
-                console.log(`Player with username ${this.player.username} not found in database.`);
-            }
-            else {
-                console.log(`Updated credits for player ${this.player.username} to ${this.player.credits}.`);
-            }
+            await this.updateDatabase();
         } catch (error) {
             console.error('Error updating credits in database:', error);
         }
     }
 
-
+    async deductPlayerBalance(credit: number) {
+        this.checkPlayerBalance();
+        this.player.credits -= credit;
+        await this.updateDatabase();
+    }
 
     private initSymbols() {
         for (let i = 0; i < this.settings.currentGamedata.Symbols.length; i++) {
@@ -305,6 +361,47 @@ export default class SlotGame {
 
         }
 
+    }
+
+    private async spinResult() {
+        if (this.settings.currentGamedata.bonus.isEnabled && this.settings.currentGamedata.bonus.type == bonusGameType.tap) {
+            this.settings.bonus.game = new BonusGame(this.settings.currentGamedata.bonus.noOfItem, this)
+        }
+
+        await this.deductPlayerBalance(this.settings.currentBet);
+
+        /*
+        MIDDLEWARE GOES HERE
+        */
+
+        this.settings.tempReels = [[]];
+        this.settings.bonus.start = false;
+
+        new RandomResultGenerator(this);
+        const result = new CheckResult(this)
+        result.makeResultJson(ResultType.normal)
+    }
+
+    private getRTP(spins: number) {
+        let spend: number = 0;
+        let won: number = 0;
+        this.currentRTP.won = 0;
+        this.currentRTP.bets = 0;
+        for (let i = 0; i < spins; i++) {
+            this.spinResult();
+            spend += this.settings.currentBet;
+            won = this.settings._winData.totalWinningAmount
+        }
+        let rtp = 0;
+        console.log(`Bet:${this.settings.currentBet}\n,player total bet ${spend} and\n won ${won}`)
+
+        if (spend > 0) {
+            rtp = (won / spend)
+        }
+        console.log('BONUS :', this.settings.noOfBonus);
+        console.log('TOTAL BONUS : ', this.settings.totalBonuWinAmount);
+        console.log('GENERATED RTP : ', rtp)
+        return
     }
 }
 

@@ -37,6 +37,26 @@ export enum gameCategory {
     KENO = "KN",
 }
 
+export interface BonusPayEntry {
+    symbolCount: number;
+    symbolID: number;
+    pay: number;
+    highestPayMultiplier: number;
+}
+export interface ScatterPayEntry {
+    symbolCount: number;
+    symbolID: number;
+    pay: number;
+    freeSpins: number;
+}
+
+export enum ResultType {
+    moolah = "moolah",
+    normal = "normal",
+}
+export const betMultiplier = [0.1, 0.25, 0.5, 0.75, 1];
+
+
 export const UiInitData = {
     paylines: null,
     spclSymbolTxt: [],
