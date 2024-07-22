@@ -7,6 +7,8 @@ import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType
 import { GData, PlayerData } from "../Global";
 import { Socket } from "socket.io";
 import { sendMessage } from "../../socket/userSocket";
+
+
 export class CheckResult {
   scatter: string;
   useScatter: boolean;
@@ -568,6 +570,7 @@ export class WinData {
   totalWinningAmount: number;
   jackpotwin: number;
   resultReelIndex: number[] = [];
+
   constructor() {
     this.freeSpins = 0;
     this.winningLines = [];
