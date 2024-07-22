@@ -53,9 +53,7 @@ export class SocketUser {
         slotGameSettings.initiate(this.socket, gameData[0], this.socket.id);
         return;
       }
-
       const payoutData = await Payouts.find({ _id: { $in: game.payout } });
-
       const gameType = tagName.split('-');
       this.gameTag = gameType[0];
       if (gameType == GAMETYPE.SLOT)
