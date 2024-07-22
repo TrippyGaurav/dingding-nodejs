@@ -2,7 +2,6 @@ import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import socketController from "./socket/controller";
 import globalErrorHandler from "./dashboard/middleware/globalHandler";
 import companyRoutes from "./dashboard/company/companyRoutes";
 import userRoutes from "./dashboard/users/userRoutes";
@@ -12,6 +11,7 @@ import session from "express-session"
 import { config } from "./config/config";
 import svgCaptcha from "svg-captcha";
 import createHttpError from "http-errors";
+import { socketController } from "./socket";
 
 declare module "express-session" {
   interface Session {
