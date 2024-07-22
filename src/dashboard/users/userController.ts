@@ -39,7 +39,9 @@ export class UserController {
     this.updateClient = this.updateClient.bind(this)
     this.getReport = this.getReport.bind(this);
     this.getASubordinateReport = this.getASubordinateReport.bind(this)
-    // this.getUserSubordinates = this.getUserSubordinates.bind(this);
+    this.getCurrentUserSubordinates = this.getCurrentUserSubordinates.bind(this)
+    this.generatePassword = this.generatePassword.bind(this);
+
   }
 
   public static getSubordinateRoles(role: string): string[] {
@@ -77,11 +79,39 @@ export class UserController {
     return { start, end };
   }
 
+  async generatePassword(req: Request, res: Response, next: NextFunction) {
+    const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+    const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const digitChars = "0123456789";
+    const specialChars = '!@#$%^&()_/,.?":{}|<>';
+
+    let password = "";
+
+    password += this.userService.getRandomChar(lowercaseChars);
+    password += this.userService.getRandomChar(uppercaseChars);
+    password += this.userService.getRandomChar(digitChars);
+    password += this.userService.getRandomChar(specialChars);
+
+    const remainingLength = 8 - password.length;
+    for (let i = 0; i < remainingLength; i++) {
+      const randomSet = Math.floor(Math.random() * 3);
+      if (randomSet === 0) {
+        password += this.userService.getRandomChar(lowercaseChars);
+      } else if (randomSet === 1) {
+        password += this.userService.getRandomChar(uppercaseChars);
+      } else {
+        password += this.userService.getRandomChar(digitChars);
+      }
+    }
+
+    password = this.userService.shuffleString(password);
+    res.status(200).json({ password });
+  }
+
 
   async loginUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;
-      console.log("Login Request : ", username, password);
 
 
       if (!username || !password) {
@@ -98,9 +128,6 @@ export class UserController {
           throw createHttpError(401, "User not found")
         }
       }
-
-
-      console.log("Logged : ", user);
 
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -160,7 +187,7 @@ export class UserController {
       }
 
 
-      let existingUser = user.role === "player" ? await this.userService.findPlayerByUsername(user.username, session) : await this.userService.findUserByUsername(user.username, session);
+      let existingUser = await this.userService.findPlayerByUsername(user.username, session) || await this.userService.findUserByUsername(user.username, session);
       if (existingUser) {
         throw createHttpError(409, "User already exists")
       }
@@ -236,24 +263,167 @@ export class UserController {
       if (loggedUser.role !== "company") {
         throw createHttpError(403, "Access denied. Only users with the role 'company' can access this resource.");
       }
-      const users = await User.find({ role: { $ne: "company" } });
-      const players = await Player.find({});
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      const userCount = await User.countDocuments({ role: { $ne: "company" } });
+      const playerCount = await Player.countDocuments();
+      const totalSubordinates = userCount + playerCount;
+      const totalPages = Math.ceil(totalSubordinates / limit);
+
+      if (totalSubordinates === 0) {
+        return res.status(200).json({
+          message: "No subordinates found",
+          totalSubordinates: 0,
+          totalPages: 0,
+          currentPage: 0,
+          subordinates: []
+        });
+      }
+
+      if (page > totalPages) {
+        return res.status(400).json({
+          message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+          totalSubordinates,
+          totalPages,
+          currentPage: page,
+          subordinates: []
+        });
+      }
+
+      // Determine how many users to fetch based on the skip and limit
+      let users = [];
+      if (skip < userCount) {
+        users = await User.find({ role: { $ne: "company" } }).skip(skip).limit(limit);
+      }
+
+      const remainingLimit = limit - users.length;
+      let players = [];
+      if (remainingLimit > 0) {
+        const playerSkip = Math.max(0, skip - userCount);
+        players = await Player.find({}).skip(playerSkip).limit(remainingLimit);
+      }
 
       const allSubordinates = [...users, ...players];
+      console.log(allSubordinates.length);
 
 
-
-      // let userWithSubordinates;
-      // if(loggedUser.role === "store"){
-      //   userWithSubordinates = await User.findById(loggedUser._id).populate({path:"subordinates", model:Player});
-      // }
-      // else{
-      //   userWithSubordinates = await User.findById(loggedUser._id).populate({path:"subordinates", model:User});
-      // }
-
-      res.status(200).json(allSubordinates);
+      res.status(200).json({
+        totalSubordinates,
+        totalPages,
+        currentPage: page,
+        subordinates: allSubordinates
+      });
     } catch (error) {
       next(error);
+    }
+  }
+
+  async getCurrentUserSubordinates(req: Request, res: Response, next: NextFunction) {
+    try {
+      const _req = req as AuthRequest;
+      const { username, role } = _req.user;
+      const { id } = req.query;
+
+      console.log("Subor : ", id);
+
+
+
+      const currentUser = await User.findOne({ username });
+      if (!currentUser) {
+        throw createHttpError(401, "User not found")
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      let userToCheck = currentUser;
+
+      if (id) {
+        userToCheck = await User.findById(id);
+        if (!userToCheck) {
+          userToCheck = await Player.findById(id);
+          if (!userToCheck) {
+            return res.status(404).json({ message: "User not found" });
+          }
+        }
+      }
+
+
+      let subordinates;
+      let totalSubordinates;
+
+
+
+      if (userToCheck.role === "store") {
+        totalSubordinates = await Player.countDocuments({ createdBy: userToCheck._id });
+        subordinates = await Player.find({ createdBy: userToCheck._id })
+          .skip(skip)
+          .limit(limit)
+          .select('name username status role totalRecharged totalRedeemed credits');
+      }
+      else if (userToCheck.role === "company") {
+        const userSubordinatesCount = await User.countDocuments({ createdBy: userToCheck._id });
+        const playerSubordinatesCount = await Player.countDocuments({ createdBy: userToCheck._id });
+
+        totalSubordinates = userSubordinatesCount + playerSubordinatesCount;
+
+        const userSubordinates = await User.find({ createdBy: userToCheck._id })
+          .skip(skip)
+          .limit(limit)
+          .select('name username status role totalRecharged totalRedeemed credits');
+
+        const remainingLimit = limit - userSubordinates.length;
+
+        const playerSubordinates = remainingLimit > 0 ? await Player.find({ createdBy: userToCheck._id })
+          .skip(Math.max(skip - userSubordinatesCount, 0))
+          .limit(remainingLimit)
+          .select('name username status role totalRecharged totalRedeemed credits') : [];
+
+        subordinates = [...userSubordinates, ...playerSubordinates];
+
+      }
+      else {
+        totalSubordinates = await User.countDocuments({ createdBy: userToCheck._id });
+        subordinates = await User.find({ createdBy: userToCheck._id })
+          .skip(skip)
+          .select('name username status role totalRecharged totalRedeemed credits');
+      }
+
+      const totalPages = Math.ceil(totalSubordinates / limit);
+
+      if (totalSubordinates === 0) {
+        return res.status(200).json({
+          message: "No subordinates found",
+          totalSubordinates: 0,
+          totalPages: 0,
+          currentPage: 0,
+          subordinates: []
+        });
+      }
+
+      if (page > totalPages) {
+        return res.status(400).json({
+          message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+          totalSubordinates,
+          totalPages,
+          currentPage: page,
+          subordinates: []
+        });
+      }
+
+      res.status(200).json({
+        totalSubordinates,
+        totalPages,
+        currentPage: page,
+        subordinates
+      });
+
+    } catch (error) {
+      next(error)
     }
   }
 
@@ -319,8 +489,6 @@ export class UserController {
       const { clientId } = req.params;
       const { status, credits, password, existingPassword } = req.body;
 
-      console.log("Upadating for : ", clientId);
-
 
       if (!clientId) {
         throw createHttpError(400, "Client Id is required");
@@ -379,7 +547,7 @@ export class UserController {
       const { subordinateId } = req.params;
       const { username: loggedUserName, role: loggedUserRole } = _req.user;
 
-      console.log(loggedUserName, loggedUserRole);
+
 
 
       const subordinateObjectId = new mongoose.Types.ObjectId(subordinateId);
@@ -409,13 +577,10 @@ export class UserController {
             const userSubordinates = await User.find({ createdBy: subordinateId })
 
             const playerSubordinates = await Player.find({ createdBy: subordinateId })
-            console.log("userSubordinates", userSubordinates);
-            console.log("playerSubordinates", playerSubordinates);
 
 
             client = client.toObject(); // Convert Mongoose Document to plain JavaScript object
             client.subordinates = [...userSubordinates, ...playerSubordinates];
-            console.log("client", client.subordinates);
 
             break;
 
@@ -436,6 +601,9 @@ export class UserController {
           throw createHttpError(404, "Client not found");
         }
 
+        console.log(client);
+
+
         res.status(200).json(client);
       } else {
         throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
@@ -449,17 +617,10 @@ export class UserController {
     try {
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
-      const { type } = req.query;
+      const { type, userId } = req.query;
       const { start, end } = UserController.getStartAndEndOfPeriod(type as string);
       const allowedAdmins = ["company", "master", "distributor", "subdistributor", "store"];
 
-      const roleHierarchy = {
-        company: ["master", "distributor", "subdistributor", "store", "player"],
-        master: ["distributor"],
-        distributor: ["subdistributor"],
-        subdistributor: ["store"],
-        store: ["player"]
-      };
 
       const currentUser = await User.findOne({ username });
 
@@ -471,8 +632,24 @@ export class UserController {
         throw createHttpError(400, "Access denied : Invalid User ")
       }
 
+      let targetUser = currentUser;
 
-      if (currentUser.role === "company") {
+      if (userId) {
+        let subordinate = await User.findById(userId);
+
+        if (!subordinate) {
+          subordinate = await Player.findById(userId);
+
+          if (!subordinate) {
+            throw createHttpError(404, "Subordinate user not found");
+          }
+        }
+
+        targetUser = subordinate;
+      }
+
+
+      if (targetUser.role === "company") {
 
         // Total Recharge Amount
         const totalRechargedAmt = await Transaction.aggregate([
@@ -532,7 +709,7 @@ export class UserController {
             $match: {
               $and: [
                 {
-                  role: { $ne: currentUser.role }
+                  role: { $ne: targetUser.role }
                 },
                 {
                   createdAt: { $gte: start, $lte: end }
@@ -561,13 +738,13 @@ export class UserController {
         // Transactions
         const transactions = await Transaction.find({
           createdAt: { $gte: start, $lte: end },
-        }).sort({ createdAt: -1 }).limit(10);
+        }).sort({ createdAt: -1 }).limit(9);
 
 
 
         return res.status(200).json({
-          username: currentUser.username,
-          role: currentUser.role,
+          username: targetUser.username,
+          role: targetUser.role,
           recharge: totalRechargedAmt[0]?.totalAmount || 0,
           redeem: totalRedeemedAmt[0]?.totalAmount || 0,
           users: counts,
@@ -590,7 +767,7 @@ export class UserController {
                   type: "recharge"
                 },
                 {
-                  creditor: currentUser.username
+                  creditor: targetUser.username
                 }
               ]
             }
@@ -620,7 +797,7 @@ export class UserController {
                   type: "redeem"
                 },
                 {
-                  debtor: currentUser.username
+                  debtor: targetUser.username
                 }
               ]
             }
@@ -636,17 +813,17 @@ export class UserController {
         ])
 
 
-        const userTransactions = await Transaction.find({ $or: [{ debtor: currentUser.username }, { creditor: currentUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(10);
+        const userTransactions = await Transaction.find({ $or: [{ debtor: targetUser.username }, { creditor: targetUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(9);
 
 
         let users;
-        if (currentUser.role === "store") {
+        if (targetUser.role === "store" || targetUser.role === "player") {
           users = await Player.aggregate([
             {
               $match: {
                 $and: [
                   {
-                    createdBy: currentUser._id
+                    createdBy: targetUser._id
                   },
                   {
                     createdAt: { $gte: start, $lte: end }
@@ -656,7 +833,7 @@ export class UserController {
             },
             {
               $group: {
-                _id: "$role",
+                _id: "$status",
                 count: { $sum: 1 }
               }
             }
@@ -668,7 +845,7 @@ export class UserController {
               $match: {
                 $and: [
                   {
-                    createdBy: currentUser._id
+                    createdBy: targetUser._id
                   },
                   {
                     createdAt: { $gte: start, $lte: end }
@@ -678,21 +855,28 @@ export class UserController {
             },
             {
               $group: {
-                _id: "$role",
+                _id: "$status",
                 count: { $sum: 1 }
               }
             }
           ])
         }
 
-        const counts = users.reduce((acc: Record<string, number>, curr) => {
-          acc[curr._id] = curr.count;
+
+
+        const counts = users.reduce((acc: { active: number, inactive: number }, curr) => {
+          if (curr._id === "active") {
+            acc.active += curr.count;
+          } else {
+            acc.inactive += curr.count;
+          }
           return acc;
-        }, {});
+        }, { active: 0, inactive: 0 });
+
 
         return res.status(200).json({
-          username: currentUser.username,
-          role: currentUser.role,
+          username: targetUser.username,
+          role: targetUser.role,
           recharge: userRechargeAmt[0]?.totalAmount || 0,
           redeem: userRedeemAmt[0]?.totalAmount || 0,
           users: counts,
@@ -774,9 +958,6 @@ export class UserController {
         players: playersCreatedToday
       };
 
-      console.log(report);
-
-
       res.status(200).json(report)
     } catch (error) {
       console.log(error);
@@ -785,39 +966,5 @@ export class UserController {
     }
   }
 
-  // async getUserSubordinates(req: Request, res: Response, next: NextFunction) {
-  //   try {
-  //     const _req = req as AuthRequest;
-  //     const {username:loggedInUserName, role:loggedInUserRole} = _req.user;
-  //     const { subordinateId } = req.params;
-  //     const userObjectId = new mongoose.Types.ObjectId(subordinateId);
-
-  //     const loggedUser = await this.userService.findUserByUsername(loggedInUserName);
-  //     const accessUser = await this.userService.findUserById(userObjectId);
-
-  //     if(!accessUser){
-  //       throw createHttpError(404, "User not found")
-  //     }
-
-
-  //     if(loggedUser._id.toString() === accessUser._id.toString() || loggedInUserRole === "company" || loggedUser.subordinates.includes(userObjectId)){
-  //       const subordinateModels = UserController.rolesHierarchy[accessUser.role];
-  //       const subordinates = await Promise.all(
-  //         subordinateModels.map(async (model) => {
-  //           if (model === "Player") {
-  //             return await this.userService.findPlayersByIds(accessUser.subordinates);
-  //           } else {
-  //             return await this.userService.findUsersByIds(accessUser.subordinates);
-  //           }
-  //         })
-  //       );
-  //       return res.status(200).json(subordinates.flat());
-  //     }
-
-  //     throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // }
 }
 

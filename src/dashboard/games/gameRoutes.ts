@@ -1,13 +1,6 @@
 import express from "express";
-import { extractRoleFromCookie } from "../middleware/middlware";
-import {
-  GameController,
-  addFavouriteGame,
-  deleteGame,
-  getGameById,
-  updateGame,
-  uploadThubnail,
-} from "./gameController";
+import { extractRoleFromCookie, validateApiKey } from "../middleware/middlware";
+import { GameController } from "./gameController";
 import multer from "multer";
 import { checkUser } from "../middleware/checkUser";
 
@@ -16,7 +9,7 @@ const gameRoutes = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 // GET : Get all Games
-gameRoutes.get("/", checkUser, gameController.getGames);
+gameRoutes.get("/", validateApiKey, checkUser, gameController.getGames);
 
 // POST : Add a Game
 gameRoutes.post('/', upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), checkUser, gameController.addGame);
@@ -28,15 +21,14 @@ gameRoutes.get("/platforms", checkUser, gameController.getPlatforms)
 gameRoutes.post("/platforms", checkUser, gameController.addPlatform)
 
 
-gameRoutes.put("/:gameId", upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), extractRoleFromCookie, updateGame);
+gameRoutes.put("/:gameId", upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), checkUser, gameController.updateGame);
 
-gameRoutes.delete("/:gameId", extractRoleFromCookie, deleteGame);
-gameRoutes.get("/:gameId", extractRoleFromCookie, getGameById);
-gameRoutes.post("/thumbnail", extractRoleFromCookie, uploadThubnail);
+gameRoutes.delete("/:gameId", checkUser, gameController.deleteGame);
+gameRoutes.get("/:gameId", validateApiKey, extractRoleFromCookie, gameController.getGameBySlug);
 gameRoutes.put(
   "/favourite/:playerId",
   extractRoleFromCookie,
-  addFavouriteGame
+  gameController.addFavouriteGame
 );
 
 

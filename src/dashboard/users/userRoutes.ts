@@ -14,11 +14,16 @@ userRoutes.post("/login", userController.loginUser);
 // ADD User
 userRoutes.post("/", checkUser, userController.createUser);
 
+userRoutes.get("/generatePassword", checkUser, userController.generatePassword);
+
 // // GET all details about the current user
 userRoutes.get("/", checkUser, userController.getCurrentUser);
 
 // // GET all subordinates
 userRoutes.get("/all", checkUser, userController.getAllSubordinates);
+
+// GET Current User subordinate
+userRoutes.get("/subordinates", checkUser, userController.getCurrentUserSubordinates)
 
 // GET Report
 userRoutes.get("/report", checkUser, userController.getReport)

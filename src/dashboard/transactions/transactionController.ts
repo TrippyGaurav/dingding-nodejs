@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { User } from "../users/userModel";
+import { Player, User } from "../users/userModel";
 import Transaction from "./transactionModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
@@ -25,7 +25,6 @@ export class TransactionController {
   async createTransaction(type: string, debtor: IUser, creditor: IUser | IPlayer, amount: number, session: mongoose.ClientSession): Promise<ITransaction> {
     try {
       const transaction = await this.transactionService.createTransaction(type, debtor, creditor, amount, session);
-      console.log(`Transaction created: ${transaction._id}`);
       return transaction;
     } catch (error) {
       console.error(`Error creating transaction: ${error.message}`);
@@ -41,8 +40,27 @@ export class TransactionController {
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
 
-      const transactions = await this.transactionService.getTransactions(username);
-      res.status(200).json(transactions)
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const { transactions, totalTransactions, totalPages, currentPage, outOfRange } = await this.transactionService.getTransactions(username, page, limit);
+
+      if (outOfRange) {
+        return res.status(400).json({
+          message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+          totalTransactions,
+          totalPages,
+          currentPage: page,
+          transactions: []
+        });
+      }
+
+      res.status(200).json({
+        totalTransactions,
+        totalPages,
+        currentPage,
+        transactions
+      });
     } catch (error) {
       console.error(`Error fetching transactions: ${error.message}`);
       next(error);
@@ -58,8 +76,11 @@ export class TransactionController {
       const { username, role } = _req.user;
       const { subordinateId } = req.params;
 
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
       const user = await User.findOne({ username });
-      const subordinate = await User.findOne({ _id: subordinateId });
+      const subordinate = await User.findOne({ _id: subordinateId }) || await Player.findOne({ _id: subordinateId })
 
       if (!user) {
         throw createHttpError(404, "Unable to find logged in user");
@@ -70,8 +91,27 @@ export class TransactionController {
       }
 
       if (user.role === "company" || user.subordinates.includes(new mongoose.Types.ObjectId(subordinateId))) {
-        const transactions = await this.transactionService.getTransactionsBySubName(subordinate.username)
-        res.status(200).json(transactions);
+
+        const { transactions, totalTransactions, totalPages, currentPage, outOfRange } = await this.transactionService.getTransactions(subordinate.username, page, limit);
+
+
+        if (outOfRange) {
+          return res.status(400).json({
+            message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+            totalTransactions,
+            totalPages,
+            currentPage: page,
+            transactions: []
+          });
+        }
+
+
+        res.status(200).json({
+          totalTransactions,
+          totalPages,
+          currentPage,
+          transactions
+        });
       }
       else {
         throw createHttpError(403, "Forbidden: You do not have the necessary permissions to access this resource.");
@@ -95,9 +135,36 @@ export class TransactionController {
         throw createHttpError(403, "Access denied. Only users with the role 'company' can access this resource.");
       }
 
-      const transactions = await Transaction.find()
-      res.status(200).json(transactions)
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
 
+      const skip = (page - 1) * limit;
+
+      const totalTransactions = await Transaction.countDocuments();
+      const totalPages = Math.ceil(totalTransactions / limit);
+
+      // Check if the requested page is out of range
+      if (page > totalPages) {
+        return res.status(400).json({
+          message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+          totalTransactions,
+          totalPages,
+          currentPage: page,
+          transactions: []
+        });
+      }
+
+
+      const transactions = await Transaction.find()
+        .skip(skip)
+        .limit(limit);
+
+      res.status(200).json({
+        totalTransactions,
+        totalPages,
+        currentPage: page,
+        transactions
+      });
     } catch (error) {
       console.error(`Error fetching transactions by client ID: ${error.message}`);
       next(error);
@@ -124,13 +191,11 @@ export class TransactionController {
           throw createHttpError(404, "Transaction not found");
         }
         res.status(200).json({ message: "Transaction deleted successfully" });
-        console.log(`Transaction deleted: ${id}`);
       } else {
         if (!deletedTransaction) {
           throw createHttpError(404, "Transaction not found");
         }
         res.status(200).json({ message: "Transaction deleted successfully" });
-        console.log(`Transaction deleted: ${id}`);
       }
     } catch (error) {
       await session.abortTransaction();

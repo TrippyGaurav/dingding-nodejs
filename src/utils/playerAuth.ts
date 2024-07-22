@@ -2,7 +2,7 @@ import { Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 interface DecodedToken {
   username: string;
-  designation?: string;
+  role?: string;
 }
 
 export const verifySocketToken = (socket: Socket): Promise<DecodedToken> => {
