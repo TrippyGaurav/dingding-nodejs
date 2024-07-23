@@ -106,7 +106,6 @@ export default class SlotGame {
 
     }
 
-
     private initialize(GameData: GameData) {
 
         this.settings.bonusPayTable = [];
@@ -134,25 +133,44 @@ export default class SlotGame {
         this.player.socket.emit(messageType.MESSAGE, JSON.stringify({ id: action, message, username: this.player.username }))
     }
 
+    public sendError(message: string) {
+        this.player.socket.emit(messageType.ERROR, message)
+    }
+
+    public sendAlert(message: string) {
+        this.player.socket.emit(messageType.ALERT, message)
+    }
+
     private messageHandler() {
         this.player.socket.on("message", (message) => {
             const res = JSON.parse(message)
 
-            if (res.id === "SPIN" && this.settings.startGame) {
-                this.settings.currentLines = res.data.currentLines;
-                this.settings.BetPerLines = betMultiplier[res.data.currentBet];
-                this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
-                this.spinResult()
+            switch (res.id) {
+                case "SPIN":
+                    if (this.settings.startGame) {
+                        this.settings.currentLines = res.data.currentLines;
+                        this.settings.BetPerLines = betMultiplier[res.data.currentBet];
+                        this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
+                        this.spinResult()
+                    }
+                    break;
+
+                case "GENRTP":
+                    this.settings.currentLines = res.data.currentLines;
+                    this.settings.BetPerLines = betMultiplier[res.data.currentBet];
+                    this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
+                    this.getRTP(res.data.spins);
+                    break;
+
+                case "checkMoolah":
+                    this.checkforMoolah();
+                    break;
+
+                default:
+                    console.warn(`Unhandled message ID: ${res.id}`);
+                    this.sendError(`Unhandled message ID: ${res.id}`)
+                    break;
             }
-
-            if (res.id === "GENRTP") {
-                this.settings.currentLines = res.data.currentLines;
-                this.settings.BetPerLines = betMultiplier[res.data.currentBet];
-                this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
-                this.getRTP(res.data.spins)
-            }
-
-
         })
     }
 
@@ -402,6 +420,146 @@ export default class SlotGame {
         console.log('TOTAL BONUS : ', this.settings.totalBonuWinAmount);
         console.log('GENERATED RTP : ', rtp)
         return
+    }
+
+    private checkforMoolah() {
+        console.log("--------------------- CALLED FOR CHECK FOR MOOLAHHHH ---------------------");
+
+
+        this.settings.tempReels = this.settings.reels;
+        const lastWinData = this.settings._winData;
+
+        lastWinData.winningSymbols = this.combineUniqueSymbols(
+            this.removeRecurringIndexSymbols(lastWinData.winningSymbols)
+        );
+
+        const index = lastWinData.winningSymbols.map((str) => {
+            const index: { x, y } = str.split(",").map(Number);
+            return index;
+        });
+
+        console.log("Winning Indexes " + index);
+
+        let matrix = [];
+        matrix = this.settings.resultSymbolMatrix;
+
+        index.forEach(element => {
+            matrix[element[1]][element[0]] = null;
+        })
+
+        const movedArray = this.cascadeMoveTowardsNull(matrix);
+
+        let transposed = this.transposeMatrix(movedArray);
+        let iconsToFill: number[][] = []
+        for (let i = 0; i < transposed.length; i++) {
+            let row = []
+            for (let j = 0; j < transposed[i].length; j++) {
+                if (transposed[i][j] == null) {
+                    let index = (this.settings.resultReelIndex[i] + j + 2) % this.settings.tempReels[i].length;
+                    transposed[i][j] = this.settings.tempReels[i][index];
+                    row.unshift(this.settings.tempReels[i][index]);
+                }
+
+            }
+            if (row.length > 0)
+                iconsToFill.push(row);
+        }
+
+
+        matrix = this.transposeMatrix(transposed);
+        // matrix.pop();
+        // matrix.pop();
+        // matrix.pop();
+        // matrix.push([ '1', '2', '3', '4', '5' ])
+        // matrix.push([ '1', '1', '1', '1', '6' ])
+        // matrix.push([ '0', '0', '0', '0', '0' ])
+        console.log("iconsTofill", iconsToFill);
+        this.settings.resultSymbolMatrix = matrix;
+
+        const result = new CheckResult(this);
+        result.makeResultJson(ResultType.moolah, iconsToFill);
+    }
+
+    private combineUniqueSymbols(symbolsToEmit: string[][]): string[] {
+        const seen = new Set<string>();
+        const result: string[] = [];
+
+        symbolsToEmit.forEach((subArray) => {
+            subArray.forEach((symbol) => {
+                if (!seen.has(symbol)) {
+                    seen.add(symbol);
+                    result.push(symbol);
+                }
+            });
+        });
+
+        return result;
+    }
+
+    private removeRecurringIndexSymbols(symbolsToEmit: string[][]): string[][] {
+        const seen = new Set<string>();
+        const result: string[][] = [];
+
+        symbolsToEmit.forEach((subArray) => {
+            if (!Array.isArray(subArray)) {
+                console.warn('Expected an array but got', subArray);
+                return;
+            }
+            const uniqueSubArray: string[] = [];
+            subArray.forEach((symbol) => {
+                if (!seen.has(symbol)) {
+                    seen.add(symbol);
+                    uniqueSubArray.push(symbol);
+                }
+            });
+            if (uniqueSubArray.length > 0) {
+                result.push(uniqueSubArray);
+            }
+        });
+
+        return result;
+    }
+
+    private cascadeMoveTowardsNull(arr: (string | null)[][]): (string | null)[][] {
+        if (arr.length === 0 || arr[0].length === 0) return arr;
+        const numRows = arr.length;
+        const numCols = arr[0].length;
+
+        let result: (string | null)[][] = Array.from({ length: numRows }, () => new Array(numCols).fill(null));
+
+        for (let col = 0; col < numCols; col++) {
+            let newRow = numRows - 1;
+
+            // Place non-null elements starting from the bottom
+            for (let row = numRows - 1; row >= 0; row--) {
+                if (arr[row][col] !== null) {
+                    result[newRow][col] = arr[row][col];
+                    newRow--;
+                }
+            }
+
+            // Fill the top positions with null if there are remaining positions
+            for (let row = newRow; row >= 0; row--) {
+                result[row][col] = null;
+            }
+        }
+
+        return result;
+    }
+
+    private transposeMatrix(matrix) {
+        let transposed = [];
+
+        for (let i = 0; i < matrix[0].length; i++) {
+            let newRow = [];
+            for (let j = 0; j < matrix.length; j++) {
+                newRow.push(matrix[j][i]);
+            }
+            transposed.push(newRow);
+        }
+
+        return transposed;
+
     }
 }
 

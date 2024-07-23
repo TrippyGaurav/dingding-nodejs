@@ -138,6 +138,7 @@ export function checkforMoolah(playerSkt: Socket) {
 
   slotGameSettings.tempReels = slotGameSettings.reels;
   const lastWinData = slotGameSettings._winData;
+  
   lastWinData.winningSymbols = combineUniqueSymbols(
     removeRecurringIndexSymbols(lastWinData.winningSymbols)
   );
