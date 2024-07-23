@@ -16,7 +16,6 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const http_1 = require("http");
 const socket_io_1 = require("socket.io");
-const controller_1 = __importDefault(require("./socket/controller"));
 const globalHandler_1 = __importDefault(require("./dashboard/middleware/globalHandler"));
 const companyRoutes_1 = __importDefault(require("./dashboard/company/companyRoutes"));
 const userRoutes_1 = __importDefault(require("./dashboard/users/userRoutes"));
@@ -26,6 +25,7 @@ const express_session_1 = __importDefault(require("express-session"));
 const config_1 = require("./config/config");
 const svg_captcha_1 = __importDefault(require("svg-captcha"));
 const http_errors_1 = __importDefault(require("http-errors"));
+const controller_1 = __importDefault(require("./socket/controller"));
 const app = (0, express_1.default)();
 app.use((0, express_session_1.default)({
     secret: config_1.config.jwtSecret,

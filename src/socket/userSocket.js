@@ -164,7 +164,7 @@ exports.SocketUser = SocketUser;
 function initializeUser(socket) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const decoded = yield (0, playerAuth_1.verifySocketToken)(socket);
+            const decoded = yield (0, playerAuth_1.verifyPlayerToken)(socket);
             socket.data.username = decoded.username;
             socket.data.designation = decoded.role;
             Global_1.GData.playerSocket = new SocketUser(socket, socket);
