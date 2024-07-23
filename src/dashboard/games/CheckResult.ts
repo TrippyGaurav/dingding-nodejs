@@ -1,4 +1,4 @@
-import { Socket } from "socket.io";
+
 import { WinData } from "./WinData";
 import { bonusGameType, specialIcons } from "./gameUtils";
 import SlotGame from "./slotGame";
@@ -70,11 +70,11 @@ export class CheckResult {
         if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings._winData.freeSpins != 0)
             this.startFreeSpin();
         console.log("TOTAL WINING : " + this.currentGame.settings._winData.totalWinningAmount);
-        console.log("PT BETS :" + this.currentGame.currentRTP.bets);
+        console.log("PT BETS :" + this.currentGame.settings.currentBet);
         const winRate: number =
-            (this.currentGame.player.haveWon / this.currentGame.settings.currentBet) * 100;
+            (this.currentGame.player.currentWining / this.currentGame.settings.currentBet) * 100;
         console.log(
-            `Total Spend : ${this.currentGame.settings.currentBet}  Total Won : ${this.currentGame.player.haveWon
+            `Total Spend : ${this.currentGame.settings.currentBet}  Total Won : ${this.currentGame.player.currentWining
             } 
         Current RTP : ${winRate.toFixed(2)}% `
         );
@@ -328,6 +328,11 @@ export class CheckResult {
                 isBonus: this.currentGame.settings.bonus.start,
                 BonusStopIndex: this.currentGame.settings.bonus.stopIndex,
                 BonusResult: this.bonusResult,
+            },
+            PlayerData: {
+                Balance: this.currentGame.player.credits,
+                haveWon: this.currentGame.player.haveWon,
+                currentWining: this.currentGame.player.currentWining
             }
         };
         this.currentGame.updateDatabase()

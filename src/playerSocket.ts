@@ -49,7 +49,11 @@ export class SocketUser {
             console.error(`Error initializing user ${this.username}:`, error);
         }
     }
-
+    //CHECKING SOCKET STATE BEFORE SENDING DATA TO CLIENT
+    checkSocketReady() {
+        if (!this.socketReady) return false;
+        return true;
+    }
     initGameData = async (message: any) => {
         try {
             const messageData = JSON.parse(message);

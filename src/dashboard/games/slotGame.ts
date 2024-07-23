@@ -18,10 +18,7 @@ export default class SlotGame {
         currentWining: number,
         socket: Socket
     }
-    public currentRTP: {
-        won: number
-        bets: number
-    }
+
 
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
         this.player = { ...player, haveWon: 0, currentWining: 0 };
@@ -96,10 +93,7 @@ export default class SlotGame {
             },
             reels: [[]],
         };
-        this.currentRTP = {
-            won: 0,
-            bets: 0
-        }
+
 
         this.initialize(GameData);
         this.messageHandler();
@@ -291,6 +285,7 @@ export default class SlotGame {
 
         const dataToSend = {
             GameData: {
+                Reel: this.settings.reels,
                 Lines: this.settings.currentGamedata.linesApiData,
                 Bets: this.settings.currentGamedata.bets,
                 canSwitchLines: false,
@@ -328,7 +323,6 @@ export default class SlotGame {
             shuffleArray(reel);
             matrix.push(reel);
         }
-
         return matrix;
     }
 
@@ -385,8 +379,7 @@ export default class SlotGame {
     private getRTP(spins: number) {
         let spend: number = 0;
         let won: number = 0;
-        this.currentRTP.won = 0;
-        this.currentRTP.bets = 0;
+
         for (let i = 0; i < spins; i++) {
             this.spinResult();
             spend += this.settings.currentBet;
