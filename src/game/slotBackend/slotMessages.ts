@@ -12,6 +12,7 @@ export function slotMessages(playerSkt: Socket, clientID, message: any) {
     checkforMoolah(playerSkt);
   }
   if (message.id === MESSAGEID.SPIN && slotGameSettings.startGame) {
+
     slotGameSettings.currentLines = message.data.currentLines;
     slotGameSettings.BetPerLines = betMultiplier[message.data.currentBet];
     slotGameSettings.currentBet = betMultiplier[message.data.currentBet] * slotGameSettings.currentLines;

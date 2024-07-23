@@ -1,18 +1,16 @@
 import { Socket } from "socket.io";
 import { MESSAGEID, MESSAGETYPE } from "../utils/utils";
-import { verifySocketToken } from "../utils/playerAuth";
+import { verifyPlayerToken } from "../utils/playerAuth";
 import { Player } from "../dashboard/users/userModel";
 export let users: Map<string, SocketUser> = new Map();
 import { gameData } from "../game/slotBackend/testData";
 import { Payouts } from "../dashboard/games/gameModel";
-import { GData, PlayerData } from "../game/Global.";
+import { GData, PlayerData } from "../game/Global";
 import { GAMETYPE } from "../game/Utils/globalTypes";
 import { slotMessages } from "../game/slotBackend/slotMessages";
 import { slotGameSettings } from "../game/slotBackend/_global";
 import { kenoMessages } from "../game/kenoBackend/kenoMessages";
 import { Platform } from "../dashboard/games/gameModel";
-
-
 
 export class SocketUser {
   socket: Socket;
@@ -20,6 +18,7 @@ export class SocketUser {
   username: string;
   role: string;
   gameTag: string;
+
   constructor(socket: Socket, public GameData: any) {
     this.isAlive = true;
     this.socket = socket;
@@ -49,15 +48,12 @@ export class SocketUser {
 
       const game = platform[0].game;
       // console.log(game, "Game");
-
       if (!game || !game.payout) {
         console.log('NO GAME FOUND WITH THIS GAME ID, SWIFTING PAYOUTS TO SL-VIK');
         slotGameSettings.initiate(this.socket, gameData[0], this.socket.id);
         return;
       }
-
       const payoutData = await Payouts.find({ _id: { $in: game.payout } });
-
       const gameType = tagName.split('-');
       this.gameTag = gameType[0];
       if (gameType == GAMETYPE.SLOT)
@@ -171,7 +167,7 @@ export class SocketUser {
 
 export async function initializeUser(socket: Socket) {
   try {
-    const decoded = await verifySocketToken(socket);
+    const decoded = await verifyPlayerToken(socket);
     socket.data.username = decoded.username;
     socket.data.designation = decoded.role;
     GData.playerSocket = new SocketUser(socket, socket);
@@ -194,7 +190,7 @@ export function sendMessage(skt: Socket, id: string, message: any) {
 }
 
 
-export const betMultiplier = [0.1, 0.5, 0.7, 1];
+export const betMultiplier = [0.1, 0.25, 0.5, 0.75, 1];
 
 
 

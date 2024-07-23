@@ -1,10 +1,12 @@
 import { Socket } from "socket.io";
-import { GData } from "../Global.";
+import { GData } from "../Global";
 import { slotGameSettings } from "./_global";
 // import { sendMessageToClient } from "./App";
 import { bonusGameType } from "./slotTypes";
-import { PlayerData } from "../Global.";
+import { PlayerData } from "../Global";
 import { sendMessage } from "../../socket/userSocket";
+
+
 export class bonusGame {
   type: String;
   noOfItems: number;
