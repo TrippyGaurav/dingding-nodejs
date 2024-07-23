@@ -36,7 +36,7 @@ export class RandomResultGenerator {
         // matrix.push(['1', '0', '1', '2', '6'])
 
         current.settings.resultSymbolMatrix = matrix;
-        console.log("MATRIX " + matrix);
+        // console.log("MATRIX " + matrix);
 
     }
     // Function to generate a random number based on weights
