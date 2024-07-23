@@ -34,7 +34,8 @@ class UserController {
         this.updateClient = this.updateClient.bind(this);
         this.getReport = this.getReport.bind(this);
         this.getASubordinateReport = this.getASubordinateReport.bind(this);
-        this.getCurrentUserSubordinates = this.getCurrentUserSubordinates.bind(this);
+        this.getCurrentUserSubordinates =
+            this.getCurrentUserSubordinates.bind(this);
         this.generatePassword = this.generatePassword.bind(this);
     }
     static getSubordinateRoles(role) {
@@ -47,20 +48,20 @@ class UserController {
         const start = new Date();
         const end = new Date();
         switch (type) {
-            case 'weekly':
+            case "weekly":
                 start.setDate(start.getDate() - start.getDay()); // set to start of the week
                 start.setHours(0, 0, 0, 0);
                 end.setDate(end.getDate() + (6 - end.getDay())); // set to end of the week
                 end.setHours(23, 59, 59, 999);
                 break;
-            case 'monthly':
+            case "monthly":
                 start.setDate(1); // set to start of the month
                 start.setHours(0, 0, 0, 0);
                 end.setMonth(end.getMonth() + 1);
                 end.setDate(0); // set to end of the month
                 end.setHours(23, 59, 59, 999);
                 break;
-            case 'daily':
+            case "daily":
             default:
                 start.setHours(0, 0, 0, 0);
                 end.setHours(23, 59, 59, 999);
@@ -126,7 +127,7 @@ class UserController {
                 res.status(200).json({
                     message: "Login successful",
                     token: token,
-                    role: user.role
+                    role: user.role,
                 });
             }
             catch (error) {
@@ -143,7 +144,12 @@ class UserController {
                 const _req = req;
                 const { user } = req.body;
                 const { username, role } = _req.user; // ADMIN
-                if (!user || !user.name || !user.username || !user.password || !user.role || user.credits === undefined) {
+                if (!user ||
+                    !user.name ||
+                    !user.username ||
+                    !user.password ||
+                    !user.role ||
+                    user.credits === undefined) {
                     throw (0, http_errors_1.default)(400, "All required fields must be provided");
                 }
                 if (role !== "company" && !UserController.isRoleValid(role, user.role)) {
@@ -153,7 +159,8 @@ class UserController {
                 if (!admin) {
                     throw (0, http_errors_1.default)(404, "Admin not found");
                 }
-                let existingUser = (yield this.userService.findPlayerByUsername(user.username, session)) || (yield this.userService.findUserByUsername(user.username, session));
+                let existingUser = (yield this.userService.findPlayerByUsername(user.username, session)) ||
+                    (yield this.userService.findUserByUsername(user.username, session));
                 if (existingUser) {
                     throw (0, http_errors_1.default)(409, "User already exists");
                 }
@@ -222,8 +229,62 @@ class UserController {
                 const page = parseInt(req.query.page) || 1;
                 const limit = parseInt(req.query.limit) || 10;
                 const skip = (page - 1) * limit;
-                const userCount = yield userModel_1.User.countDocuments({ role: { $ne: "company" } });
-                const playerCount = yield userModel_1.Player.countDocuments();
+                const filter = req.query.filter || "";
+                const search = req.query.search;
+                let parsedData = {
+                    role: "",
+                    status: "",
+                    totalRecharged: { From: 0, To: Infinity },
+                    totalRedeemed: { From: 0, To: Infinity },
+                    credits: { From: 0, To: Infinity },
+                    updatedAt: { From: null, To: null },
+                    type: "",
+                    amount: { From: 0, To: 0 },
+                };
+                let role, status, redeem, recharge, credits;
+                if (search) {
+                    parsedData = JSON.parse(search);
+                    if (parsedData) {
+                        role = parsedData.role;
+                        status = parsedData.status;
+                        redeem = parsedData.totalRedeemed;
+                        recharge = parsedData.totalRecharged;
+                        credits = parsedData.credits;
+                    }
+                }
+                let query = {};
+                if (filter) {
+                    query.username = { $regex: filter, $options: "i" };
+                }
+                if (role) {
+                    query.role = { $ne: "company", $eq: role };
+                }
+                else if (!role) {
+                    query.role = { $ne: "company" };
+                }
+                if (status) {
+                    query.status = status;
+                }
+                if (parsedData.totalRecharged) {
+                    query.totalRecharged = {
+                        $gte: parsedData.totalRecharged.From,
+                        $lte: parsedData.totalRecharged.To,
+                    };
+                }
+                if (parsedData.totalRedeemed) {
+                    query.totalRedeemed = {
+                        $gte: parsedData.totalRedeemed.From,
+                        $lte: parsedData.totalRedeemed.To,
+                    };
+                }
+                if (parsedData.credits) {
+                    query.credits = {
+                        $gte: parsedData.credits.From,
+                        $lte: parsedData.credits.To,
+                    };
+                }
+                const userCount = yield userModel_1.User.countDocuments(query);
+                const playerCount = yield userModel_1.Player.countDocuments(query);
                 const totalSubordinates = userCount + playerCount;
                 const totalPages = Math.ceil(totalSubordinates / limit);
                 if (totalSubordinates === 0) {
@@ -232,7 +293,7 @@ class UserController {
                         totalSubordinates: 0,
                         totalPages: 0,
                         currentPage: 0,
-                        subordinates: []
+                        subordinates: [],
                     });
                 }
                 if (page > totalPages) {
@@ -241,19 +302,20 @@ class UserController {
                         totalSubordinates,
                         totalPages,
                         currentPage: page,
-                        subordinates: []
+                        subordinates: [],
                     });
                 }
-                // Determine how many users to fetch based on the skip and limit
                 let users = [];
                 if (skip < userCount) {
-                    users = yield userModel_1.User.find({ role: { $ne: "company" } }).skip(skip).limit(limit);
+                    users = yield userModel_1.User.find(query).skip(skip).limit(limit);
                 }
                 const remainingLimit = limit - users.length;
                 let players = [];
                 if (remainingLimit > 0) {
                     const playerSkip = Math.max(0, skip - userCount);
-                    players = yield userModel_1.Player.find({}).skip(playerSkip).limit(remainingLimit);
+                    players = yield userModel_1.Player.find(query)
+                        .skip(playerSkip)
+                        .limit(remainingLimit);
                 }
                 const allSubordinates = [...users, ...players];
                 console.log(allSubordinates.length);
@@ -261,7 +323,7 @@ class UserController {
                     totalSubordinates,
                     totalPages,
                     currentPage: page,
-                    subordinates: allSubordinates
+                    subordinates: allSubordinates,
                 });
             }
             catch (error) {
@@ -275,7 +337,6 @@ class UserController {
                 const _req = req;
                 const { username, role } = _req.user;
                 const { id } = req.query;
-                console.log("Subor : ", id);
                 const currentUser = yield userModel_1.User.findOne({ username });
                 if (!currentUser) {
                     throw (0, http_errors_1.default)(401, "User not found");
@@ -293,35 +354,92 @@ class UserController {
                         }
                     }
                 }
+                let filterRole, status, redeem, recharge, credits;
+                const filter = req.query.filter || "";
+                const search = req.query.search;
+                let parsedData = {
+                    role: "",
+                    status: "",
+                    totalRecharged: { From: 0, To: Infinity },
+                    totalRedeemed: { From: 0, To: Infinity },
+                    credits: { From: 0, To: Infinity },
+                    updatedAt: { From: new Date(), To: new Date() },
+                    type: "",
+                    amount: { From: 0, To: 0 },
+                };
+                if (search) {
+                    parsedData = JSON.parse(search);
+                    if (parsedData) {
+                        filterRole = parsedData.role;
+                        status = parsedData.status;
+                        redeem = parsedData.totalRedeemed;
+                        recharge = parsedData.totalRecharged;
+                        credits = parsedData.credits;
+                    }
+                }
+                let query = {};
+                query.createdBy = userToCheck._id;
+                if (filter) {
+                    query.username = { $regex: filter, $options: "i" };
+                }
+                if (filterRole) {
+                    query.role = { $ne: "company", $eq: filterRole };
+                }
+                else if (!filterRole) {
+                    query.role = { $ne: "company" };
+                }
+                if (status) {
+                    query.status = status;
+                }
+                if (parsedData.totalRecharged) {
+                    query.totalRecharged = {
+                        $gte: parsedData.totalRecharged.From,
+                        $lte: parsedData.totalRecharged.To,
+                    };
+                }
+                if (parsedData.totalRedeemed) {
+                    query.totalRedeemed = {
+                        $gte: parsedData.totalRedeemed.From,
+                        $lte: parsedData.totalRedeemed.To,
+                    };
+                }
+                if (parsedData.credits) {
+                    query.credits = {
+                        $gte: parsedData.credits.From,
+                        $lte: parsedData.credits.To,
+                    };
+                }
                 let subordinates;
                 let totalSubordinates;
                 if (userToCheck.role === "store") {
-                    totalSubordinates = yield userModel_1.Player.countDocuments({ createdBy: userToCheck._id });
-                    subordinates = yield userModel_1.Player.find({ createdBy: userToCheck._id })
+                    totalSubordinates = yield userModel_1.Player.countDocuments(query);
+                    subordinates = yield userModel_1.Player.find(query)
                         .skip(skip)
                         .limit(limit)
-                        .select('name username status role totalRecharged totalRedeemed credits');
+                        .select("name username status role totalRecharged totalRedeemed credits");
                 }
                 else if (userToCheck.role === "company") {
-                    const userSubordinatesCount = yield userModel_1.User.countDocuments({ createdBy: userToCheck._id });
-                    const playerSubordinatesCount = yield userModel_1.Player.countDocuments({ createdBy: userToCheck._id });
+                    const userSubordinatesCount = yield userModel_1.User.countDocuments(query);
+                    const playerSubordinatesCount = yield userModel_1.Player.countDocuments(query);
                     totalSubordinates = userSubordinatesCount + playerSubordinatesCount;
-                    const userSubordinates = yield userModel_1.User.find({ createdBy: userToCheck._id })
+                    const userSubordinates = yield userModel_1.User.find(query)
                         .skip(skip)
                         .limit(limit)
-                        .select('name username status role totalRecharged totalRedeemed credits');
+                        .select("name username status role totalRecharged totalRedeemed credits");
                     const remainingLimit = limit - userSubordinates.length;
-                    const playerSubordinates = remainingLimit > 0 ? yield userModel_1.Player.find({ createdBy: userToCheck._id })
-                        .skip(Math.max(skip - userSubordinatesCount, 0))
-                        .limit(remainingLimit)
-                        .select('name username status role totalRecharged totalRedeemed credits') : [];
+                    const playerSubordinates = remainingLimit > 0
+                        ? yield userModel_1.Player.find(query)
+                            .skip(Math.max(skip - userSubordinatesCount, 0))
+                            .limit(remainingLimit)
+                            .select("name username status role totalRecharged totalRedeemed credits")
+                        : [];
                     subordinates = [...userSubordinates, ...playerSubordinates];
                 }
                 else {
-                    totalSubordinates = yield userModel_1.User.countDocuments({ createdBy: userToCheck._id });
-                    subordinates = yield userModel_1.User.find({ createdBy: userToCheck._id })
+                    totalSubordinates = yield userModel_1.User.countDocuments(query);
+                    subordinates = yield userModel_1.User.find(query)
                         .skip(skip)
-                        .select('name username status role totalRecharged totalRedeemed credits');
+                        .select("name username status role totalRecharged totalRedeemed credits");
                 }
                 const totalPages = Math.ceil(totalSubordinates / limit);
                 if (totalSubordinates === 0) {
@@ -330,7 +448,7 @@ class UserController {
                         totalSubordinates: 0,
                         totalPages: 0,
                         currentPage: 0,
-                        subordinates: []
+                        subordinates: [],
                     });
                 }
                 if (page > totalPages) {
@@ -339,14 +457,14 @@ class UserController {
                         totalSubordinates,
                         totalPages,
                         currentPage: page,
-                        subordinates: []
+                        subordinates: [],
                     });
                 }
                 res.status(200).json({
                     totalSubordinates,
                     totalPages,
                     currentPage: page,
-                    subordinates
+                    subordinates,
                 });
             }
             catch (error) {
@@ -368,11 +486,13 @@ class UserController {
                 if (!admin) {
                     throw (0, http_errors_1.default)(404, "Admin Not Found");
                 }
-                const client = (yield this.userService.findUserById(clientObjectId)) || (yield this.userService.findPlayerById(clientObjectId));
+                const client = (yield this.userService.findUserById(clientObjectId)) ||
+                    (yield this.userService.findPlayerById(clientObjectId));
                 if (!client) {
                     throw (0, http_errors_1.default)(404, "User not found");
                 }
-                if (role != "company" && !admin.subordinates.some((id) => id.equals(clientObjectId))) {
+                if (role != "company" &&
+                    !admin.subordinates.some((id) => id.equals(clientObjectId))) {
                     throw (0, http_errors_1.default)(403, "Client does not belong to the creator");
                 }
                 const clientRole = client.role;
@@ -414,7 +534,8 @@ class UserController {
                         throw (0, http_errors_1.default)(404, "Creator not found");
                     }
                 }
-                const client = (yield this.userService.findUserById(clientObjectId)) || (yield this.userService.findPlayerById(clientObjectId));
+                const client = (yield this.userService.findUserById(clientObjectId)) ||
+                    (yield this.userService.findPlayerById(clientObjectId));
                 if (!client) {
                     throw (0, http_errors_1.default)(404, "Client not found");
                 }
@@ -457,24 +578,37 @@ class UserController {
                         throw (0, http_errors_1.default)(404, "User not found");
                     }
                 }
-                if (loggedUserRole === "company" || loggedUser.subordinates.includes(subordinateObjectId) || user._id.toString() == loggedUser._id.toString()) {
+                if (loggedUserRole === "company" ||
+                    loggedUser.subordinates.includes(subordinateObjectId) ||
+                    user._id.toString() == loggedUser._id.toString()) {
                     let client;
                     switch (user.role) {
                         case "company":
-                            client = yield userModel_1.User.findById(subordinateId).populate({ path: "transactions", model: transactionModel_1.default });
-                            const userSubordinates = yield userModel_1.User.find({ createdBy: subordinateId });
-                            const playerSubordinates = yield userModel_1.Player.find({ createdBy: subordinateId });
+                            client = yield userModel_1.User.findById(subordinateId).populate({
+                                path: "transactions",
+                                model: transactionModel_1.default,
+                            });
+                            const userSubordinates = yield userModel_1.User.find({
+                                createdBy: subordinateId,
+                            });
+                            const playerSubordinates = yield userModel_1.Player.find({
+                                createdBy: subordinateId,
+                            });
                             client = client.toObject(); // Convert Mongoose Document to plain JavaScript object
                             client.subordinates = [...userSubordinates, ...playerSubordinates];
                             break;
                         case "store":
-                            client = yield userModel_1.User.findById(subordinateId).populate({ path: "subordinates", model: userModel_1.Player }).populate({ path: "transactions", model: transactionModel_1.default });
+                            client = yield userModel_1.User.findById(subordinateId)
+                                .populate({ path: "subordinates", model: userModel_1.Player })
+                                .populate({ path: "transactions", model: transactionModel_1.default });
                             break;
                         case "player":
                             client = user;
                             break;
                         default:
-                            client = yield userModel_1.User.findById(subordinateObjectId).populate({ path: "transactions", model: transactionModel_1.default, }).populate({ path: "subordinates", model: userModel_1.User });
+                            client = yield userModel_1.User.findById(subordinateObjectId)
+                                .populate({ path: "transactions", model: transactionModel_1.default })
+                                .populate({ path: "subordinates", model: userModel_1.User });
                     }
                     if (!client) {
                         throw (0, http_errors_1.default)(404, "Client not found");
@@ -499,7 +633,13 @@ class UserController {
                 const { username, role } = _req.user;
                 const { type, userId } = req.query;
                 const { start, end } = UserController.getStartAndEndOfPeriod(type);
-                const allowedAdmins = ["company", "master", "distributor", "subdistributor", "store"];
+                const allowedAdmins = [
+                    "company",
+                    "master",
+                    "distributor",
+                    "subdistributor",
+                    "store",
+                ];
                 const currentUser = yield userModel_1.User.findOne({ username });
                 if (!currentUser) {
                     throw (0, http_errors_1.default)(401, "User not found");
@@ -527,22 +667,23 @@ class UserController {
                                     {
                                         createdAt: {
                                             $gte: start,
-                                            $lte: end
-                                        }
+                                            $lte: end,
+                                        },
                                     },
                                     {
-                                        type: "recharge"
-                                    }
-                                ]
-                            }
-                        }, {
+                                        type: "recharge",
+                                    },
+                                ],
+                            },
+                        },
+                        {
                             $group: {
                                 _id: null,
                                 totalAmount: {
-                                    $sum: "$amount"
-                                }
-                            }
-                        }
+                                    $sum: "$amount",
+                                },
+                            },
+                        },
                     ]);
                     // Total Redeem Amount
                     const totalRedeemedAmt = yield transactionModel_1.default.aggregate([
@@ -552,44 +693,48 @@ class UserController {
                                     {
                                         createdAt: {
                                             $gte: start,
-                                            $lte: end
-                                        }
+                                            $lte: end,
+                                        },
                                     },
                                     {
-                                        type: "redeem"
-                                    }
-                                ]
-                            }
-                        }, {
+                                        type: "redeem",
+                                    },
+                                ],
+                            },
+                        },
+                        {
                             $group: {
                                 _id: null,
                                 totalAmount: {
-                                    $sum: "$amount"
-                                }
-                            }
-                        }
+                                    $sum: "$amount",
+                                },
+                            },
+                        },
                     ]);
                     const users = yield userModel_1.User.aggregate([
                         {
                             $match: {
                                 $and: [
                                     {
-                                        role: { $ne: targetUser.role }
+                                        role: { $ne: targetUser.role },
                                     },
                                     {
-                                        createdAt: { $gte: start, $lte: end }
-                                    }
-                                ]
-                            }
+                                        createdAt: { $gte: start, $lte: end },
+                                    },
+                                ],
+                            },
                         },
                         {
                             $group: {
                                 _id: "$role",
-                                count: { $sum: 1 }
-                            }
-                        }
+                                count: { $sum: 1 },
+                            },
+                        },
                     ]);
-                    const players = yield userModel_1.Player.countDocuments({ role: "player", createdAt: { $gte: start, $lte: end } });
+                    const players = yield userModel_1.Player.countDocuments({
+                        role: "player",
+                        createdAt: { $gte: start, $lte: end },
+                    });
                     const counts = users.reduce((acc, curr) => {
                         acc[curr._id] = curr.count;
                         return acc;
@@ -598,14 +743,16 @@ class UserController {
                     // Transactions
                     const transactions = yield transactionModel_1.default.find({
                         createdAt: { $gte: start, $lte: end },
-                    }).sort({ createdAt: -1 }).limit(9);
+                    })
+                        .sort({ createdAt: -1 })
+                        .limit(9);
                     return res.status(200).json({
                         username: targetUser.username,
                         role: targetUser.role,
                         recharge: ((_a = totalRechargedAmt[0]) === null || _a === void 0 ? void 0 : _a.totalAmount) || 0,
                         redeem: ((_b = totalRedeemedAmt[0]) === null || _b === void 0 ? void 0 : _b.totalAmount) || 0,
                         users: counts,
-                        transactions: transactions
+                        transactions: transactions,
                     });
                 }
                 else {
@@ -616,26 +763,26 @@ class UserController {
                                     {
                                         createdAt: {
                                             $gte: start,
-                                            $lte: end
-                                        }
+                                            $lte: end,
+                                        },
                                     },
                                     {
-                                        type: "recharge"
+                                        type: "recharge",
                                     },
                                     {
-                                        creditor: targetUser.username
-                                    }
-                                ]
-                            }
+                                        creditor: targetUser.username,
+                                    },
+                                ],
+                            },
                         },
                         {
                             $group: {
                                 _id: null,
                                 totalAmount: {
-                                    $sum: "$amount"
-                                }
-                            }
-                        }
+                                    $sum: "$amount",
+                                },
+                            },
+                        },
                     ]);
                     const userRedeemAmt = yield transactionModel_1.default.aggregate([
                         {
@@ -644,28 +791,36 @@ class UserController {
                                     {
                                         createdAt: {
                                             $gte: start,
-                                            $lte: end
-                                        }
+                                            $lte: end,
+                                        },
                                     },
                                     {
-                                        type: "redeem"
+                                        type: "redeem",
                                     },
                                     {
-                                        debtor: targetUser.username
-                                    }
-                                ]
-                            }
+                                        debtor: targetUser.username,
+                                    },
+                                ],
+                            },
                         },
                         {
                             $group: {
                                 _id: null,
                                 totalAmount: {
-                                    $sum: "$amount"
-                                }
-                            }
-                        }
+                                    $sum: "$amount",
+                                },
+                            },
+                        },
                     ]);
-                    const userTransactions = yield transactionModel_1.default.find({ $or: [{ debtor: targetUser.username }, { creditor: targetUser.username }], createdAt: { $gte: start, $lte: end } }).sort({ createdAt: -1 }).limit(9);
+                    const userTransactions = yield transactionModel_1.default.find({
+                        $or: [
+                            { debtor: targetUser.username },
+                            { creditor: targetUser.username },
+                        ],
+                        createdAt: { $gte: start, $lte: end },
+                    })
+                        .sort({ createdAt: -1 })
+                        .limit(9);
                     let users;
                     if (targetUser.role === "store" || targetUser.role === "player") {
                         users = yield userModel_1.Player.aggregate([
@@ -673,20 +828,20 @@ class UserController {
                                 $match: {
                                     $and: [
                                         {
-                                            createdBy: targetUser._id
+                                            createdBy: targetUser._id,
                                         },
                                         {
-                                            createdAt: { $gte: start, $lte: end }
-                                        }
-                                    ]
-                                }
+                                            createdAt: { $gte: start, $lte: end },
+                                        },
+                                    ],
+                                },
                             },
                             {
                                 $group: {
                                     _id: "$status",
-                                    count: { $sum: 1 }
-                                }
-                            }
+                                    count: { $sum: 1 },
+                                },
+                            },
                         ]);
                     }
                     else {
@@ -695,20 +850,20 @@ class UserController {
                                 $match: {
                                     $and: [
                                         {
-                                            createdBy: targetUser._id
+                                            createdBy: targetUser._id,
                                         },
                                         {
-                                            createdAt: { $gte: start, $lte: end }
-                                        }
-                                    ]
-                                }
+                                            createdAt: { $gte: start, $lte: end },
+                                        },
+                                    ],
+                                },
                             },
                             {
                                 $group: {
                                     _id: "$status",
-                                    count: { $sum: 1 }
-                                }
-                            }
+                                    count: { $sum: 1 },
+                                },
+                            },
                         ]);
                     }
                     const counts = users.reduce((acc, curr) => {
@@ -726,7 +881,7 @@ class UserController {
                         recharge: ((_c = userRechargeAmt[0]) === null || _c === void 0 ? void 0 : _c.totalAmount) || 0,
                         redeem: ((_d = userRedeemAmt[0]) === null || _d === void 0 ? void 0 : _d.totalAmount) || 0,
                         users: counts,
-                        transactions: userTransactions
+                        transactions: userTransactions,
                     });
                 }
             }
@@ -755,34 +910,37 @@ class UserController {
                 // Fetch today's transactions where the subordinate is the creditor
                 const transactionsTodayAsCreditor = yield transactionModel_1.default.find({
                     creditor: subordinate.username,
-                    createdAt: { $gte: start, $lte: end }
+                    createdAt: { $gte: start, $lte: end },
                 });
                 // Aggregate the total credits given to the subordinate today
                 const totalCreditsGivenToday = transactionsTodayAsCreditor.reduce((sum, t) => sum + t.amount, 0);
                 // Fetch today's transactions where the subordinate is the debtor
                 const transactionsTodayAsDebtor = yield transactionModel_1.default.find({
                     debtor: subordinate.username,
-                    createdAt: { $gte: start, $lte: end }
+                    createdAt: { $gte: start, $lte: end },
                 });
                 // Aggregate the total money spent by the subordinate today
                 const totalMoneySpentToday = transactionsTodayAsDebtor.reduce((sum, t) => sum + t.amount, 0);
                 // Combine both sets of transactions
-                const allTransactions = [...transactionsTodayAsCreditor, ...transactionsTodayAsDebtor];
+                const allTransactions = [
+                    ...transactionsTodayAsCreditor,
+                    ...transactionsTodayAsDebtor,
+                ];
                 // Fetch users and players created by this subordinate today
                 const usersCreatedToday = yield userModel_1.User.find({
                     createdBy: subordinate._id,
-                    createdAt: { $gte: start, $lte: end }
+                    createdAt: { $gte: start, $lte: end },
                 });
                 const playersCreatedToday = yield userModel_1.Player.find({
                     createdBy: subordinate._id,
-                    createdAt: { $gte: start, $lte: end }
+                    createdAt: { $gte: start, $lte: end },
                 });
                 const report = {
                     creditsGiven: totalCreditsGivenToday,
                     moneySpent: totalMoneySpentToday,
                     transactions: allTransactions, // All transactions related to the subordinate
                     users: usersCreatedToday,
-                    players: playersCreatedToday
+                    players: playersCreatedToday,
                 };
                 res.status(200).json(report);
             }
