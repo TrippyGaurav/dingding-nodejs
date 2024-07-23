@@ -51,21 +51,57 @@ class TransactionController {
                 const { username, role } = _req.user;
                 const page = parseInt(req.query.page) || 1;
                 const limit = parseInt(req.query.limit) || 10;
-                const { transactions, totalTransactions, totalPages, currentPage, outOfRange } = yield this.transactionService.getTransactions(username, page, limit);
+                const search = req.query.search;
+                let parsedData = {
+                    role: "",
+                    status: "",
+                    totalRecharged: { From: 0, To: 0 },
+                    totalRedeemed: { From: 0, To: 0 },
+                    credits: { From: 0, To: 0 },
+                    updatedAt: { From: new Date(), To: new Date() },
+                    type: "",
+                    amount: { From: 0, To: Infinity },
+                };
+                let type, updatedAt, amount;
+                if (search) {
+                    parsedData = JSON.parse(search);
+                    if (parsedData) {
+                        type = parsedData.type;
+                        updatedAt = parsedData.updatedAt;
+                        amount = parsedData.amount;
+                    }
+                }
+                let query = {};
+                if (type) {
+                    query.type = type;
+                }
+                if (updatedAt) {
+                    query.updatedAt = {
+                        $gte: parsedData.updatedAt.From,
+                        $lte: parsedData.updatedAt.To,
+                    };
+                }
+                if (amount) {
+                    query.amount = {
+                        $gte: parsedData.amount.From,
+                        $lte: parsedData.amount.To,
+                    };
+                }
+                const { transactions, totalTransactions, totalPages, currentPage, outOfRange, } = yield this.transactionService.getTransactions(username, page, limit, query);
                 if (outOfRange) {
                     return res.status(400).json({
                         message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
                         totalTransactions,
                         totalPages,
                         currentPage: page,
-                        transactions: []
+                        transactions: [],
                     });
                 }
                 res.status(200).json({
                     totalTransactions,
                     totalPages,
                     currentPage,
-                    transactions
+                    transactions,
                 });
             }
             catch (error) {
@@ -86,29 +122,32 @@ class TransactionController {
                 const page = parseInt(req.query.page) || 1;
                 const limit = parseInt(req.query.limit) || 10;
                 const user = yield userModel_1.User.findOne({ username });
-                const subordinate = (yield userModel_1.User.findOne({ _id: subordinateId })) || (yield userModel_1.Player.findOne({ _id: subordinateId }));
+                const subordinate = (yield userModel_1.User.findOne({ _id: subordinateId })) ||
+                    (yield userModel_1.Player.findOne({ _id: subordinateId }));
                 if (!user) {
                     throw (0, http_errors_1.default)(404, "Unable to find logged in user");
                 }
                 if (!subordinate) {
                     throw (0, http_errors_1.default)(404, "User not found");
                 }
-                if (user.role === "company" || user.subordinates.includes(new mongoose_1.default.Types.ObjectId(subordinateId))) {
-                    const { transactions, totalTransactions, totalPages, currentPage, outOfRange } = yield this.transactionService.getTransactions(subordinate.username, page, limit);
+                let query = {};
+                if (user.role === "company" ||
+                    user.subordinates.includes(new mongoose_1.default.Types.ObjectId(subordinateId))) {
+                    const { transactions, totalTransactions, totalPages, currentPage, outOfRange, } = yield this.transactionService.getTransactions(subordinate.username, page, limit, query);
                     if (outOfRange) {
                         return res.status(400).json({
                             message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
                             totalTransactions,
                             totalPages,
                             currentPage: page,
-                            transactions: []
+                            transactions: [],
                         });
                     }
                     res.status(200).json({
                         totalTransactions,
                         totalPages,
                         currentPage,
-                        transactions
+                        transactions,
                     });
                 }
                 else {
@@ -134,8 +173,44 @@ class TransactionController {
                 }
                 const page = parseInt(req.query.page) || 1;
                 const limit = parseInt(req.query.limit) || 10;
+                const search = req.query.search;
+                let parsedData = {
+                    role: "",
+                    status: "",
+                    totalRecharged: { From: 0, To: 0 },
+                    totalRedeemed: { From: 0, To: 0 },
+                    credits: { From: 0, To: 0 },
+                    updatedAt: { From: new Date(), To: new Date() },
+                    type: "",
+                    amount: { From: 0, To: Infinity },
+                };
+                let type, updatedAt, amount;
+                if (search) {
+                    parsedData = JSON.parse(search);
+                    if (parsedData) {
+                        type = parsedData.type;
+                        updatedAt = parsedData.updatedAt;
+                        amount = parsedData.amount;
+                    }
+                }
+                let query = {};
+                if (type) {
+                    query.type = type;
+                }
+                if (updatedAt) {
+                    query.updatedAt = {
+                        $gte: parsedData.updatedAt.From,
+                        $lte: parsedData.updatedAt.To,
+                    };
+                }
+                if (amount) {
+                    query.amount = {
+                        $gte: parsedData.amount.From,
+                        $lte: parsedData.amount.To,
+                    };
+                }
                 const skip = (page - 1) * limit;
-                const totalTransactions = yield transactionModel_1.default.countDocuments();
+                const totalTransactions = yield transactionModel_1.default.countDocuments(query);
                 const totalPages = Math.ceil(totalTransactions / limit);
                 // Check if the requested page is out of range
                 if (page > totalPages) {
@@ -144,17 +219,15 @@ class TransactionController {
                         totalTransactions,
                         totalPages,
                         currentPage: page,
-                        transactions: []
+                        transactions: [],
                     });
                 }
-                const transactions = yield transactionModel_1.default.find()
-                    .skip(skip)
-                    .limit(limit);
+                const transactions = yield transactionModel_1.default.find(query).skip(skip).limit(limit);
                 res.status(200).json({
                     totalTransactions,
                     totalPages,
                     currentPage: page,
-                    transactions
+                    transactions,
                 });
             }
             catch (error) {
