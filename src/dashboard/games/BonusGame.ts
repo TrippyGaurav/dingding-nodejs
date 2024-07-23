@@ -27,11 +27,12 @@ export class BonusGame {
         this.result = this.parent.settings.currentGamedata.bonus.payOut;
 
         console.log("bonus result", this.result);
+        if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == bonusGameType.tap)
+            this.shuffle(this.result);
 
         for (let i = 0; i < this.result.length; i++) {
             res.push(this.result[i].toString());
         }
-
         return res;
     }
 
@@ -39,13 +40,10 @@ export class BonusGame {
         let res: string[] = [];
         let slot_array: number[] = [];
         let multiplier_array: number[] = [];
-
         slot_array.push(1);
         slot_array.push(2);
         slot_array.push(1);
-
         let reelNum: number = 1;
-
         if (!slot_array.includes(reelNum)) {
             reelNum = -1;
         }
@@ -76,12 +74,13 @@ export class BonusGame {
             console.log("bonus index", this.parent.settings.bonus.stopIndex);
             console.log("bonus result", this.result[this.parent.settings.bonus.stopIndex]);
         } else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == bonusGameType.tap) {
-            this.shuffle(this.result);
-            this.result.forEach((element) => {
-                if (element <= 0)
-                    return;
-                amount += this.parent.settings.BetPerLines * element;
-            });
+            console.log("bonus result", this.result);
+            for (let index = 0; index < this.result.length; index++) {
+                if (this.result[index] == 0)
+                    break;
+                else
+                    amount += this.parent.settings.BetPerLines * this.result[index];
+            }
         } else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == "slot") {
             for (let index = 1; index < 4; index++) {
                 amount += this.parent.settings.BetPerLines * this.result[this.result.length - index];

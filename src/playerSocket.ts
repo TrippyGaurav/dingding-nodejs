@@ -77,6 +77,7 @@ export class SocketUser {
             );
         }
     };
+    
     messageHandler = () => {
         return (message: any) => {
             const messageData = JSON.parse(message);

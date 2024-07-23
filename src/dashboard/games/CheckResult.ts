@@ -83,31 +83,28 @@ export class CheckResult {
     }
     private checkForBonus() {
         if (!this.currentGame.settings.currentGamedata.bonus.isEnabled) return;
-
+        if (this.currentGame.settings.freeSpinStarted) return
         let bonusSymbols = [];
-        // gameSettings.totalBonuWinAmount=[];
         let temp = this.findSymbol(specialIcons.bonus);
         if (temp.length > 0) bonusSymbols.push(...temp);
-        // console.log("paytable length",this.bonusPaytable.length);
         this.bonusPaytable.forEach((element) => {
             if (
                 element.symbolCount > 0 &&
                 bonusSymbols.length >= element.symbolCount
             ) {
-                // bonuswin = new WinData(bonusSymbols, 0, 0);
                 this.currentGame.settings._winData.winningSymbols.push(bonusSymbols);
-                // gameSettings._winData.bonus=true;
                 this.currentGame.settings.bonus.start = true;
                 this.currentGame.settings.noOfBonus++;
                 if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.tap)
-                    this.bonusResult = this.currentGame.settings.bonus.game.generateData(
-                        this.currentGame.settings.bonusPayTable[0]?.pay
-                    );
-                let temp = this.currentGame.settings.bonus.game.setRandomStopIndex();
-                this.currentGame.settings.totalBonuWinAmount.push(temp);
-                this.currentGame.settings._winData.totalWinningAmount += temp;
+                    this.bonusResult = this.currentGame.settings.bonus.game.generateData();
 
+                this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();
+            } else {
+                if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.spin)
+                    this.currentGame.settings.bonus.stopIndex = -1
             }
+
+
         });
     }
 

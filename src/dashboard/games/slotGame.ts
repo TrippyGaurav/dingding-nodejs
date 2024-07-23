@@ -18,8 +18,6 @@ export default class SlotGame {
         currentWining: number,
         socket: Socket
     }
-
-
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
         this.player = { ...player, haveWon: 0, currentWining: 0 };
         this.settings = {
@@ -101,24 +99,15 @@ export default class SlotGame {
     }
 
     private initialize(GameData: GameData) {
-
         this.settings.bonusPayTable = [];
         this.settings.scatterPayTable = [];
         this.settings.Symbols = [];
         this.settings.Weights = [];
         this.settings._winData = new WinData(this);
-
         this.settings.currentGamedata = GameData[0] || GameData;
-
-        this.settings.currentGamedata.Symbols.forEach((element) => {
-            if (element.Name === "Bonus") {
-                this.settings.bonus.id = element.Id
-            }
-        })
         this.initSymbols();
         UiInitData.paylines = convertSymbols(this.settings.currentGamedata.Symbols);
         this.settings.startGame = true;
-
         this.makePayLines();
         this.sendInitdata()
     }
@@ -138,7 +127,6 @@ export default class SlotGame {
     private messageHandler() {
         this.player.socket.on("message", (message) => {
             const res = JSON.parse(message)
-
             switch (res.id) {
                 case "SPIN":
                     if (this.settings.startGame) {
@@ -148,7 +136,6 @@ export default class SlotGame {
                         this.spinResult()
                     }
                     break;
-
                 case "GENRTP":
                     this.settings.currentLines = res.data.currentLines;
                     this.settings.BetPerLines = betMultiplier[res.data.currentBet];
@@ -159,7 +146,6 @@ export default class SlotGame {
                 case "checkMoolah":
                     this.checkforMoolah();
                     break;
-
                 default:
                     console.warn(`Unhandled message ID: ${res.id}`);
                     this.sendError(`Unhandled message ID: ${res.id}`)
