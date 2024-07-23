@@ -107,6 +107,7 @@ function spinResult(playerSkt, clientID) {
     _global_1.slotGameSettings.tempReels = [[]];
     _global_1.slotGameSettings.bonus.start = false;
     new slotDataInit_1.RandomResultGenerator();
+    // HERE: 
     const result = new slotResults_1.CheckResult(playerSkt);
     result.makeResultJson(playerSkt, slotTypes_1.ResultType.normal);
 }
@@ -294,13 +295,6 @@ function convertSymbols(data) {
             increaseValue: element.increaseValue || {},
             freeSpin: element.freeSpin
         };
-        // if (element.multiplier) {
-        //   const multiplierObject = {};
-        //   element.multiplier.forEach((item, index) => {
-        //     multiplierObject[(5 - index).toString() + "x"] = item[0];
-        //   });
-        //   symbolData.multiplier = multiplierObject;
-        // }
         uiData.symbols.push(symbolData);
     });
     return uiData;

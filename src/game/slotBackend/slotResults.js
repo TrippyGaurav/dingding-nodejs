@@ -104,7 +104,7 @@ class CheckResult {
         let allComboWin = [];
         _global_1.slotGameSettings.lineData.slice(0, _global_1.slotGameSettings.currentLines).forEach((lb, index) => {
             let win = null;
-            console.log("Lines Index : :" + index);
+            // console.log("Lines Index : :" + index);
             _global_1.slotGameSettings.fullPayTable.forEach((Payline) => {
                 //  find max win (or win with max symbols count)
                 const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
@@ -381,6 +381,7 @@ class PayLines {
         wPoss.forEach((p) => {
             maxCounterValues.push(1);
         });
+        // HERE: 
         let cC = new ComboCounter(maxCounterValues);
         while (cC.nextCombo()) {
             let combo = cC.combo;

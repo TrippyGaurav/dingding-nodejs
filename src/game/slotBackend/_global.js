@@ -13,6 +13,7 @@ exports.getCurrentRTP = exports.gameWining = exports.UiInitData = exports.slotGa
 const slotDataInit_1 = require("./slotDataInit");
 const slotResults_1 = require("./slotResults");
 const slotUtils_1 = require("./slotUtils");
+// DONE : 
 exports.slotGameSettings = {
     currentGamedata: {
         id: "",
@@ -113,6 +114,7 @@ exports.slotGameSettings = {
         (0, slotDataInit_1.sendInitdata)(playerSkt, clientID);
     }),
 };
+// DONE: 
 function initSymbols() {
     var _a, _b;
     for (let i = 0; i < (exports.slotGameSettings === null || exports.slotGameSettings === void 0 ? void 0 : exports.slotGameSettings.currentGamedata.Symbols.length); i++) {
@@ -120,6 +122,7 @@ function initSymbols() {
         exports.slotGameSettings.Weights.push((_b = exports.slotGameSettings.currentGamedata.Symbols[i]) === null || _b === void 0 ? void 0 : _b.weightedRandomness);
     }
 }
+// DONE
 exports.UiInitData = {
     paylines: null,
     spclSymbolTxt: [],
