@@ -83,6 +83,8 @@ export class SocketUser {
             console.log("message " + JSON.stringify(messageData));
             if (this.gameTag == GAMETYPE.SLOT)
                 slotMessages(this.socket, this.username, messageData);
+
+                
         }
     };
     sendError = (errorCode: string, message: any) => {
