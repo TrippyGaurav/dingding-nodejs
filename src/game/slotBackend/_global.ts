@@ -8,7 +8,7 @@ import { WinData, CheckResult } from "./slotResults";
 import { GameSettings, WildSymbol, PlayerData, winning, specialIcons, bonusGameType, ResultType } from "./slotTypes";
 import { convertSymbols, combineUniqueSymbols, removeRecurringIndexSymbols, makePayLines } from "./slotUtils";
 
-
+// DONE : 
 export const slotGameSettings: GameSettings = {
   currentGamedata: {
     id: "",
@@ -105,7 +105,6 @@ export const slotGameSettings: GameSettings = {
       if (element.Name == "Bonus") {
         slotGameSettings.bonus.id = element.Id
       }
-
     })
 
     initSymbols();
@@ -117,6 +116,7 @@ export const slotGameSettings: GameSettings = {
   },
 };
 
+// DONE: 
 function initSymbols() {
   for (let i = 0; i < slotGameSettings?.currentGamedata.Symbols.length; i++) {
     slotGameSettings.Symbols.push(
@@ -130,6 +130,7 @@ function initSymbols() {
 
 
 
+// DONE
 export const UiInitData = {
 
   paylines: null,
@@ -150,6 +151,7 @@ export let gameWining: winning = {
   freeSpins: 0,
   currentBet: 0,
 };
+
 export const getCurrentRTP = {
   playerWon: 0,
   playerTotalBets: 0,

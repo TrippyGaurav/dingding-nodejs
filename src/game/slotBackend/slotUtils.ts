@@ -104,6 +104,7 @@ export function spinResult(playerSkt: Socket, clientID: string) {
   slotGameSettings.bonus.start = false;
 
   new RandomResultGenerator();
+  // HERE: 
   const result = new CheckResult(playerSkt);
   result.makeResultJson(playerSkt, ResultType.normal);
 }
@@ -130,12 +131,14 @@ export function startFreeSpin(playerSkt: Socket) {
 
   console.log("____----Stopped FREE SPIN ----_____");
 }
+
 export function checkforMoolah(playerSkt: Socket) {
   console.log("_______-------CALLED FOR CHECK FOR MOOLAHHHH-------_______");
 
 
   slotGameSettings.tempReels = slotGameSettings.reels;
   const lastWinData = slotGameSettings._winData;
+  
   lastWinData.winningSymbols = combineUniqueSymbols(
     removeRecurringIndexSymbols(lastWinData.winningSymbols)
   );
@@ -335,13 +338,7 @@ export function convertSymbols(data) {
       increaseValue: element.increaseValue || {},
       freeSpin: element.freeSpin
     };
-    // if (element.multiplier) {
-    //   const multiplierObject = {};
-    //   element.multiplier.forEach((item, index) => {
-    //     multiplierObject[(5 - index).toString() + "x"] = item[0];
-    //   });
-    //   symbolData.multiplier = multiplierObject;
-    // }
+
     uiData.symbols.push(symbolData);
   });
 

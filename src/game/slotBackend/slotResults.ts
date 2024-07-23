@@ -7,6 +7,8 @@ import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType
 import { GData, PlayerData } from "../Global";
 import { Socket } from "socket.io";
 import { sendMessage } from "../../socket/userSocket";
+
+
 export class CheckResult {
   scatter: string;
   useScatter: boolean;
@@ -146,7 +148,7 @@ export class CheckResult {
 
     slotGameSettings.lineData.slice(0, slotGameSettings.currentLines).forEach((lb, index) => {
       let win = null;
-      console.log("Lines Index : :" + index);
+      // console.log("Lines Index : :" + index);
 
       slotGameSettings.fullPayTable.forEach((Payline: PayLines) => {
         //  find max win (or win with max symbols count)
@@ -482,13 +484,17 @@ export class PayLines {
     const maxWildsCount = this.useWildInFirstPosition
       ? wPoss.length - 1
       : wPoss.length;
+
     let minWildsCount = 1;
     let maxCounterValues: any[] = [];
+
     wPoss.forEach((p) => {
       maxCounterValues.push(1);
     });
 
+    // HERE: 
     let cC = new ComboCounter(maxCounterValues);
+
     while (cC.nextCombo()) {
       let combo = cC.combo;
       let comboSum = cC.sum(); // count of wilds in combo
@@ -568,6 +574,7 @@ export class WinData {
   totalWinningAmount: number;
   jackpotwin: number;
   resultReelIndex: number[] = [];
+
   constructor() {
     this.freeSpins = 0;
     this.winningLines = [];
