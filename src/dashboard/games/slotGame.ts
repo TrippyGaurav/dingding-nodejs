@@ -85,7 +85,7 @@ export default class SlotGame {
             currentLines: 0,
             BetPerLines: 0,
             startGame: false,
-            gamble: new gambleCardGame(),
+            gamble: new gambleCardGame(this),
             reels: [[]],
         };
 
