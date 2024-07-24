@@ -7,6 +7,7 @@ import { Player } from "../users/userModel";
 import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
+import { gambleCardGame } from "./GambleGame";
 
 export default class SlotGame {
     public settings: GameSettings;
@@ -84,11 +85,7 @@ export default class SlotGame {
             currentLines: 0,
             BetPerLines: 0,
             startGame: false,
-            gamble: {
-                game: null,
-                maxCount: 1,
-                start: false,
-            },
+            gamble: new gambleCardGame(this),
             reels: [[]],
         };
 
@@ -127,28 +124,28 @@ export default class SlotGame {
     private messageHandler() {
         this.player.socket.on("message", (message) => {
             try {
-                const res = JSON.parse(message)
+                const res = JSON.parse(message);
 
                 switch (res.id) {
                     case "SPIN":
-
                         if (this.settings.startGame) {
                             if (this.settings.currentBet > this.player.credits) {
                                 console.log("Low Balance");
-                                this.sendError("Low Balance")
+                                this.sendError("Low Balance");
                                 break;
                             }
 
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = betMultiplier[res.data.currentBet];
                             this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
-                            this.spinResult()
+                            this.spinResult();
                         }
                         break;
+
                     case "GENRTP":
                         if (this.settings.currentBet > this.player.credits) {
                             console.log("Low Balance");
-                            this.sendError("Low Balance")
+                            this.sendError("Low Balance");
                             break;
                         }
 
@@ -161,18 +158,29 @@ export default class SlotGame {
                     case "checkMoolah":
                         this.checkforMoolah();
                         break;
+
+                    case "GambleInit":
+                        this.settings.gamble.resetGamble();
+                        const sendData = this.settings.gamble.sendInitGambleData(res.data.GAMBLETYPE);
+                        this.sendMessage("gambleInitData", sendData);
+                        break;
+
+                    case "GambleResultData":
+                        this.settings.gamble.getResult(res.data);
+                        break;
+
                     default:
                         console.warn(`Unhandled message ID: ${res.id}`);
-                        this.sendError(`Unhandled message ID: ${res.id}`)
+                        this.sendError(`Unhandled message ID: ${res.id}`);
                         break;
                 }
             } catch (error) {
                 console.error("Failed to parse message:", error);
-                this.sendError("Parse error");
+                this.sendError("Failed to parse message");
             }
-
-        })
+        });
     }
+
 
     public async updateDatabase() {
         try {
