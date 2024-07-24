@@ -24,6 +24,10 @@ exports.users = new Map();
 class SocketUser {
     constructor(socket, platformData, gameSetting) {
         this.socketReady = false;
+        this.currentGame = null;
+        this.reconnectionAttempts = 0;
+        this.maxReconnectionAttempts = 3;
+        this.reconnectionTimeout = 5000; // 5 seconds
         this.initializeUser(socket, platformData, gameSetting);
     }
     initializeUser(socket, platformData, gameSetting) {
@@ -73,7 +77,7 @@ class SocketUser {
                 const game = platform[0].game;
                 const payoutData = yield gameModel_2.Payouts.find({ _id: { $in: game.payout } });
                 this.gameSettings = Object.assign({}, payoutData[0].data);
-                new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.socket }, this.gameSettings);
+                this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.socket }, this.gameSettings);
             }
             catch (error) {
                 console.error(`Error initializing game data for user ${this.username}:`, error);
@@ -98,17 +102,36 @@ class SocketUser {
     }
     disconnectHandler() {
         this.socket.on("disconnect", (reason) => {
-            console.log("User disconnected ", this.username);
-            // Handle cleanup logic
-            this.socketReady = false;
-            exports.users.delete(this.username);
-            // Clear the heartbeat interval
-            clearInterval(this.heartbeatInterval);
-            // Call the cleanup method
-            this.cleanup();
+            console.log(`User ${this.username} disconnected. Attempting to reconnect...`);
+            this.attemptReconnection();
+        });
+    }
+    attemptReconnection() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                while (this.reconnectionAttempts < this.maxReconnectionAttempts) {
+                    yield new Promise(resolve => setTimeout(resolve, this.reconnectionTimeout));
+                    this.reconnectionAttempts++;
+                    if (this.socket && this.socket.connected) {
+                        console.log(`User ${this.username} reconnected successfully.`);
+                        this.reconnectionAttempts = 0;
+                        return;
+                    }
+                    console.log(`Reconnection attempt ${this.reconnectionAttempts} for user ${this.username}...`);
+                }
+                console.log(`User ${this.username} failed to reconnect after ${this.maxReconnectionAttempts} attempts.`);
+                exports.users.delete(this.username);
+                this.cleanup();
+                console.log("Curren tser : ", this.username);
+                console.log("Map : ", exports.users);
+            }
+            catch (error) {
+                console.log("ERROR : Attempt to reconnect : ", error);
+            }
         });
     }
     cleanup() {
+        clearInterval(this.heartbeatInterval);
         // Nullify all properties to ensure the object is destroyed
         this.socket = null;
         this.username = null;
@@ -124,7 +147,29 @@ class SocketUser {
         this.socket.on("exit", () => {
             exports.users.delete(this.username);
             this.socket.disconnect();
+            this.cleanup();
             console.log("User exited");
+        });
+    }
+    updateSocket(socket) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.socket = socket;
+            this.socketID = socket.id;
+            this.socketReady = true;
+            this.disconnectHandler();
+            this.startHeartbeat();
+            this.onExit();
+            try {
+                const credits = yield (0, Global_1.getPlayerCredits)(this.username);
+                this.credits = typeof credits === "number" ? credits : 0;
+                // Reinitialize the game with the existing gameSettings and updated credits
+                if (this.gameSettings && this.username) {
+                    this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.socket }, this.gameSettings);
+                }
+            }
+            catch (error) {
+                console.error(`Error updating credits for user ${this.username}:`, error);
+            }
         });
     }
 }
@@ -140,13 +185,17 @@ function enterPlayer(socket) {
             }
             const existingUser = exports.users.get(platformData.username);
             if (existingUser) {
-                throw new Error("User already logged in from another device.");
+                yield existingUser.updateSocket(socket);
+                existingUser.sendAlert(`Welcome back, ${platformData.username}!`);
+                console.log(`Player ${platformData.username} re-entered the game.`);
             }
-            socket.data = { platformData, gameSetting };
-            const newUser = new SocketUser(socket, platformData, gameSetting);
-            exports.users.set(platformData.username, newUser);
-            socket.emit("alert", `Welcome, ${platformData.username}!`);
-            console.log(`Player ${platformData.username} entered the game.`);
+            else {
+                socket.data = { platformData, gameSetting };
+                const newUser = new SocketUser(socket, platformData, gameSetting);
+                exports.users.set(platformData.username, newUser);
+                newUser.sendAlert(`Welcome, ${platformData.username}!`);
+                console.log(`Player ${platformData.username} entered the game.`);
+            }
         }
         catch (error) {
             console.error("Error during player entry:", error);

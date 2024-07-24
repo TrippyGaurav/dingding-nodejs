@@ -121,12 +121,13 @@ class SlotGame {
                 const res = JSON.parse(message);
                 switch (res.id) {
                     case "SPIN":
+                        if (this.settings.currentBet > this.player.credits) {
+                            console.log("Low Balance : ", this.player.credits);
+                            console.log("Current Bet : ", this.settings.currentBet);
+                            this.sendError("Low Balance");
+                            break;
+                        }
                         if (this.settings.startGame) {
-                            if (this.settings.currentBet > this.player.credits) {
-                                console.log("Low Balance");
-                                this.sendError("Low Balance");
-                                break;
-                            }
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = gameUtils_1.betMultiplier[res.data.currentBet];
                             this.settings.currentBet = gameUtils_1.betMultiplier[res.data.currentBet] * this.settings.currentLines;
@@ -135,7 +136,8 @@ class SlotGame {
                         break;
                     case "GENRTP":
                         if (this.settings.currentBet > this.player.credits) {
-                            console.log("Low Balance");
+                            console.log("Low Balance : ", this.player.credits);
+                            console.log("Current Bet : ", this.settings.currentBet);
                             this.sendError("Low Balance");
                             break;
                         }
