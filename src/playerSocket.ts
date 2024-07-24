@@ -124,27 +124,30 @@ export class SocketUser {
     }
 
     private async attemptReconnection() {
-        while (this.reconnectionAttempts < this.maxReconnectionAttempts) {
-            await new Promise(resolve => setTimeout(resolve, this.reconnectionTimeout));
-            this.reconnectionAttempts++;
+        try {
+            while (this.reconnectionAttempts < this.maxReconnectionAttempts) {
+                await new Promise(resolve => setTimeout(resolve, this.reconnectionTimeout));
+                this.reconnectionAttempts++;
 
-            if (this.socket.connected) {
-                console.log(`User ${this.username} reconnected successfully.`);
-                this.reconnectionAttempts = 0;
-                return;
+                if (this.socket && this.socket.connected) {
+                    console.log(`User ${this.username} reconnected successfully.`);
+                    this.reconnectionAttempts = 0;
+                    return;
+                }
+
+                console.log(`Reconnection attempt ${this.reconnectionAttempts} for user ${this.username}...`);
             }
 
-            console.log(`Reconnection attempt ${this.reconnectionAttempts} for user ${this.username}...`);
+            console.log(`User ${this.username} failed to reconnect after ${this.maxReconnectionAttempts} attempts.`);
+            users.delete(this.username);
+            this.cleanup();
+
+            console.log("Curren tser : ", this.username);
+
+            console.log("Map : ", users);
+        } catch (error) {
+            console.log("ERROR : Attempt to reconnect : ", error);
         }
-
-        console.log(`User ${this.username} failed to reconnect after ${this.maxReconnectionAttempts} attempts.`);
-        users.delete(this.username);
-        this.cleanup();
-
-        console.log("Curren tser : ", this.username);
-
-        console.log("Map : ", users);
-
     }
 
 
