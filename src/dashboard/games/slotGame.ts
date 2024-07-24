@@ -92,7 +92,6 @@ export default class SlotGame {
 
         this.initialize(GameData);
         this.messageHandler();
-
     }
 
     private initialize(GameData: GameData) {
@@ -128,12 +127,13 @@ export default class SlotGame {
 
                 switch (res.id) {
                     case "SPIN":
+                        if (this.settings.currentBet > this.player.credits) {
+                            console.log("Low Balance : ", this.player.credits);
+                            console.log("Current Bet : ", this.settings.currentBet);
+                            this.sendError("Low Balance");
+                            break;
+                        }
                         if (this.settings.startGame) {
-                            if (this.settings.currentBet > this.player.credits) {
-                                console.log("Low Balance");
-                                this.sendError("Low Balance");
-                                break;
-                            }
 
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = betMultiplier[res.data.currentBet];
@@ -144,7 +144,8 @@ export default class SlotGame {
 
                     case "GENRTP":
                         if (this.settings.currentBet > this.player.credits) {
-                            console.log("Low Balance");
+                            console.log("Low Balance : ", this.player.credits);
+                            console.log("Current Bet : ", this.settings.currentBet);
                             this.sendError("Low Balance");
                             break;
                         }
