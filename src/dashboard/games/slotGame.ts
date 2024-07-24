@@ -92,7 +92,6 @@ export default class SlotGame {
 
         this.initialize(GameData);
         this.messageHandler();
-
     }
 
     private initialize(GameData: GameData) {
