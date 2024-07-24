@@ -21,9 +21,6 @@ const gameModel_2 = require("./dashboard/games/gameModel");
 const slotGame_1 = __importDefault(require("./dashboard/games/slotGame"));
 const testData_1 = require("./game/slotBackend/testData");
 exports.users = new Map();
-const RECONNECT_TIMEOUT = 60000;
-// HEATBEAT FOR : ewvery 20s
-// Reconnect : 
 class SocketUser {
     constructor(socket, platformData, gameSetting) {
         this.socketReady = false;
@@ -51,6 +48,10 @@ class SocketUser {
             }
             catch (error) {
                 console.error(`Error initializing user ${this.username}:`, error);
+                if (socket.connected) {
+                    socket.emit("internalError", error.message);
+                }
+                socket.disconnect();
             }
         });
     }
@@ -139,23 +140,20 @@ function enterPlayer(socket) {
             }
             const existingUser = exports.users.get(platformData.username);
             if (existingUser) {
-                socket.emit("internalError", "Please log out from the other device.");
-                socket.disconnect();
-                existingUser.socketID = socket.id;
-                yield existingUser.initializeUser(socket, platformData, gameSetting);
-                console.log(`Player ${platformData.username} tried to enter from another device.`);
+                throw new Error("User already logged in from another device.");
             }
-            else {
-                socket.data = { platformData, gameSetting };
-                const newUser = new SocketUser(socket, platformData, gameSetting);
-                exports.users.set(platformData.username, newUser);
-                socket.emit("alert", `Welcome, ${platformData.username}!`);
-                console.log(`Player ${platformData.username} entered the game.`);
-            }
+            socket.data = { platformData, gameSetting };
+            const newUser = new SocketUser(socket, platformData, gameSetting);
+            exports.users.set(platformData.username, newUser);
+            socket.emit("alert", `Welcome, ${platformData.username}!`);
+            console.log(`Player ${platformData.username} entered the game.`);
         }
         catch (error) {
             console.error("Error during player entry:", error);
-            socket.emit("internalError", "An error occurred during player entry.");
+            if (socket.connected) {
+                socket.emit("internalError", error.message);
+            }
+            socket.disconnect(true); // Forcefully disconnect to clean up resources
         }
     });
 }
@@ -171,7 +169,8 @@ function getPlatformData(socket) {
             };
         }
         catch (error) {
-            throw new Error("Failed to get platform data: " + error.message);
+            console.error("Failed to get platform data:", error);
+            throw error;
         }
     });
 }
