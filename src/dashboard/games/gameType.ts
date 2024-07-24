@@ -1,5 +1,6 @@
 import mongoose, { Document, Types } from "mongoose";
 import { Card, gambleCardGame } from "./GambleGame";
+import { WinData } from "./WinData";
 
 export interface IGame extends Document {
   name: string;
@@ -65,7 +66,7 @@ export interface GameSettings {
   resultSymbolMatrix: any[];
   lineData: any[];
   fullPayTable: any[];
-  _winData: any | undefined;
+  _winData: WinData | undefined;
   freeSpinStarted: boolean;
   resultReelIndex: any[];
   noOfBonus: number;

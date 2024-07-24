@@ -9,14 +9,12 @@ export class BonusGame {
     noise: number;
     minPay: number;
     maxPay: number;
-    clientId: string;
     parent: SlotGame
 
     constructor(nosOfItem: number, parent: SlotGame) {
         this.noOfItems = nosOfItem;
         this.type = bonusGameType.default;
         this.result = [];
-        this.clientId = parent.player.socket.id;
         this.parent = parent;
     }
 

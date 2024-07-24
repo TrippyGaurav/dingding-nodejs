@@ -1,7 +1,7 @@
 
 import { Socket } from "socket.io";
 import { middleware } from "../../utils/middleware";
-import { GData } from "../Global";
+import { GData } from "../../dashboard/utils/Global";
 import { bonusGame } from "./extraBonusGames";
 import { sendInitdata, RandomResultGenerator } from "./slotDataInit";
 import { WinData, CheckResult } from "./slotResults";

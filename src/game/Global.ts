@@ -1,6 +1,6 @@
 import { Player } from '../dashboard/users/userModel';
-import { GDataType, UserData } from './Utils/globalTypes';
 
+import { GDataType, UserData } from './Utils/globalTypes';
 
 export const GData: GDataType = {
     playerSocket: undefined,

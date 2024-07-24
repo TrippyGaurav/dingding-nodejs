@@ -36,8 +36,8 @@ export class CheckResult {
         this.bonusPaytable = current.settings.bonusPayTable;
         this.reels = current.settings.resultSymbolMatrix;
 
-        console.log("SCATTER PAYTABLE : ", this.scatterPayTable);
-        console.log("Bonus PAYTABLE : ", this.bonusPaytable);
+        // console.log("SCATTER PAYTABLE : ", this.scatterPayTable);
+        // console.log("Bonus PAYTABLE : ", this.bonusPaytable);
 
         this.scatterWinSymbols = [];
         this.jackpotWinSymbols = [];
@@ -49,7 +49,7 @@ export class CheckResult {
     }
 
     searchWinSymbols() {
-        console.log("search win symbols");
+        // console.log("search win symbols");
 
         this.checkForWin();
         this.checkForBonus();
@@ -64,7 +64,7 @@ export class CheckResult {
 
         this.currentGame.settings._winData.updateBalance();
         console.log("result :", this.currentGame.settings.resultSymbolMatrix);
-        console.log("win data", this.currentGame.settings._winData);
+        // console.log("win data", this.currentGame.settings._winData);
         console.log("Bonus start", this.currentGame.settings.bonus.start);
 
         if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings._winData.freeSpins != 0)
@@ -113,7 +113,7 @@ export class CheckResult {
 
         this.currentGame.settings.lineData.slice(0, this.currentGame.settings.currentLines).forEach((lb, index) => {
             let win = null;
-            console.log("Lines Index : :" + index);
+            // console.log("Lines Index : :" + index);
 
             this.currentGame.settings.fullPayTable.forEach((Payline: PayLines) => {
                 //  find max win (or win with max symbols count)
