@@ -13,7 +13,6 @@ class BonusGame {
         this.result = [];
         let res = [];
         this.result = this.parent.settings.currentGamedata.bonus.payOut;
-        console.log("bonus result", this.result);
         if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.tap)
             this.shuffle(this.result);
         for (let i = 0; i < this.result.length; i++) {
@@ -49,12 +48,8 @@ class BonusGame {
         if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.spin) {
             this.parent.settings.bonus.stopIndex = this.getRandomPayoutIndex(this.parent.settings.currentGamedata.bonus.payOutProb);
             amount = this.parent.settings.BetPerLines * this.result[this.parent.settings.bonus.stopIndex];
-            console.log("bonus amount", amount);
-            console.log("bonus index", this.parent.settings.bonus.stopIndex);
-            console.log("bonus result", this.result[this.parent.settings.bonus.stopIndex]);
         }
         else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.tap) {
-            console.log("bonus result", this.result);
             for (let index = 0; index < this.result.length; index++) {
                 if (this.result[index] == 0)
                     break;

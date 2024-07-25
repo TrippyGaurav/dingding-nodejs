@@ -22,6 +22,8 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const userModel_1 = require("./userModel");
 const userService_1 = __importDefault(require("./userService"));
 const transactionModel_1 = __importDefault(require("../transactions/transactionModel"));
+const socket_1 = require("../../socket");
+const Player_1 = __importDefault(require("../../Player"));
 class UserController {
     constructor() {
         this.userService = new userService_1.default();
@@ -103,6 +105,9 @@ class UserController {
                 if (!username || !password) {
                     throw (0, http_errors_1.default)(400, "Username, password are required");
                 }
+                if (socket_1.users.has(username)) {
+                    throw (0, http_errors_1.default)(403, "User is already logged in");
+                }
                 let user;
                 user = yield this.userService.findUserByUsername(username);
                 if (!user) {
@@ -115,7 +120,8 @@ class UserController {
                 if (!isPasswordValid) {
                     throw (0, http_errors_1.default)(401, "Invalid username or password");
                 }
-                user.lastLogin = new Date();
+                if (user)
+                    user.lastLogin = new Date();
                 user.loginTimes = (user.loginTimes || 0) + 1;
                 yield user.save();
                 const token = jsonwebtoken_1.default.sign({ id: user._id, username: user.username, role: user.role }, config_1.config.jwtSecret, { expiresIn: "24h" });
@@ -124,6 +130,8 @@ class UserController {
                     httpOnly: true,
                     sameSite: "none",
                 });
+                // Add user to the logged-in users map
+                socket_1.users.set(username, new Player_1.default(user.username, user.role, user.credits, "", null));
                 res.status(200).json({
                     message: "Login successful",
                     token: token,
@@ -503,7 +511,7 @@ class UserController {
                 if (client instanceof userModel_1.User) {
                     yield this.userService.deleteUserById(clientObjectId);
                 }
-                else if (client instanceof userModel_1.Player) {
+                else if (client instanceof Player_1.default) {
                     yield this.userService.deletePlayerById(clientObjectId);
                 }
                 admin.subordinates = admin.subordinates.filter((id) => !id.equals(clientObjectId));
