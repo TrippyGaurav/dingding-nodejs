@@ -11,7 +11,8 @@ import session from "express-session"
 import { config } from "./config/config";
 import svgCaptcha from "svg-captcha";
 import createHttpError from "http-errors";
-import socketController from "./socket/controller";
+import socketController from "./socket";
+
 
 declare module "express-session" {
   interface Session {
