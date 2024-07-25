@@ -25,7 +25,7 @@ const express_session_1 = __importDefault(require("express-session"));
 const config_1 = require("./config/config");
 const svg_captcha_1 = __importDefault(require("svg-captcha"));
 const http_errors_1 = __importDefault(require("http-errors"));
-const controller_1 = __importDefault(require("./socket/controller"));
+const socket_1 = __importDefault(require("./socket"));
 const app = (0, express_1.default)();
 app.use((0, express_session_1.default)({
     secret: config_1.config.jwtSecret,
@@ -92,6 +92,6 @@ const io = new socket_io_1.Server(server, {
         methods: ["GET", "POST"],
     },
 });
-(0, controller_1.default)(io);
+(0, socket_1.default)(io);
 app.use(globalHandler_1.default);
 exports.default = server;
