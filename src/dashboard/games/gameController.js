@@ -30,6 +30,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const userModel_1 = require("../users/userModel");
 const cloudinary_1 = __importDefault(require("cloudinary"));
 const config_1 = require("../../config/config");
+const socket_1 = require("../../socket");
 cloudinary_1.default.v2.config({
     cloud_name: config_1.config.cloud_name,
     api_key: config_1.config.api_key,
@@ -141,9 +142,15 @@ class GameController {
     getGameBySlug(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                const _req = req;
+                const { username, role } = _req.user;
                 const { gameId: slug } = req.params;
                 if (!slug) {
                     throw (0, http_errors_1.default)(400, "Slug parameter is required");
+                }
+                const existingUser = socket_1.users.get(username);
+                if (existingUser && existingUser.gameSocket) {
+                    throw (0, http_errors_1.default)(403, "You already have an active game session.");
                 }
                 const platform = yield gameModel_1.Platform.aggregate([
                     { $unwind: "$games" },

@@ -4,7 +4,7 @@ exports.defaultPayoutTable = void 0;
 exports.play = play;
 const crypto_1 = require("crypto"); // For random number generation
 const _global_1 = require("./_global");
-const Global_1 = require("../Global");
+const TestGlobal_1 = require("../TestGlobal");
 exports.defaultPayoutTable = {
     1: { 0: 0, 1: 0 },
     2: { 0: 0, 1: 1, 2: 8 },
@@ -40,12 +40,12 @@ function play(count, payoutTable = exports.defaultPayoutTable) {
     for (let i = 0; i <= count; i++) {
         matchCounts[i] = 0;
     }
-    Global_1.GData.playerSocket.deductPlayerBalance(_global_1.kenoCurrentGameData.currentBet);
+    TestGlobal_1.GData.playerSocket.deductPlayerBalance(_global_1.kenoCurrentGameData.currentBet);
     const selectedNumbers = _global_1.kenoCurrentGameData.currentSelectedNumbers;
     const drawnNumbers = drawNumbers();
     const winnings = calculateWinnings(selectedNumbers, drawnNumbers, payoutTable);
     totalWinnings += winnings;
-    Global_1.GData.playerSocket.updatePlayerBalance(totalWinnings);
+    TestGlobal_1.GData.playerSocket.updatePlayerBalance(totalWinnings);
     const matches = selectedNumbers.filter(num => drawnNumbers.includes(num)).length;
     matchCounts[matches] += 1;
     // const rtp = totalWinnings / spins;

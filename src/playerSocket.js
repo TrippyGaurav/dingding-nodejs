@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SocketUser = exports.users = void 0;
 exports.default = enterPlayer;
 const playerAuth_1 = require("./utils/playerAuth");
-const Global_1 = require("./game/Global");
+const TestGlobal_1 = require("./game/TestGlobal");
 const gameModel_1 = require("./dashboard/games/gameModel");
 const gameModel_2 = require("./dashboard/games/gameModel");
 const slotGame_1 = __importDefault(require("./dashboard/games/slotGame"));
@@ -160,7 +160,7 @@ class SocketUser {
             this.startHeartbeat();
             this.onExit();
             try {
-                const credits = yield (0, Global_1.getPlayerCredits)(this.username);
+                const credits = yield (0, TestGlobal_1.getPlayerCredits)(this.username);
                 this.credits = typeof credits === "number" ? credits : 0;
                 // Reinitialize the game with the existing gameSettings and updated credits
                 if (this.gameSettings && this.username) {
@@ -210,7 +210,7 @@ function getPlatformData(socket) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const decoded = yield (0, playerAuth_1.verifyPlayerToken)(socket);
-            const credits = yield (0, Global_1.getPlayerCredits)(decoded.username);
+            const credits = yield (0, TestGlobal_1.getPlayerCredits)(decoded.username);
             return {
                 username: decoded.username,
                 role: decoded.role,

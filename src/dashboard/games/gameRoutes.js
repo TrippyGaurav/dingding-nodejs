@@ -21,6 +21,6 @@ gameRoutes.get("/platforms", checkUser_1.checkUser, gameController.getPlatforms)
 gameRoutes.post("/platforms", checkUser_1.checkUser, gameController.addPlatform);
 gameRoutes.put("/:gameId", upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), checkUser_1.checkUser, gameController.updateGame);
 gameRoutes.delete("/:gameId", checkUser_1.checkUser, gameController.deleteGame);
-gameRoutes.get("/:gameId", middlware_1.validateApiKey, middlware_1.extractRoleFromCookie, gameController.getGameBySlug);
+gameRoutes.get("/:gameId", middlware_1.validateApiKey, checkUser_1.checkUser, gameController.getGameBySlug);
 gameRoutes.put("/favourite/:playerId", middlware_1.extractRoleFromCookie, gameController.addFavouriteGame);
 exports.default = gameRoutes;

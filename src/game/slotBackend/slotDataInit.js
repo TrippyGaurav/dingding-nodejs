@@ -8,7 +8,7 @@ const slotUtils_1 = require("./slotUtils");
 const slotTypes_1 = require("./slotTypes");
 const extraBonusGames_1 = require("./extraBonusGames");
 const userSocket_1 = require("../../socket/userSocket");
-const Global_1 = require("../Global");
+const TestGlobal_1 = require("../TestGlobal");
 function sendInitdata(playerSkt, clientID) {
     var _a;
     // const matrix = generateMatrix(gameSettings.matrix.x, 18);
@@ -39,7 +39,7 @@ function sendInitdata(playerSkt, clientID) {
             ? _global_1.slotGameSettings.bonus.game.generateData((_a = _global_1.slotGameSettings.bonusPayTable[0]) === null || _a === void 0 ? void 0 : _a.pay)
             : [],
         UIData: _global_1.UiInitData,
-        PlayerData: Global_1.PlayerData,
+        PlayerData: TestGlobal_1.PlayerData,
     };
     (0, userSocket_1.sendMessage)(playerSkt, "InitData", dataToSend);
 }

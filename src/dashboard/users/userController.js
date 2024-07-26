@@ -39,6 +39,7 @@ class UserController {
         this.getCurrentUserSubordinates =
             this.getCurrentUserSubordinates.bind(this);
         this.generatePassword = this.generatePassword.bind(this);
+        this.logoutUser = this.logoutUser.bind(this);
     }
     static getSubordinateRoles(role) {
         return this.rolesHierarchy[role] || [];
@@ -105,9 +106,6 @@ class UserController {
                 if (!username || !password) {
                     throw (0, http_errors_1.default)(400, "Username, password are required");
                 }
-                if (socket_1.users.has(username)) {
-                    throw (0, http_errors_1.default)(403, "User is already logged in");
-                }
                 let user;
                 user = yield this.userService.findUserByUsername(username);
                 if (!user) {
@@ -120,22 +118,48 @@ class UserController {
                 if (!isPasswordValid) {
                     throw (0, http_errors_1.default)(401, "Invalid username or password");
                 }
-                if (user)
-                    user.lastLogin = new Date();
+                user.lastLogin = new Date();
                 user.loginTimes = (user.loginTimes || 0) + 1;
                 yield user.save();
-                const token = jsonwebtoken_1.default.sign({ id: user._id, username: user.username, role: user.role }, config_1.config.jwtSecret, { expiresIn: "24h" });
+                const token = jsonwebtoken_1.default.sign({ id: user._id, username: user.username, role: user.role }, config_1.config.jwtSecret, { expiresIn: "7d" });
                 res.cookie("userToken", token, {
                     maxAge: 1000 * 60 * 60 * 24 * 7,
                     httpOnly: true,
                     sameSite: "none",
                 });
-                // Add user to the logged-in users map
-                socket_1.users.set(username, new Player_1.default(user.username, user.role, user.credits, "", null));
                 res.status(200).json({
                     message: "Login successful",
                     token: token,
                     role: user.role,
+                });
+            }
+            catch (error) {
+                console.log(error);
+                next(error);
+            }
+        });
+    }
+    logoutUser(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const _req = req;
+                const { username, role } = _req.user;
+                if (!username) {
+                    throw (0, http_errors_1.default)(400, "Username is required");
+                }
+                if (!socket_1.users.has(username)) {
+                    throw (0, http_errors_1.default)(404, "User not logged in");
+                }
+                // Remove the user from the logged-in users map
+                socket_1.users.delete(username);
+                console.log("User logged out : ", username);
+                // Clear the user token cookie
+                res.clearCookie("userToken", {
+                    httpOnly: true,
+                    sameSite: "none",
+                });
+                res.status(200).json({
+                    message: "Logout successful",
                 });
             }
             catch (error) {
