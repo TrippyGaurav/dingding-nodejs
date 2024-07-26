@@ -10,10 +10,14 @@ import jwt from "jsonwebtoken";
 import { config } from "../../config/config";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
-import { User, Player } from "./userModel";
+import { User, Player as PlayerModel } from "./userModel";
 import UserService from "./userService";
 import Transaction from "../transactions/transactionModel";
 import { QueryParams } from "../../game/Utils/globalTypes";
+import { users } from "../../socket";
+import Player from "../../Player";
+
+
 
 export class UserController {
   private userService: UserService;
@@ -39,6 +43,7 @@ export class UserController {
     this.getCurrentUserSubordinates =
       this.getCurrentUserSubordinates.bind(this);
     this.generatePassword = this.generatePassword.bind(this);
+    this.logoutUser = this.logoutUser.bind(this)
   }
 
   public static getSubordinateRoles(role: string): string[] {
@@ -138,7 +143,7 @@ export class UserController {
       const token = jwt.sign(
         { id: user._id, username: user.username, role: user.role },
         config.jwtSecret!,
-        { expiresIn: "24h" }
+        { expiresIn: "7d" }
       );
 
       res.cookie("userToken", token, {
@@ -146,6 +151,7 @@ export class UserController {
         httpOnly: true,
         sameSite: "none",
       });
+
 
       res.status(200).json({
         message: "Login successful",
@@ -157,6 +163,41 @@ export class UserController {
 
       next(error);
     }
+  }
+
+  async logoutUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const _req = req as AuthRequest;
+      const { username, role } = _req.user;
+
+      if (!username) {
+        throw createHttpError(400, "Username is required");
+      }
+
+      if (!users.has(username)) {
+        throw createHttpError(404, "User not logged in");
+      }
+
+      // Remove the user from the logged-in users map
+      users.delete(username);
+      console.log("User logged out : ", username);
+
+
+      // Clear the user token cookie
+      res.clearCookie("userToken", {
+        httpOnly: true,
+        sameSite: "none",
+      });
+
+      res.status(200).json({
+        message: "Logout successful",
+      });
+
+    } catch (error) {
+      console.log(error);
+      next(error)
+    }
+
   }
 
   async createUser(req: Request, res: Response, next: NextFunction) {
@@ -352,7 +393,7 @@ export class UserController {
       }
 
       const userCount = await User.countDocuments(query);
-      const playerCount = await Player.countDocuments(query);
+      const playerCount = await PlayerModel.countDocuments(query);
 
       const totalSubordinates = userCount + playerCount;
       const totalPages = Math.ceil(totalSubordinates / limit);
@@ -386,7 +427,7 @@ export class UserController {
       let players = [];
       if (remainingLimit > 0) {
         const playerSkip = Math.max(0, skip - userCount);
-        players = await Player.find(query)
+        players = await PlayerModel.find(query)
           .skip(playerSkip)
           .limit(remainingLimit);
       }
@@ -429,7 +470,7 @@ export class UserController {
       if (id) {
         userToCheck = await User.findById(id);
         if (!userToCheck) {
-          userToCheck = await Player.findById(id);
+          userToCheck = await PlayerModel.findById(id);
           if (!userToCheck) {
             return res.status(404).json({ message: "User not found" });
           }
@@ -498,8 +539,8 @@ export class UserController {
       let totalSubordinates;
 
       if (userToCheck.role === "store") {
-        totalSubordinates = await Player.countDocuments(query);
-        subordinates = await Player.find(query)
+        totalSubordinates = await PlayerModel.countDocuments(query);
+        subordinates = await PlayerModel.find(query)
           .skip(skip)
           .limit(limit)
           .select(
@@ -507,7 +548,7 @@ export class UserController {
           );
       } else if (userToCheck.role === "company") {
         const userSubordinatesCount = await User.countDocuments(query);
-        const playerSubordinatesCount = await Player.countDocuments(query);
+        const playerSubordinatesCount = await PlayerModel.countDocuments(query);
 
         totalSubordinates = userSubordinatesCount + playerSubordinatesCount;
         const userSubordinates = await User.find(query)
@@ -521,12 +562,12 @@ export class UserController {
 
         const playerSubordinates =
           remainingLimit > 0
-            ? await Player.find(query)
-                .skip(Math.max(skip - userSubordinatesCount, 0))
-                .limit(remainingLimit)
-                .select(
-                  "name username status role totalRecharged totalRedeemed credits"
-                )
+            ? await PlayerModel.find(query)
+              .skip(Math.max(skip - userSubordinatesCount, 0))
+              .limit(remainingLimit)
+              .select(
+                "name username status role totalRecharged totalRedeemed credits"
+              )
             : [];
 
         subordinates = [...userSubordinates, ...playerSubordinates];
@@ -728,7 +769,7 @@ export class UserController {
               createdBy: subordinateId,
             });
 
-            const playerSubordinates = await Player.find({
+            const playerSubordinates = await PlayerModel.find({
               createdBy: subordinateId,
             });
 
@@ -739,7 +780,7 @@ export class UserController {
 
           case "store":
             client = await User.findById(subordinateId)
-              .populate({ path: "subordinates", model: Player })
+              .populate({ path: "subordinates", model: PlayerModel })
               .populate({ path: "transactions", model: Transaction });
             break;
 
@@ -803,7 +844,7 @@ export class UserController {
         let subordinate = await User.findById(userId);
 
         if (!subordinate) {
-          subordinate = await Player.findById(userId);
+          subordinate = await PlayerModel.findById(userId);
 
           if (!subordinate) {
             throw createHttpError(404, "Subordinate user not found");
@@ -889,7 +930,7 @@ export class UserController {
           },
         ]);
 
-        const players = await Player.countDocuments({
+        const players = await PlayerModel.countDocuments({
           role: "player",
           createdAt: { $gte: start, $lte: end },
         });
@@ -987,7 +1028,7 @@ export class UserController {
 
         let users;
         if (targetUser.role === "store" || targetUser.role === "player") {
-          users = await Player.aggregate([
+          users = await PlayerModel.aggregate([
             {
               $match: {
                 $and: [
@@ -1072,7 +1113,7 @@ export class UserController {
       let subordinate = await User.findById(subordinateObjectId);
 
       if (!subordinate) {
-        subordinate = await Player.findById(subordinateObjectId);
+        subordinate = await PlayerModel.findById(subordinateObjectId);
 
         if (!subordinate) {
           throw createHttpError(404, "Subordinate not found");
@@ -1115,7 +1156,7 @@ export class UserController {
         createdAt: { $gte: start, $lte: end },
       });
 
-      const playersCreatedToday = await Player.find({
+      const playersCreatedToday = await PlayerModel.find({
         createdBy: subordinate._id,
         createdAt: { $gte: start, $lte: end },
       });

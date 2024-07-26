@@ -6,6 +6,7 @@ import { AuthRequest } from "../../utils/utils";
 import { Player } from "../users/userModel";
 import cloudinary from "cloudinary";
 import { config } from "../../config/config";
+import { users } from "../../socket";
 
 cloudinary.v2.config({
   cloud_name: config.cloud_name,
@@ -143,11 +144,20 @@ export class GameController {
   // GET : Get Game By Slug
   async getGameBySlug(req: Request, res: Response, next: NextFunction) {
     try {
+      const _req = req as AuthRequest;
+      const { username, role } = _req.user;
+
       const { gameId: slug } = req.params;
 
       if (!slug) {
         throw createHttpError(400, "Slug parameter is required");
       }
+
+      const existingUser = users.get(username);
+      if (existingUser && existingUser.gameSocket) {
+        throw createHttpError(403, "You already have an active game session.")
+      }
+
 
       const platform = await Platform.aggregate([
         { $unwind: "$games" },
