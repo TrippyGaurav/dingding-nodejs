@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { verifyPlayerToken } from "./utils/playerAuth";
-import { getPlayerCredits } from "./game/Global";
+import { getPlayerCredits } from "./game/TestGlobal";
 import { Platform } from "./dashboard/games/gameModel";
 import { Payouts } from "./dashboard/games/gameModel";
 
