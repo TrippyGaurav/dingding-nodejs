@@ -9,6 +9,9 @@ const userRoutes = express.Router();
 // LOGIN
 userRoutes.post("/login", userController.loginUser);
 
+// LOGOUT
+userRoutes.post("/logout", checkUser, userController.logoutUser)
+
 // ADD User
 userRoutes.post("/", checkUser, userController.createUser);
 

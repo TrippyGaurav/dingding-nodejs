@@ -68,45 +68,41 @@ const socketController = (io: Server) => {
             return;
         }
 
+        console.log("CUrrent users : ", users);
+
+
         const userAgent = (socket as any).userAgent;
+        const username = decoded.username;
 
-        const user = {
-            username: decoded.username,
-            role: decoded.role,
-            credits: decoded.credits,
-            userAgent: userAgent,
-            socket: socket
+        const existingUser = users.get(username);
+
+        if (existingUser) {
+            if (existingUser.userAgent !== userAgent) {
+                socket.emit("alert", "You are already playing on another browser.");
+                socket.disconnect(true);
+                return;
+            }
+
+            // if (existingUser.gameSocket) {
+            //     socket.emit("alert", "You are already connected from another tab.");
+            //     socket.disconnect(true);
+            //     return;
+            // }
+
+            await existingUser.updateGameSocket(socket);
+            existingUser.sendAlert(`Game socket created for ${username}`);
+            console.log(`Player ${username} started a new game.`);
+            return;
         }
 
-        io.emit("newConnectionAlert", "A new user has connected!");
-        // enterPlayer(socket);
-        try {
-            const existingUser = users.get(user.username);
-            if (existingUser && existingUser.socket !== null) {
+        // This is a new user connecting
+        const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket);
+        users.set(username, newUser);
+        newUser.sendAlert(`Welcome, ${newUser.username}!`);
+        console.log(`Player ${newUser.username} entered the game.`);
 
-                if (existingUser.userAgent !== userAgent) {
-                    socket.emit("alert", "You are already playing on another browser.");
-                    socket.disconnect(true);
-                    return;
-                }
-                await existingUser.updateSocket(socket);
-                existingUser.sendAlert(`Welcome back, ${user.username}!`)
-                console.log(`Player ${user.username} re-entered the game.`);
-            }
-            else {
-                const newUser = new Player(user.username, user.role, user.credits, user.userAgent, user.socket);
-                users.set(user.username, newUser);
-                newUser.sendAlert(`Welcome, ${newUser.username}!`);
-                console.log(`Player ${newUser.username} entered the game`);
+        console.log("After users : ", users);
 
-            }
-        } catch (error) {
-            console.log("Error during player entry : ", error);
-            if (socket.connected) {
-                socket.emit("internalError", error.message)
-            }
-            socket.disconnect(true)
-        }
     });
 
     // Error handling middleware
