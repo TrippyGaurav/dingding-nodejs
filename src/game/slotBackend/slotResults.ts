@@ -4,7 +4,7 @@
 import { slotGameSettings, gameWining, getCurrentRTP } from "./_global";
 import { removeRecurringIndexSymbols, startFreeSpin } from "./slotUtils";
 import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "./slotTypes";
-import { GData, PlayerData } from "../Global";
+import { GData, PlayerData } from "../TestGlobal";
 import { Socket } from "socket.io";
 import { sendMessage } from "../../socket/userSocket";
 

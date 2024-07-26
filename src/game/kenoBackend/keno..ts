@@ -1,6 +1,6 @@
 import { randomInt } from "crypto"; // For random number generation
 import { kenoCurrentGameData } from "./_global";
-import { GData } from "../Global";
+import { GData } from "../TestGlobal";
 
 interface PayoutTable {
     [key: number]: { [key: number]: number };
