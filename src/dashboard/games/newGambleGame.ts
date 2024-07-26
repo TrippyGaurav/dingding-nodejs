@@ -98,7 +98,7 @@ export class gambleCardGame {
     if(gameType == GAMBLETYPE.HIGHCARD)
     {
       const highCard = this.getHighCard();
-      return gambleData = {highCard : highCard, lowCard : this.getLowerCard(highCard)}; 
+      return gambleData = {highCard : highCard, lowCard : this.getLowerCard(highCard), exCards : [this.getRandomCard(),this.getRandomCard()]}; 
     }
   }
 
