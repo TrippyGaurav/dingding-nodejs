@@ -1,28 +1,11 @@
 import { Socket } from "socket.io";
 import { verifyPlayerToken } from "./utils/playerAuth";
-<<<<<<< Updated upstream
-import { getPlayerCredits } from "./game/Global";
-<<<<<<< HEAD
-=======
+import { getPlayerCredits } from "./game/TestGlobal";
 import { MESSAGEID, MESSAGETYPE } from "./utils/utils";
-=======
-
->>>>>>> Stashed changes
->>>>>>> dev-v
 import { Platform } from "./dashboard/games/gameModel";
 import { Payouts } from "./dashboard/games/gameModel";
-
 import SlotGame from "./dashboard/games/slotGame";
-<<<<<<< HEAD
 import { gameData } from "./game/slotBackend/testData";
-=======
-<<<<<<< Updated upstream
-=======
-import { gameData } from "./game/slotBackend/testData";
-import { getPlayerCredits } from "./game/global";
->>>>>>> Stashed changes
->>>>>>> dev-v
-
 export let users: Map<string, SocketUser> = new Map();
 
 

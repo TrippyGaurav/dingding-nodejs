@@ -162,12 +162,14 @@ export default class SlotGame {
 
                     case "GambleInit":
                         this.settings.gamble.resetGamble();
+
                         const sendData = this.settings.gamble.sendInitGambleData(res.data.GAMBLETYPE);
+
                         this.sendMessage("gambleInitData", sendData);
                         break;
 
                     case "GambleResultData":
-                        this.settings.gamble.getResult(res.data);
+                        this.settings.gamble.getResult(res.data.GAMBLETYPE);
                         break;
 
                     default:
