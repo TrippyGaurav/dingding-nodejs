@@ -19,7 +19,7 @@ const userModel_1 = require("../users/userModel");
 const PayLines_1 = __importDefault(require("./PayLines"));
 const RandomResultGenerator_1 = require("./RandomResultGenerator");
 const CheckResult_1 = require("./CheckResult");
-const GambleGame_1 = require("./GambleGame");
+const newGambleGame_1 = require("./newGambleGame");
 class SlotGame {
     constructor(player, GameData) {
         this.player = Object.assign(Object.assign({}, player), { haveWon: 0, currentWining: 0 });
@@ -87,7 +87,7 @@ class SlotGame {
             currentLines: 0,
             BetPerLines: 0,
             startGame: false,
-            gamble: new GambleGame_1.gambleCardGame(this),
+            gamble: new newGambleGame_1.gambleCardGame(this),
             reels: [[]],
         };
         this.initialize(GameData);
@@ -155,7 +155,7 @@ class SlotGame {
                         this.sendMessage("gambleInitData", sendData);
                         break;
                     case "GambleResultData":
-                        this.settings.gamble.getResult(res.data);
+                        this.settings.gamble.getResult(res.data.GAMBLETYPE);
                         break;
                     default:
                         console.warn(`Unhandled message ID: ${res.id}`);

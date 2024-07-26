@@ -7,7 +7,7 @@ const _global_1 = require("./_global");
 const slotUtils_1 = require("./slotUtils");
 const slotTypes_1 = require("./slotTypes");
 Object.defineProperty(exports, "ResultType", { enumerable: true, get: function () { return slotTypes_1.ResultType; } });
-const Global_1 = require("../Global");
+const TestGlobal_1 = require("../TestGlobal");
 const userSocket_1 = require("../../socket/userSocket");
 class CheckResult {
     constructor(playerSkt) {
@@ -294,9 +294,9 @@ class CheckResult {
                 BonusStopIndex: _global_1.slotGameSettings.bonus.stopIndex,
                 BonusResult: this.bonusResult,
             },
-            PlayerData: Global_1.PlayerData,
+            PlayerData: TestGlobal_1.PlayerData,
         };
-        Global_1.GData.playerSocket.updateCreditsInDb();
+        TestGlobal_1.GData.playerSocket.updateCreditsInDb();
         if (isResult == slotTypes_1.ResultType.normal)
             (0, userSocket_1.sendMessage)(playerSkt, "ResultData", ResultData);
         if (isResult == slotTypes_1.ResultType.moolah) {
@@ -468,7 +468,7 @@ class WinData {
     }
     updateBalance() {
         // gameWining.TotalWinningAmount += this.pay;
-        Global_1.GData.playerSocket.updatePlayerBalance(this.totalWinningAmount);
+        TestGlobal_1.GData.playerSocket.updatePlayerBalance(this.totalWinningAmount);
         _global_1.getCurrentRTP.playerWon += this.totalWinningAmount;
         console.log("BETS " + _global_1.slotGameSettings.currentBet);
         if (!_global_1.slotGameSettings.freeSpinStarted)
