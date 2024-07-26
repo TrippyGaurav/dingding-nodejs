@@ -24,7 +24,7 @@ gameRoutes.post("/platforms", checkUser, gameController.addPlatform)
 gameRoutes.put("/:gameId", upload.fields([{ name: 'thumbnail' }, { name: 'payoutFile' }]), checkUser, gameController.updateGame);
 
 gameRoutes.delete("/:gameId", checkUser, gameController.deleteGame);
-gameRoutes.get("/:gameId", validateApiKey, extractRoleFromCookie, gameController.getGameBySlug);
+gameRoutes.get("/:gameId", validateApiKey, checkUser, gameController.getGameBySlug);
 gameRoutes.put(
   "/favourite/:playerId",
   extractRoleFromCookie,

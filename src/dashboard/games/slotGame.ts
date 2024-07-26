@@ -7,7 +7,7 @@ import { Player } from "../users/userModel";
 import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
-import { gambleCardGame } from "./GambleGame";
+import { gambleCardGame } from "./newGambleGame";
 
 export default class SlotGame {
     public settings: GameSettings;
@@ -162,12 +162,14 @@ export default class SlotGame {
 
                     case "GambleInit":
                         this.settings.gamble.resetGamble();
+
                         const sendData = this.settings.gamble.sendInitGambleData(res.data.GAMBLETYPE);
+
                         this.sendMessage("gambleInitData", sendData);
                         break;
 
                     case "GambleResultData":
-                        this.settings.gamble.getResult(res.data);
+                        this.settings.gamble.getResult(res.data.GAMBLETYPE);
                         break;
 
                     default:

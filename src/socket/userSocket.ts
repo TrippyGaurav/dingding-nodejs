@@ -5,7 +5,7 @@ import { Player } from "../dashboard/users/userModel";
 export let users: Map<string, SocketUser> = new Map();
 import { gameData } from "../game/slotBackend/testData";
 import { Payouts } from "../dashboard/games/gameModel";
-import { GData, PlayerData } from "../game/Global";
+import { GData, PlayerData } from "../game/TestGlobal";
 import { GAMETYPE } from "../game/Utils/globalTypes";
 import { slotMessages } from "../game/slotBackend/slotMessages";
 import { slotGameSettings } from "../game/slotBackend/_global";

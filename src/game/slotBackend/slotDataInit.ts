@@ -3,12 +3,12 @@ import { UiInitData, slotGameSettings } from "./_global";
 import { PayLines } from "./slotResults";
 import { shuffleArray } from "./slotUtils";
 import { bonusGameType } from "./slotTypes";
-import { GData } from "../Global";
+import { GData } from "../TestGlobal";
 import { bonusGame } from "./extraBonusGames";
 import { Socket } from "socket.io";
 import { sendMessage } from "../../socket/userSocket";
 import { Player } from "../../dashboard/users/userModel";
-import { PlayerData } from "../Global";
+import { PlayerData } from "../TestGlobal";
 export function sendInitdata(playerSkt: Socket, clientID: string) {
   // const matrix = generateMatrix(gameSettings.matrix.x, 18);
   gameDataInit();

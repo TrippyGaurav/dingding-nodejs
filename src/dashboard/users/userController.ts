@@ -43,6 +43,7 @@ export class UserController {
     this.getCurrentUserSubordinates =
       this.getCurrentUserSubordinates.bind(this);
     this.generatePassword = this.generatePassword.bind(this);
+    this.logoutUser = this.logoutUser.bind(this)
   }
 
   public static getSubordinateRoles(role: string): string[] {
@@ -117,10 +118,6 @@ export class UserController {
         throw createHttpError(400, "Username, password are required");
       }
 
-      if (users.has(username)) {
-        throw createHttpError(403, "User is already logged in");
-      }
-
       let user;
       user = await this.userService.findUserByUsername(username);
 
@@ -138,9 +135,7 @@ export class UserController {
         throw createHttpError(401, "Invalid username or password");
       }
 
-      if (user)
-
-        user.lastLogin = new Date();
+      user.lastLogin = new Date();
 
       user.loginTimes = (user.loginTimes || 0) + 1;
       await user.save();
@@ -148,7 +143,7 @@ export class UserController {
       const token = jwt.sign(
         { id: user._id, username: user.username, role: user.role },
         config.jwtSecret!,
-        { expiresIn: "24h" }
+        { expiresIn: "7d" }
       );
 
       res.cookie("userToken", token, {
@@ -157,8 +152,6 @@ export class UserController {
         sameSite: "none",
       });
 
-      // Add user to the logged-in users map
-      users.set(username, new Player(user.username, user.role, user.credits, "", null));
 
       res.status(200).json({
         message: "Login successful",
@@ -170,6 +163,41 @@ export class UserController {
 
       next(error);
     }
+  }
+
+  async logoutUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const _req = req as AuthRequest;
+      const { username, role } = _req.user;
+
+      if (!username) {
+        throw createHttpError(400, "Username is required");
+      }
+
+      if (!users.has(username)) {
+        throw createHttpError(404, "User not logged in");
+      }
+
+      // Remove the user from the logged-in users map
+      users.delete(username);
+      console.log("User logged out : ", username);
+
+
+      // Clear the user token cookie
+      res.clearCookie("userToken", {
+        httpOnly: true,
+        sameSite: "none",
+      });
+
+      res.status(200).json({
+        message: "Logout successful",
+      });
+
+    } catch (error) {
+      console.log(error);
+      next(error)
+    }
+
   }
 
   async createUser(req: Request, res: Response, next: NextFunction) {
