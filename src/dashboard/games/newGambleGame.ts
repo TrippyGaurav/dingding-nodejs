@@ -21,6 +21,7 @@ export class gambleCardGame {
   deck: Card[];
   chosenCards: Set<string>;
   initialUpdate : boolean = false;
+  shouldWin : boolean = false;
 
   constructor(public sltGame : SlotGame) {
     this.resetGamble();
@@ -45,7 +46,7 @@ export class gambleCardGame {
       randomCard = this.deck[randomIndex];
     } while (this.chosenCards.has(`${randomCard.value}-${randomCard.suit}`));
 
-    this.chosenCards.add(`${randomCard.value}-${randomCard.suit}`);
+    this.chosenCards.add(`${randomCard.value}-${randomCard.suit }`);
     return randomCard;
   }
 
@@ -64,6 +65,21 @@ export class gambleCardGame {
   getCardSuitRank(card: Card): number {
     return this.suitRanks[card.suit];
   }
+  getRandomRedCard(): Card {
+    let card: Card;
+    do {
+      card = this.getRandomCard();
+    } while (!this.isCardRed(card));
+    return card;
+  }
+
+  getRandomBlackCard(): Card {
+    let card: Card;
+    do {
+      card = this.getRandomCard();
+    } while (!this.isCardBlack(card));
+    return card;
+  }
 
   compareCards(card1: Card, card2: Card): number {
     const valueComparison = this.getCardValue(card1) - this.getCardValue(card2);
@@ -75,11 +91,15 @@ export class gambleCardGame {
   }
   sendInitGambleData(gameType : GAMBLETYPE)
   {
+    this.shouldWin = getRandomBoolean();
     let gambleData;
     if(gameType == GAMBLETYPE.BlACKRED)
-    return gambleData = {card : this.getRandomCard()} 
+    return gambleData = {blCard : this.getRandomBlackCard(), rdCard : this.getRandomRedCard()} 
     if(gameType == GAMBLETYPE.HIGHCARD)
-    return gambleData = {playerCard : this.getRandomCard(), dealerCard : this.getRandomCard()} 
+    {
+      const highCard = this.getHighCard();
+      return gambleData = {highCard : highCard, lowCard : this.getLowerCard(highCard)}; 
+    }
   }
 
   getResult(data : any):void{
@@ -88,10 +108,11 @@ export class gambleCardGame {
         playerWon : false,
         winningAmount :0
     };
+
     let result;
     if(gambleData.gameType == GAMBLETYPE.BlACKRED)
     {
-        result = this.checkForRedBlack(gambleData.chosenCard.pl,gambleData.isCardBlack);
+      result = this.shouldWin;
       if(result)
       {
         resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount*2;
@@ -121,7 +142,7 @@ export class gambleCardGame {
       
     if(gambleData.gameType == GAMBLETYPE.HIGHCARD)
     {
-      result = this.playHighCard(gambleData.gameTypechosenCard.pl,gambleData.gameType.chosenCard.pl);
+      result = this.shouldWin;
     }
 
     if(result)
@@ -148,7 +169,7 @@ export class gambleCardGame {
       }
 
   }
-  checkForRedBlack(plCard : Card,isCardBlack)
+  checkForRedBlack(plCard : Card,isCardBlack :boolean)
   {
     if(isCardBlack)
     {
@@ -156,6 +177,27 @@ export class gambleCardGame {
     }
     else
     return this.isCardRed(plCard);
+  }
+  getHighCard(): Card {
+    const highestValue = this.values[this.values.length - 1]; // 'A'
+    let card: Card;
+    do {
+      card = this.getRandomCard();
+    } while (card.value !== highestValue);
+    return card;
+  }
+
+  getLowerCard(highCard: Card): Card | null {
+    const highCardValueIndex = this.values.indexOf(highCard.value);
+    if (highCardValueIndex <= 0) {
+      return null; // No lower card available
+    }
+    const lowerValue = this.values[highCardValueIndex - 1];
+    let card: Card;
+    do {
+      card = this.getRandomCard();
+    } while (card.value !== lowerValue);
+    return card;
   }
   
   playHighCard(plCard : Card, dlCard : Card): boolean {
@@ -185,3 +227,6 @@ export class gambleCardGame {
 
 // cardGame.playHighCard();
 // cardGame.playRedOrBlack();
+function getRandomBoolean(): boolean {
+    return Math.random() >= 0.5;
+}

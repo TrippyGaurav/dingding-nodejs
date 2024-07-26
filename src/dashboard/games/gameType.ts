@@ -1,5 +1,5 @@
 import mongoose, { Document, Types } from "mongoose";
-import { Card, gambleCardGame } from "./GambleGame";
+import { Card, gambleCardGame } from "./newGambleGame";
 import { WinData } from "./WinData";
 
 export interface IGame extends Document {

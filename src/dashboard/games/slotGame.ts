@@ -7,7 +7,7 @@ import { Player } from "../users/userModel";
 import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
-import { gambleCardGame } from "./GambleGame";
+import { gambleCardGame } from "./newGambleGame";
 
 export default class SlotGame {
     public settings: GameSettings;
