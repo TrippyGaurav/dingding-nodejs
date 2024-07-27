@@ -24,6 +24,9 @@ export default class Player {
     maxReconnectionAttempts: number = 3;
     reconnectionTimeout: number = 5000; // 5 seconds
 
+    cleanedUp: boolean = false;
+
+
     constructor(username: string, role: string, credits: number, userAgent: string, gameSocket: Socket) {
 
         this.username = username;
@@ -55,6 +58,11 @@ export default class Player {
             while (this.reconnectionAttempts < this.maxReconnectionAttempts) {
                 await new Promise(resolve => setTimeout(resolve, this.reconnectionTimeout));
                 this.reconnectionAttempts++;
+
+                if (this.cleanedUp) {
+                    console.log(`Reconnection halted for user ${this.username} as cleanup is done.`);
+                    return;
+                }
 
                 if (this.gameSocket && this.gameSocket.connected) {
                     console.log(`User ${this.username} reconnected successfully.`);
@@ -91,20 +99,34 @@ export default class Player {
 
     cleanup() {
         if (this.gameSocket) {
-            this.gameSocket.disconnect();
+            this.gameSocket.disconnect(true);
             this.gameSocket = null;
         }
         clearInterval(this.heartbeatInterval);
+
+        this.username = "";
+        this.role = "";
+        this.credits = 0;
+        this.userAgent = "";
+        this.gameSettings = null;
+        this.currentGame = null;
+        this.reconnectionAttempts = 0;
+
+        this.cleanedUp = true; // Set the cleanup flag
+
     }
 
     onExit() {
         if (this.gameSocket) {
-            this.gameSocket.on("exit", () => {
+            this.gameSocket.on("EXIT", () => {
                 users.delete(this.username);
                 this.cleanup();
                 console.log("User exited");
+                console.log("USERS : ", users);
             });
         }
+
+
     }
 
 
