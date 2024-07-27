@@ -39,6 +39,7 @@ export default class Player {
 
     initializeGameSocket(socket: Socket) {
         this.gameSocket = socket;
+        this.cleanedUp = false;  // Reset the cleanup flag
         this.gameSocket.on("disconnect", () => this.handleGameDisconnection());
         this.initGameData();
         this.startHeartbeat();
