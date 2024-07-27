@@ -308,7 +308,8 @@ class SlotGame {
                 Balance: this.player.credits,
                 haveWon: this.player.haveWon,
                 currentWining: this.player.currentWining
-            }
+            },
+            maxGambleBet: 300
         };
         // console.log("Data to send : ", dataToSend);
         this.sendMessage("InitData", dataToSend);
