@@ -143,9 +143,10 @@ class gambleCardGame {
     }
     getHighCard() {
         let card;
+        const filteredValues = this.values.filter(value => value !== '2');
         do {
-            const randomIndex = Math.floor(Math.random() * this.values.length);
-            const randomValue = this.values[randomIndex];
+            const randomIndex = Math.floor(Math.random() * filteredValues.length);
+            const randomValue = filteredValues[randomIndex];
             card = this.getRandomCardFromValue(randomValue);
         } while (card === null || this.chosenCards.has(`${card.value}-${card.suit}`));
         return card;
