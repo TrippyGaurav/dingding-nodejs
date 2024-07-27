@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { Platform, Payouts } from "./gameModel";
+import { Platform } from "./gameModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import { AuthRequest } from "../../utils/utils";
@@ -7,6 +7,7 @@ import { Player } from "../users/userModel";
 import cloudinary from "cloudinary";
 import { config } from "../../config/config";
 import { users } from "../../socket";
+import Payouts from "../payouts/payoutModel";
 
 cloudinary.v2.config({
   cloud_name: config.cloud_name,
@@ -278,24 +279,22 @@ export class GameController {
       }
 
       // Handle file for payout
-      const jsonData = JSON.parse(
-        req.files.payoutFile[0].buffer.toString("utf-8")
-      );
+      const payoutFile = req.files.payoutFile[0];
+      const jsonData = JSON.parse(payoutFile.buffer.toString("utf-8"));
+      const payoutFileName = payoutFile.originalname;
 
-      // Check if a Payout with the same gameName already exists
-      let payoutId;
 
-      let existingPayout = await Payouts.findOne({ gameName: tagName });
-      if (existingPayout) {
-        payoutId = existingPayout._id;
-      } else {
-        const newPayout = new Payouts({
-          gameName: tagName,
-          data: jsonData,
-        });
-        await newPayout.save({ session });
-        payoutId = newPayout._id;
-      }
+      const newPayout = new Payouts({
+        gameName: tagName,
+        content: [
+          {
+            name: payoutFileName,
+            data: jsonData
+          }
+        ]
+      });
+      await newPayout.save({ session });
+
 
       const newGame = {
         name,
@@ -306,7 +305,7 @@ export class GameController {
         status,
         tagName,
         slug,
-        payout: payoutId,
+        payout: newPayout._id
       };
 
       platform.games.push(newGame as any);

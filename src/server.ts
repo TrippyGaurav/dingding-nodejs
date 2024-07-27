@@ -12,6 +12,10 @@ import { config } from "./config/config";
 import svgCaptcha from "svg-captcha";
 import createHttpError from "http-errors";
 import socketController from "./socket";
+import { checkAdmin } from "./dashboard/middleware/checkAdmin";
+import payoutController from "./dashboard/payouts/payoutController";
+import payoutRoutes from "./dashboard/payouts/payoutRoutes";
+import { checkUser } from "./dashboard/middleware/checkUser";
 
 
 declare module "express-session" {
@@ -90,6 +94,7 @@ app.use("/api/company", companyRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/games", gameRoutes);
+app.use("/api/payouts", checkUser, checkAdmin, payoutRoutes)
 
 const io = new Server(server, {
   cors: {

@@ -4,13 +4,14 @@ import { verifyPlayerToken } from "../utils/playerAuth";
 import { Player } from "../dashboard/users/userModel";
 export let users: Map<string, SocketUser> = new Map();
 import { gameData } from "../game/slotBackend/testData";
-import { Payouts } from "../dashboard/games/gameModel";
 import { GData, PlayerData } from "../game/Global";
 import { GAMETYPE } from "../game/Utils/globalTypes";
 import { slotMessages } from "../game/slotBackend/slotMessages";
 import { slotGameSettings } from "../game/slotBackend/_global";
 import { kenoMessages } from "../game/kenoBackend/kenoMessages";
 import { Platform } from "../dashboard/games/gameModel";
+import Payouts from "../dashboard/payouts/payoutModel";
+
 
 export class SocketUser {
     socket: Socket;
@@ -53,12 +54,24 @@ export class SocketUser {
                 slotGameSettings.initiate(this.socket, gameData[0], this.socket.id);
                 return;
             }
-            const payoutData = await Payouts.find({ _id: { $in: game.payout } });
+
+            const payout = await Payouts.findById(game.payout);
+            if (!payout) {
+                throw new Error(`Payout not found for game ${game.name}`);
+            }
+
+            // Assuming you need the first element's data from the content array
+            if (payout.content.length === 0) {
+                throw new Error(`No payout content found for game ${game.name}`);
+            }
+
+            const firstPayoutContent = payout.content[0];
+
             const gameType = tagName.split('-');
             this.gameTag = gameType[0];
             if (gameType == GAMETYPE.SLOT)
                 console.log('SLOT INITITATED')
-            slotGameSettings.initiate(this.socket, payoutData[0].data, this.socket.id);
+            slotGameSettings.initiate(this.socket, firstPayoutContent.data, this.socket.id);
             if (gameType == GAMETYPE.KENO) {
 
                 console.log("KENO  GAME INITITATED");
