@@ -82,14 +82,14 @@ class gambleCardGame {
     }
     getResult(data) {
         const gambleData = data;
+        console.log("GAMBLE DATA " + gambleData);
         let resultData = {
-            playerWon: false,
+            playerWon: this.shouldWin,
             winningAmount: 0
         };
-        let result;
-        if (gambleData.gameType == GAMBLETYPE.BlACKRED) {
-            result = this.shouldWin;
-            if (result) {
+        if (gambleData == GAMBLETYPE.BlACKRED) {
+            // result = this.shouldWin;
+            if (this.shouldWin) {
                 resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount * 2;
                 resultData.playerWon = true;
                 this.sltGame.sendMessage("GambleResult", resultData);
@@ -111,27 +111,26 @@ class gambleCardGame {
             //RESULT == TRUE MEANS PLAYER WON MAKE IT FOR IF PLAYER HAS NOT WON
             //UPDATE AMOUNT IF WONNN ELSE MAKE IT ZERO
         }
-        if (gambleData.gameType == GAMBLETYPE.HIGHCARD) {
-            result = this.shouldWin;
-        }
-        if (result) {
-            resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount * 2;
-            resultData.playerWon = true;
-            this.sltGame.sendMessage("GambleResult", resultData);
-            if (!this.initialUpdate) {
-                this.initialUpdate = true;
-                this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
+        if (gambleData == GAMBLETYPE.HIGHCARD) {
+            if (this.shouldWin) {
+                resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount * 2;
+                resultData.playerWon = true;
+                this.sltGame.sendMessage("GambleResult", resultData);
+                if (!this.initialUpdate) {
+                    this.initialUpdate = true;
+                    this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
+                    return;
+                }
+                this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount * 2);
                 return;
             }
-            this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount * 2);
-            return;
-        }
-        else {
-            this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
-            resultData.winningAmount = 0;
-            resultData.playerWon = false;
-            this.sltGame.sendMessage("GambleResult", resultData);
-            return;
+            else {
+                this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
+                resultData.winningAmount = 0;
+                resultData.playerWon = false;
+                this.sltGame.sendMessage("GambleResult", resultData);
+                return;
+            }
         }
     }
     checkForRedBlack(plCard, isCardBlack) {
