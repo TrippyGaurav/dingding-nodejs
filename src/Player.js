@@ -24,6 +24,7 @@ class Player {
         this.reconnectionAttempts = 0;
         this.maxReconnectionAttempts = 3;
         this.reconnectionTimeout = 5000; // 5 seconds
+        this.cleanedUp = false;
         this.username = username;
         this.role = role;
         this.credits = credits;
@@ -33,6 +34,7 @@ class Player {
     }
     initializeGameSocket(socket) {
         this.gameSocket = socket;
+        this.cleanedUp = false; // Reset the cleanup flag
         this.gameSocket.on("disconnect", () => this.handleGameDisconnection());
         this.initGameData();
         this.startHeartbeat();
@@ -50,6 +52,10 @@ class Player {
                 while (this.reconnectionAttempts < this.maxReconnectionAttempts) {
                     yield new Promise(resolve => setTimeout(resolve, this.reconnectionTimeout));
                     this.reconnectionAttempts++;
+                    if (this.cleanedUp) {
+                        console.log(`Reconnection halted for user ${this.username} as cleanup is done.`);
+                        return;
+                    }
                     if (this.gameSocket && this.gameSocket.connected) {
                         console.log(`User ${this.username} reconnected successfully.`);
                         this.reconnectionAttempts = 0;
@@ -80,17 +86,26 @@ class Player {
     }
     cleanup() {
         if (this.gameSocket) {
-            this.gameSocket.disconnect();
+            this.gameSocket.disconnect(true);
             this.gameSocket = null;
         }
         clearInterval(this.heartbeatInterval);
+        this.username = "";
+        this.role = "";
+        this.credits = 0;
+        this.userAgent = "";
+        this.gameSettings = null;
+        this.currentGame = null;
+        this.reconnectionAttempts = 0;
+        this.cleanedUp = true; // Set the cleanup flag
     }
     onExit() {
         if (this.gameSocket) {
-            this.gameSocket.on("exit", () => {
+            this.gameSocket.on("EXIT", () => {
                 socket_1.users.delete(this.username);
                 this.cleanup();
                 console.log("User exited");
+                console.log("USERS : ", socket_1.users);
             });
         }
     }
