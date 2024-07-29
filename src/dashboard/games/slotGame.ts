@@ -87,6 +87,7 @@ export default class SlotGame {
             startGame: false,
             gamble: new gambleCardGame(this),
             reels: [[]],
+            currentMoolahCount: 0,
         };
 
 
@@ -222,7 +223,7 @@ export default class SlotGame {
             this.player.haveWon += credit;
             this.player.currentWining = credit;
             console.log("FINAL BALANCE : ", this.player.credits);
-            await this.updateDatabase();
+            // await this.updateDatabase();
         } catch (error) {
             console.error('Error updating credits in database:', error);
         }
@@ -231,7 +232,7 @@ export default class SlotGame {
     async deductPlayerBalance(credit: number) {
         this.checkPlayerBalance();
         this.player.credits -= credit;
-        await this.updateDatabase();
+        // await this.updateDatabase();
     }
 
     private initSymbols() {
@@ -405,7 +406,6 @@ export default class SlotGame {
             /*
             MIDDLEWARE GOES HERE
             */
-
             this.settings.tempReels = [[]];
             this.settings.bonus.start = false;
 
@@ -445,13 +445,15 @@ export default class SlotGame {
 
     }
 
-    private checkforMoolah() {
+    public checkforMoolah() {
         try {
             console.log("--------------------- CALLED FOR CHECK FOR MOOLAHHHH ---------------------");
 
 
             this.settings.tempReels = this.settings.reels;
-            const lastWinData = this.settings._winData;
+
+            const lastWinData = this.settings._winData
+            console.log("TEMP WINDATA  : ", lastWinData);
 
             lastWinData.winningSymbols = this.combineUniqueSymbols(
                 this.removeRecurringIndexSymbols(lastWinData.winningSymbols)
@@ -494,17 +496,23 @@ export default class SlotGame {
             // matrix.pop();
             // matrix.pop();
             // matrix.pop();
-            // matrix.push([ '1', '2', '3', '4', '5' ])
-            // matrix.push([ '1', '1', '1', '1', '6' ])
-            // matrix.push([ '0', '0', '0', '0', '0' ])
+            // matrix.push(['1', '2', '3', '4', '5'])
+            // matrix.push(['1', '1', '1', '1', '6'])
+            // matrix.push(['0', '0', '0', '0', '0'])
             console.log("iconsTofill", iconsToFill);
             this.settings.resultSymbolMatrix = matrix;
+            console.log("New Moola Matrix  : " + matrix);
 
+            console.log('icons to fill', iconsToFill)
+            // tempGame.
             const result = new CheckResult(this);
             result.makeResultJson(ResultType.moolah, iconsToFill);
+            this.settings._winData.winningSymbols = []
+            this.settings.tempReels = []
         } catch (error) {
             console.error("Failed to check for Moolah:", error);
             this.sendError("Moolah check error");
+            return error
         }
 
     }

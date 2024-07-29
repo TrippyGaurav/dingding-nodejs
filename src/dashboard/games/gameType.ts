@@ -89,8 +89,9 @@ export interface GameSettings {
   currentLines: number;
   BetPerLines: number;
   startGame: boolean;
-  gamble:gambleCardGame;
+  gamble: gambleCardGame;
   reels: any[][];
+  currentMoolahCount: number,
 }
 
 export interface WildSymbol {

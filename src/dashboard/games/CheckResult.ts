@@ -5,6 +5,8 @@ import SlotGame from "./slotGame";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import PayLines from "./PayLines";
 import { ScatterPayEntry, BonusPayEntry, ResultType } from "./gameUtils";
+import { moolahPayOut } from "./testData";
+import { log } from "console";
 
 export class CheckResult {
     scatter: string;
@@ -26,7 +28,6 @@ export class CheckResult {
 
     constructor(current) {
         current.settings._winData = new WinData(current);
-
         this.currentGame = current;
         this.scatter = specialIcons.scatter;
         this.useScatter = current.settings.useScatter && this.scatter !== null;
@@ -46,6 +47,23 @@ export class CheckResult {
         this.bonusResult = [];
 
         this.searchWinSymbols();
+
+        if (this.currentGame.settings._winData.totalWinningAmount > 0) {
+
+            this.currentGame.settings.currentMoolahCount++;
+            console.log("MOOLAH COUNT : ", this.currentGame.settings.currentMoolahCount);
+            this.currentGame.checkforMoolah();
+
+        }
+        else {
+            if (this.currentGame.settings.currentMoolahCount >= 3 && (moolahPayOut.length + 3) > this.currentGame.settings.currentMoolahCount) {
+                this.currentGame.settings._winData.freeSpins = moolahPayOut[3 - this.currentGame.settings.currentMoolahCount]
+                if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings._winData.freeSpins != 0)
+                    this.startFreeSpin();
+            }
+            this.currentGame.settings.currentMoolahCount = 0;
+        }
+
     }
 
     searchWinSymbols() {
@@ -139,6 +157,8 @@ export class CheckResult {
                 element.pay * this.currentGame.settings.BetPerLines;
             this.currentGame.settings._winData.freeSpins += element.freeSpin;
         });
+
+
     }
 
     private checkforDuplicate(allComboWin: any[]): any[] {
@@ -332,12 +352,13 @@ export class CheckResult {
                 currentWining: this.currentGame.player.currentWining
             }
         };
-        this.currentGame.updateDatabase()
+        // this.currentGame.updateDatabase()
         if (isResult == ResultType.normal)
             this.currentGame.sendMessage("ResultData", ResultData);
         if (isResult == ResultType.moolah) {
             ResultData.GameData['iconstoFill'] = iconsToFill;
             this.currentGame.sendMessage("MoolahResultData", ResultData);
+
         }
     }
 
