@@ -442,7 +442,18 @@ export default class SlotGame {
             console.error("Failed to calculate RTP:", error);
             this.sendError("RTP calculation error");
         }
-
+//    let count = 0;
+//             const intervalId = setInterval(() => {
+//                 this.spinResult()
+//                 count++;
+            
+//                 // Stop after 500 calls
+//                 if (count >= spins) {
+//                     clearInterval(intervalId);
+//                 }
+//                 spend += this.settings.currentBet;
+//                 won = this.settings._winData.totalWinningAmount
+//             }, 1000);
     }
 
     public checkforMoolah() {
