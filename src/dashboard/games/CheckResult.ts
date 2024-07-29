@@ -49,10 +49,11 @@ export class CheckResult {
         this.searchWinSymbols();
 
         if (this.currentGame.settings._winData.winningSymbols.length !== 0) {
-
-            this.currentGame.settings.currentMoolahCount++;
-            console.log("MOOLAH COUNT : ", this.currentGame.settings.currentMoolahCount);
             this.currentGame.checkforMoolah();
+            if (!this.currentGame.settings.freeSpinStarted)
+                this.currentGame.settings.currentMoolahCount++
+            console.log("MOOLAH COUNT : ", this.currentGame.settings.currentMoolahCount);
+            return;
 
         }
         if (this.currentGame.settings.freeSpinStarted) {
