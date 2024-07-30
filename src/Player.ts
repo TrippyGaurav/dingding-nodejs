@@ -22,8 +22,8 @@ export default class Player {
 
     heartbeatInterval: NodeJS.Timeout;
     reconnectionAttempts: number = 0;
-    maxReconnectionAttempts: number = 3;
-    reconnectionTimeout: number = 5000; // 5 seconds
+    maxReconnectionAttempts: number = 1;
+    reconnectionTimeout: number = 3000; // 5 seconds
 
     cleanedUp: boolean = false;
 
