@@ -64,6 +64,7 @@ export default class SlotGame {
             fullPayTable: [],
             _winData: undefined,
             freeSpinStarted: false,
+            freeSpinCount: 0,
             resultReelIndex: [],
             noOfBonus: 0,
             noOfFreeSpins: 0,
@@ -134,7 +135,6 @@ export default class SlotGame {
                         //     break;
                         // }
                         if (this.settings.startGame) {
-
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = betMultiplier[res.data.currentBet];
                             this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
@@ -396,15 +396,27 @@ export default class SlotGame {
 
     private async spinResult() {
         try {
+            if (this.settings.currentBet > this.player.credits) {
+                console.log("Low Balance : ", this.player.credits);
+                console.log("Current Bet : ", this.settings.currentBet);
+                this.sendError("Low Balance");
+                return
+            }
             if (this.settings.currentGamedata.bonus.isEnabled && this.settings.currentGamedata.bonus.type == bonusGameType.tap) {
                 this.settings.bonus.game = new BonusGame(this.settings.currentGamedata.bonus.noOfItem, this)
             }
-
-            await this.deductPlayerBalance(this.settings.currentBet);
-
             /*
             MIDDLEWARE GOES HERE
             */
+            if (!this.settings.freeSpinStarted) {
+                await this.deductPlayerBalance(this.settings.currentBet);
+            } else {
+                this.settings.freeSpinCount--;
+                if (this.settings.freeSpinCount <= 0) {
+                    this.settings.freeSpinStarted = false
+
+                }
+            }
 
             this.settings.tempReels = [[]];
             this.settings.bonus.start = false;
@@ -448,8 +460,6 @@ export default class SlotGame {
     private checkforMoolah() {
         try {
             console.log("--------------------- CALLED FOR CHECK FOR MOOLAHHHH ---------------------");
-
-
             this.settings.tempReels = this.settings.reels;
             const lastWinData = this.settings._winData;
 

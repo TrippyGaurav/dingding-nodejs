@@ -382,18 +382,18 @@ export class CheckResult {
 
         this.currentGame.sendMessage('StartedFreeSpin', {})
         this.currentGame.settings.freeSpinStarted = true;
-        for (let i = 0; i <= this.currentGame.settings._winData.freeSpins; i++) {
-            this.currentGame.settings.bonus.start = false;
-            new RandomResultGenerator(this.currentGame);
-            new CheckResult(this.currentGame);
-            console.log(
-                "FREE SPINS LEFTTT ::::" + (this.currentGame.settings._winData.freeSpins - i)
-            );
-            return
-        }
-        this.currentGame.settings._winData.freeSpins = 0;
+        // for (let i = 0; i <= this.currentGame.settings._winData.freeSpins; i++) {
+        //     this.currentGame.settings.bonus.start = false;
+        //     new RandomResultGenerator(this.currentGame);
+        //     new CheckResult(this.currentGame);
+        //     console.log(
+        //         "FREE SPINS LEFTTT ::::" + (this.currentGame.settings._winData.freeSpins - i)
+        //     );
+        //     return
+        // }
+        // this.currentGame.settings._winData.freeSpins = 0;
         this.currentGame.sendMessage("StoppedFreeSpins", {});
-        this.currentGame.settings.freeSpinStarted = false;
+        // this.currentGame.settings.freeSpinStarted = false;
         console.log("____----Stopped FREE SPIN ----_____");
     }
 
