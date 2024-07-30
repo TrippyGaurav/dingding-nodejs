@@ -12,14 +12,16 @@ const PayoutsSchema = new Schema(
                 name: {
                     type: String,
                     required: true,
-                    unique: true
                 },
-                data: [{
+                data: {
                     type: Schema.Types.Mixed,
                     required: true
-                }]
+                },
+                version: Number,
+                createdAt: { type: Date, default: Date.now }
             }
-        ]
+        ],
+        latestVersion: { type: Number, default: 0 }
     },
     { timestamps: true }
 )

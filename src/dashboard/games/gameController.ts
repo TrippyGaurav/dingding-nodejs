@@ -8,6 +8,7 @@ import cloudinary from "cloudinary";
 import { config } from "../../config/config";
 import { users } from "../../socket";
 import Payouts from "../payouts/payoutModel";
+import path from "path";
 
 cloudinary.v2.config({
   cloud_name: config.cloud_name,
@@ -280,21 +281,47 @@ export class GameController {
 
       // Handle file for payout
       const payoutFile = req.files.payoutFile[0];
-      const jsonData = JSON.parse(payoutFile.buffer.toString("utf-8"));
-      const payoutFileName = payoutFile.originalname;
+      const payoutJSONData = JSON.parse(payoutFile.buffer.toString("utf-8"));
+      let payoutFileName = path.parse(payoutFile.originalname).name;
 
+      let payout = await Payouts.findOne({ gameName: tagName });
+      let contentId;
+      if (!payout) {
+        payout = new Payouts({
+          gameName: tagName,
+          content: [
+            {
+              _id: new mongoose.Types.ObjectId(),
+              name: `${payoutFileName}-1`,
+              data: payoutJSONData,
+              version: 1
+            }
+          ],
+          latestVersion: 1
+        });
+        await payout.save({ session });
+        contentId = payout.content[0]._id;
+      }
+      else {
+        payout.latestVersion += 1;
+        const newVersion = payout.latestVersion;
+        contentId = new mongoose.Types.ObjectId();
 
-      const newPayout = new Payouts({
-        gameName: tagName,
-        content: [
-          {
-            name: payoutFileName,
-            data: jsonData
-          }
-        ]
-      });
-      await newPayout.save({ session });
+        const newContent = {
+          _id: contentId,
+          name: `${payoutFileName}-${newVersion}`,
+          data: payoutJSONData,
+          version: newVersion,
+          createdAt: new Date()
+        };
 
+        await Payouts.updateOne(
+          { gameName: tagName },
+          { $push: { content: newContent }, $set: { latestVersion: newVersion } },
+          { session }
+        );
+
+      }
 
       const newGame = {
         name,
@@ -305,8 +332,9 @@ export class GameController {
         status,
         tagName,
         slug,
-        payout: newPayout._id
+        payout: contentId
       };
+
 
       platform.games.push(newGame as any);
       await platform.save({ session });
@@ -708,4 +736,6 @@ export class GameController {
       next(error);
     }
   }
+
+
 }

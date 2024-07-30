@@ -9,10 +9,15 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Create a new payout
 payoutRoutes.post("/", upload.fields([{ name: "payoutFile" }]), payoutController.uploadNewVersion);
 
+// Get Payout
+payoutRoutes.get('/', payoutController.getPayouts)
 
-// Get all payouts
-// Get a single payout by ID
-// Update  a payout by ID
+// Get Payout versions name of a Game
+payoutRoutes.get("/:tagName", payoutController.getPayoutVersionName);
+
+// Update Active Payout version
+payoutRoutes.patch("/:tagName", payoutController.updateActivePayout)
+
 // Delete a payout by ID
 payoutRoutes.delete("/:tagName/:version", payoutController.deletePayout);
 

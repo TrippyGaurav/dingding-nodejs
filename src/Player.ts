@@ -8,6 +8,7 @@ import SlotGame from "./dashboard/games/slotGame";
 import { gameData } from "./game/slotBackend/testData";
 import { users } from "./socket";
 import Payouts from "./dashboard/payouts/payoutModel";
+import payoutController from "./dashboard/payouts/payoutController";
 
 
 export default class Player {
@@ -141,21 +142,9 @@ export default class Player {
 
                 }
                 const game = platform[0].game;
-                const payout = await Payouts.findById(game.payout);
+                const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout)
 
-
-                if (!payout) {
-                    throw new Error(`Payout not found for game ${game.name}`);
-                }
-
-                // Assuming you need the first element's data from the content array
-                if (payout.content.length === 0) {
-                    throw new Error(`No payout content found for game ${game.name}`);
-                }
-
-                const firstPayoutContent = payout.content[0];
-
-                this.gameSettings = { ...firstPayoutContent.data };
+                this.gameSettings = { ...payout }
                 this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
 
             } catch (error) {
