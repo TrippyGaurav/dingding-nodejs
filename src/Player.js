@@ -112,7 +112,7 @@ class Player {
     updateGameSocket(socket) {
         return __awaiter(this, void 0, void 0, function* () {
             if (socket.request.headers['user-agent'] !== this.userAgent) {
-                socket.emit("alert", "You are already playing on another browser.");
+                socket.emit("alert", { id: "AnotherDevice", message: "You are already playing on another browser" });
                 socket.disconnect(true);
                 return;
             }

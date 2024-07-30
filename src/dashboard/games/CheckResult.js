@@ -302,6 +302,7 @@ class CheckResult {
             new RandomResultGenerator_1.RandomResultGenerator(this.currentGame);
             new CheckResult(this.currentGame);
             console.log("FREE SPINS LEFTTT ::::" + (this.currentGame.settings._winData.freeSpins - i));
+            return;
         }
         this.currentGame.settings._winData.freeSpins = 0;
         this.currentGame.sendMessage("StoppedFreeSpins", {});
