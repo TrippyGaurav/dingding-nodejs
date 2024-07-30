@@ -22,8 +22,8 @@ class Player {
     constructor(username, role, credits, userAgent, gameSocket) {
         this.currentGame = null;
         this.reconnectionAttempts = 0;
-        this.maxReconnectionAttempts = 3;
-        this.reconnectionTimeout = 5000; // 5 seconds
+        this.maxReconnectionAttempts = 1;
+        this.reconnectionTimeout = 3000; // 5 seconds
         this.cleanedUp = false;
         this.username = username;
         this.role = role;

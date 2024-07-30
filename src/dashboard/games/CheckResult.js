@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CheckResult = void 0;
 const WinData_1 = require("./WinData");
 const gameUtils_1 = require("./gameUtils");
-const RandomResultGenerator_1 = require("./RandomResultGenerator");
 const gameUtils_2 = require("./gameUtils");
 class CheckResult {
     constructor(current) {
@@ -297,16 +296,18 @@ class CheckResult {
         console.log("____----Started FREE SPIN ----_____" + " :::  FREE SPINSS ::::", this.currentGame.settings._winData.freeSpins);
         this.currentGame.sendMessage('StartedFreeSpin', {});
         this.currentGame.settings.freeSpinStarted = true;
-        for (let i = 0; i <= this.currentGame.settings._winData.freeSpins; i++) {
-            this.currentGame.settings.bonus.start = false;
-            new RandomResultGenerator_1.RandomResultGenerator(this.currentGame);
-            new CheckResult(this.currentGame);
-            console.log("FREE SPINS LEFTTT ::::" + (this.currentGame.settings._winData.freeSpins - i));
-            return;
-        }
-        this.currentGame.settings._winData.freeSpins = 0;
+        // for (let i = 0; i <= this.currentGame.settings._winData.freeSpins; i++) {
+        //     this.currentGame.settings.bonus.start = false;
+        //     new RandomResultGenerator(this.currentGame);
+        //     new CheckResult(this.currentGame);
+        //     console.log(
+        //         "FREE SPINS LEFTTT ::::" + (this.currentGame.settings._winData.freeSpins - i)
+        //     );
+        //     return
+        // }
+        // this.currentGame.settings._winData.freeSpins = 0;
         this.currentGame.sendMessage("StoppedFreeSpins", {});
-        this.currentGame.settings.freeSpinStarted = false;
+        // this.currentGame.settings.freeSpinStarted = false;
         console.log("____----Stopped FREE SPIN ----_____");
     }
 }
