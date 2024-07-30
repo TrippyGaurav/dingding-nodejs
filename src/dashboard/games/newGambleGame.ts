@@ -102,67 +102,66 @@ export class gambleCardGame {
   }
 
   getResult(data: any): void {
-
     const gambleData = data;
     console.log("GAMBLE DATA " + gambleData);
 
     let resultData = {
       playerWon: this.shouldWin,
       currentWining: 0,
-      Balance: this.sltGame.player.credits
+      Balance: 0
     };
 
-
-
     if (gambleData == GAMBLETYPE.BlACKRED) {
-      // result = this.shouldWin;
       if (this.shouldWin) {
         resultData.currentWining = this.sltGame.settings._winData.totalWinningAmount * 2;
         resultData.playerWon = true;
-        this.sltGame.sendMessage("GambleResult", resultData);
         if (!this.initialUpdate) {
           this.initialUpdate = true;
           this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
-
+          resultData.Balance = this.sltGame.player.credits;
+          this.sltGame.sendMessage("GambleResult", resultData); // Ensure message is sent on initial update
           return;
         }
         this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount * 2);
+        resultData.Balance = this.sltGame.player.credits;
+        this.sltGame.sendMessage("GambleResult", resultData);
         return;
-      }
-      else {
+      } else {
         this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
+        resultData.Balance = this.sltGame.player.credits;
         resultData.currentWining = 0;
         resultData.playerWon = false;
         this.sltGame.sendMessage("GambleResult", resultData);
         return;
       }
-      //RESULT == TRUE MEANS PLAYER WON MAKE IT FOR IF PLAYER HAS NOT WON
-      //UPDATE AMOUNT IF WONNN ELSE MAKE IT ZERO
     }
 
     if (gambleData == GAMBLETYPE.HIGHCARD) {
       if (this.shouldWin) {
         resultData.currentWining = this.sltGame.settings._winData.totalWinningAmount * 2;
         resultData.playerWon = true;
-        this.sltGame.sendMessage("GambleResult", resultData);
         if (!this.initialUpdate) {
           this.initialUpdate = true;
           this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
+          resultData.Balance = this.sltGame.player.credits;
+          this.sltGame.sendMessage("GambleResult", resultData); // Ensure message is sent on initial update
           return;
         }
         this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount * 2);
+        resultData.Balance = this.sltGame.player.credits;
+        this.sltGame.sendMessage("GambleResult", resultData);
         return;
-      }
-      else {
+      } else {
         this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
+        resultData.Balance = this.sltGame.player.credits;
         resultData.currentWining = 0;
         resultData.playerWon = false;
         this.sltGame.sendMessage("GambleResult", resultData);
         return;
       }
     }
-
   }
+
   checkForRedBlack(plCard: Card, isCardBlack: boolean) {
     if (isCardBlack) {
       return this.isCardBlack(plCard);
