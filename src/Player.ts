@@ -7,6 +7,7 @@ import { Payouts } from "./dashboard/games/gameModel";
 import SlotGame from "./dashboard/games/slotGame";
 import { gameData } from "./game/slotBackend/testData";
 import { users } from "./socket";
+import { messageType } from "./dashboard/games/gameUtils";
 
 
 export default class Player {
@@ -133,7 +134,7 @@ export default class Player {
 
     async updateGameSocket(socket: Socket) {
         if (socket.request.headers['user-agent'] !== this.userAgent) {
-            socket.emit("alert", "You are already playing on another browser.");
+            socket.emit("alert", { id: "AnotherDevice", message: "You are already playing on another browser" });
             socket.disconnect(true);
             return;
         }
