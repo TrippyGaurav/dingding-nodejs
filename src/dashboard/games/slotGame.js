@@ -66,6 +66,7 @@ class SlotGame {
             fullPayTable: [],
             _winData: undefined,
             freeSpinStarted: false,
+            freeSpinCount: 0,
             resultReelIndex: [],
             noOfBonus: 0,
             noOfFreeSpins: 0,
@@ -357,13 +358,27 @@ class SlotGame {
     spinResult() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                if (this.settings.currentBet > this.player.credits) {
+                    console.log("Low Balance : ", this.player.credits);
+                    console.log("Current Bet : ", this.settings.currentBet);
+                    this.sendError("Low Balance");
+                    return;
+                }
                 if (this.settings.currentGamedata.bonus.isEnabled && this.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.tap) {
                     this.settings.bonus.game = new BonusGame_1.BonusGame(this.settings.currentGamedata.bonus.noOfItem, this);
                 }
-                yield this.deductPlayerBalance(this.settings.currentBet);
                 /*
                 MIDDLEWARE GOES HERE
                 */
+                if (!this.settings.freeSpinStarted) {
+                    yield this.deductPlayerBalance(this.settings.currentBet);
+                }
+                else {
+                    this.settings.freeSpinCount--;
+                    if (this.settings.freeSpinCount <= 0) {
+                        this.settings.freeSpinStarted = false;
+                    }
+                }
                 this.settings.tempReels = [[]];
                 this.settings.bonus.start = false;
                 new RandomResultGenerator_1.RandomResultGenerator(this);

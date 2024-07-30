@@ -85,12 +85,13 @@ class gambleCardGame {
         console.log("GAMBLE DATA " + gambleData);
         let resultData = {
             playerWon: this.shouldWin,
-            winningAmount: 0
+            currentWining: 0,
+            Balance: this.sltGame.player.credits
         };
         if (gambleData == GAMBLETYPE.BlACKRED) {
             // result = this.shouldWin;
             if (this.shouldWin) {
-                resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount * 2;
+                resultData.currentWining = this.sltGame.settings._winData.totalWinningAmount * 2;
                 resultData.playerWon = true;
                 this.sltGame.sendMessage("GambleResult", resultData);
                 if (!this.initialUpdate) {
@@ -103,7 +104,7 @@ class gambleCardGame {
             }
             else {
                 this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
-                resultData.winningAmount = 0;
+                resultData.currentWining = 0;
                 resultData.playerWon = false;
                 this.sltGame.sendMessage("GambleResult", resultData);
                 return;
@@ -113,7 +114,7 @@ class gambleCardGame {
         }
         if (gambleData == GAMBLETYPE.HIGHCARD) {
             if (this.shouldWin) {
-                resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount * 2;
+                resultData.currentWining = this.sltGame.settings._winData.totalWinningAmount * 2;
                 resultData.playerWon = true;
                 this.sltGame.sendMessage("GambleResult", resultData);
                 if (!this.initialUpdate) {
@@ -126,7 +127,7 @@ class gambleCardGame {
             }
             else {
                 this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
-                resultData.winningAmount = 0;
+                resultData.currentWining = 0;
                 resultData.playerWon = false;
                 this.sltGame.sendMessage("GambleResult", resultData);
                 return;
