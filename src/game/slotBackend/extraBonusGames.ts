@@ -1,9 +1,9 @@
 import { Socket } from "socket.io";
-import { GData } from "../Global";
+import { GData } from "../TestGlobal";
 import { slotGameSettings } from "./_global";
 // import { sendMessageToClient } from "./App";
 import { bonusGameType } from "./slotTypes";
-import { PlayerData } from "../Global";
+import { PlayerData } from "../TestGlobal";
 import { sendMessage } from "../../socket/userSocket";
 
 

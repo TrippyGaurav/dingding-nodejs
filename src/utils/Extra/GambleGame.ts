@@ -1,4 +1,4 @@
-import SlotGame from "./slotGame";
+import SlotGame from "../../dashboard/games/slotGame";
 
 type Suit = 'Hearts' | 'Diamonds' | 'Clubs' | 'Spades';
 type Value = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A';
@@ -88,6 +88,7 @@ export class gambleCardGame {
         playerWon : false,
         winningAmount :0
     };
+
     let result;
     if(gambleData.gameType == GAMBLETYPE.BlACKRED)
     {
@@ -121,7 +122,7 @@ export class gambleCardGame {
       
     if(gambleData.gameType == GAMBLETYPE.HIGHCARD)
     {
-      result = this.playHighCard(gambleData.gameTypechosenCard.pl,gambleData.gameType.chosenCard.pl);
+      result = this.playHighCard(gambleData.gameTypechosenCard.pl,gambleData.gameType.chosenCard.dl);
     }
 
     if(result)

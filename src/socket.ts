@@ -76,7 +76,7 @@ const socketController = (io: Server) => {
 
         if (existingUser) {
             if (existingUser.userAgent !== userAgent) {
-                socket.emit("alert", "You are already playing on another browser.");
+                socket.emit("AnotherDevice", "You are already playing on another browser.");
                 socket.disconnect(true);
                 return;
             }
@@ -99,7 +99,7 @@ const socketController = (io: Server) => {
         newUser.sendAlert(`Welcome, ${newUser.username}!`);
         console.log(`Player ${newUser.username} entered the game.`);
 
-        console.log("After users : ", users);
+        // console.log("After users : ", users);
 
     });
 

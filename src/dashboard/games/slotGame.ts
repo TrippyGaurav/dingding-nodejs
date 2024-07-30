@@ -7,7 +7,7 @@ import { Player } from "../users/userModel";
 import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
-import { gambleCardGame } from "./GambleGame";
+import { gambleCardGame } from "./newGambleGame";
 
 export default class SlotGame {
     public settings: GameSettings;
@@ -64,6 +64,7 @@ export default class SlotGame {
             fullPayTable: [],
             _winData: undefined,
             freeSpinStarted: false,
+            freeSpinCount: 0,
             resultReelIndex: [],
             noOfBonus: 0,
             noOfFreeSpins: 0,
@@ -134,7 +135,6 @@ export default class SlotGame {
                         //     break;
                         // }
                         if (this.settings.startGame) {
-
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = betMultiplier[res.data.currentBet];
                             this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
@@ -162,12 +162,14 @@ export default class SlotGame {
 
                     case "GambleInit":
                         this.settings.gamble.resetGamble();
+
                         const sendData = this.settings.gamble.sendInitGambleData(res.data.GAMBLETYPE);
+
                         this.sendMessage("gambleInitData", sendData);
                         break;
 
                     case "GambleResultData":
-                        this.settings.gamble.getResult(res.data);
+                        this.settings.gamble.getResult(res.data.GAMBLETYPE);
                         break;
 
                     default:
@@ -333,7 +335,8 @@ export default class SlotGame {
                 Balance: this.player.credits,
                 haveWon: this.player.haveWon,
                 currentWining: this.player.currentWining
-            }
+            },
+            maxGambleBet: 300
         };
 
         // console.log("Data to send : ", dataToSend);
@@ -393,15 +396,27 @@ export default class SlotGame {
 
     private async spinResult() {
         try {
+            if (this.settings.currentBet > this.player.credits) {
+                console.log("Low Balance : ", this.player.credits);
+                console.log("Current Bet : ", this.settings.currentBet);
+                this.sendError("Low Balance");
+                return
+            }
             if (this.settings.currentGamedata.bonus.isEnabled && this.settings.currentGamedata.bonus.type == bonusGameType.tap) {
                 this.settings.bonus.game = new BonusGame(this.settings.currentGamedata.bonus.noOfItem, this)
             }
-
-            await this.deductPlayerBalance(this.settings.currentBet);
-
             /*
             MIDDLEWARE GOES HERE
             */
+            if (!this.settings.freeSpinStarted) {
+                await this.deductPlayerBalance(this.settings.currentBet);
+            } else {
+                this.settings.freeSpinCount--;
+                if (this.settings.freeSpinCount <= 0) {
+                    this.settings.freeSpinStarted = false
+
+                }
+            }
 
             this.settings.tempReels = [[]];
             this.settings.bonus.start = false;
@@ -445,8 +460,6 @@ export default class SlotGame {
     private checkforMoolah() {
         try {
             console.log("--------------------- CALLED FOR CHECK FOR MOOLAHHHH ---------------------");
-
-
             this.settings.tempReels = this.settings.reels;
             const lastWinData = this.settings._winData;
 
