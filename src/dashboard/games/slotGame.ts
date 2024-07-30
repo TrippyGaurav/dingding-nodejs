@@ -495,6 +495,7 @@ export default class SlotGame {
                         let index = (this.settings.resultReelIndex[i] + j + 2) % this.settings.tempReels[i].length;
                         transposed[i][j] = this.settings.tempReels[i][index];
                         row.unshift(this.settings.tempReels[i][index]);
+                        this.settings.tempReels[i].splice(j,1);
                     }
 
                 }

@@ -56,9 +56,6 @@ export class CheckResult {
             return;
 
         }
-        if (this.currentGame.settings.freeSpinStarted) {
-            this.currentGame.settings.currentMoolahCount = 0;
-        }
         else {
             if (this.currentGame.settings.currentMoolahCount >= 3 && (moolahPayOut.length + 3) > this.currentGame.settings.currentMoolahCount) {
                 this.currentGame.settings._winData.freeSpins += moolahPayOut[3 - this.currentGame.settings.currentMoolahCount]
