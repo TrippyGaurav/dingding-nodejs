@@ -7,19 +7,19 @@ const transactionController = new TransactionController()
 
 export default class UserService {
   async findUserByUsername(username: string, session?: mongoose.ClientSession) {
-    return User.findOne({ username }).session(session || null);
+    return await User.findOne({ username }).session(session || null);
   }
 
   async findPlayerByUsername(username: string, session?: mongoose.ClientSession) {
-    return Player.findOne({ username }).session(session || null);
+    return await Player.findOne({ username }).session(session || null);
   }
 
   async findUserById(id: mongoose.Types.ObjectId, session?: mongoose.ClientSession) {
-    return User.findById(id).session(session || null);
+    return await User.findById(id).session(session || null);
   }
 
   async findPlayerById(id: mongoose.Types.ObjectId, session?: mongoose.ClientSession) {
-    return Player.findById(id).session(session || null)
+    return await Player.findById(id).session(session || null)
   }
 
   async createUser(userData: Partial<IUser>, credits: number, hashedPassword: string, session: mongoose.ClientSession) {

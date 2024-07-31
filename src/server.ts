@@ -12,6 +12,10 @@ import { config } from "./config/config";
 import svgCaptcha from "svg-captcha";
 import createHttpError from "http-errors";
 import socketController from "./socket";
+import { checkAdmin } from "./dashboard/middleware/checkAdmin";
+import payoutController from "./dashboard/payouts/payoutController";
+import payoutRoutes from "./dashboard/payouts/payoutRoutes";
+import { checkUser } from "./dashboard/middleware/checkUser";
 
 
 declare module "express-session" {
@@ -37,8 +41,8 @@ app.use(
 );
 
 //Cloudinary configs
-app.use(express.json({ limit: "25mb" }));
-app.use(express.urlencoded({ limit: "25mb", extended: true }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 const allowedOrigins = ['http://localhost:3000', 'https://game-rtp-backend-w7g7.onrender.com'];
 
 app.use((req, res, next) => {
@@ -90,6 +94,7 @@ app.use("/api/company", companyRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/games", gameRoutes);
+app.use("/api/payouts", checkUser, checkAdmin, payoutRoutes)
 
 const io = new Server(server, {
   cors: {

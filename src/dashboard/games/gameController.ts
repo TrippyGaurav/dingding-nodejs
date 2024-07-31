@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { Platform, Payouts } from "./gameModel";
+import { Platform } from "./gameModel";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import { AuthRequest } from "../../utils/utils";
@@ -7,6 +7,8 @@ import { Player } from "../users/userModel";
 import cloudinary from "cloudinary";
 import { config } from "../../config/config";
 import { users } from "../../socket";
+import Payouts from "../payouts/payoutModel";
+import path from "path";
 
 cloudinary.v2.config({
   cloud_name: config.cloud_name,
@@ -278,23 +280,47 @@ export class GameController {
       }
 
       // Handle file for payout
-      const jsonData = JSON.parse(
-        req.files.payoutFile[0].buffer.toString("utf-8")
-      );
+      const payoutFile = req.files.payoutFile[0];
+      const payoutJSONData = JSON.parse(payoutFile.buffer.toString("utf-8"));
+      let payoutFileName = path.parse(payoutFile.originalname).name;
 
-      // Check if a Payout with the same gameName already exists
-      let payoutId;
-
-      let existingPayout = await Payouts.findOne({ gameName: tagName });
-      if (existingPayout) {
-        payoutId = existingPayout._id;
-      } else {
-        const newPayout = new Payouts({
+      let payout = await Payouts.findOne({ gameName: tagName });
+      let contentId;
+      if (!payout) {
+        payout = new Payouts({
           gameName: tagName,
-          data: jsonData,
+          content: [
+            {
+              _id: new mongoose.Types.ObjectId(),
+              name: `${payoutFileName}-1`,
+              data: payoutJSONData,
+              version: 1
+            }
+          ],
+          latestVersion: 1
         });
-        await newPayout.save({ session });
-        payoutId = newPayout._id;
+        await payout.save({ session });
+        contentId = payout.content[0]._id;
+      }
+      else {
+        payout.latestVersion += 1;
+        const newVersion = payout.latestVersion;
+        contentId = new mongoose.Types.ObjectId();
+
+        const newContent = {
+          _id: contentId,
+          name: `${payoutFileName}-${newVersion}`,
+          data: payoutJSONData,
+          version: newVersion,
+          createdAt: new Date()
+        };
+
+        await Payouts.updateOne(
+          { gameName: tagName },
+          { $push: { content: newContent }, $set: { latestVersion: newVersion } },
+          { session }
+        );
+
       }
 
       const newGame = {
@@ -306,8 +332,9 @@ export class GameController {
         status,
         tagName,
         slug,
-        payout: payoutId,
+        payout: contentId
       };
+
 
       platform.games.push(newGame as any);
       await platform.save({ session });
@@ -709,4 +736,6 @@ export class GameController {
       next(error);
     }
   }
+
+
 }

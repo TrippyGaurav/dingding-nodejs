@@ -2,11 +2,12 @@ import { Socket } from "socket.io";
 import { verifyPlayerToken } from "./utils/playerAuth";
 import { getPlayerCredits } from "./game/TestGlobal";
 import { Platform } from "./dashboard/games/gameModel";
-import { Payouts } from "./dashboard/games/gameModel";
+// import { Payouts } from "./dashboard/games/gameModel";
 
 import SlotGame from "./dashboard/games/slotGame";
 import { gameData } from "./game/slotBackend/testData";
 import { users } from "./socket";
+import payoutController from "./dashboard/payouts/payoutController";
 import { messageType } from "./dashboard/games/gameUtils";
 
 
@@ -157,16 +158,28 @@ export default class Player {
                     { $project: { _id: 0, game: "$games" } },
                 ]);
 
-                if (platform.length === 0) {
+                console.log("Platform : ", platform);
+
+
+                // For Development only
+                if (platform.length == 0) {
                     this.gameSettings = { ...gameData[0] }
-                    new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
+                    this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
                     return
-
                 }
-                const game = platform[0].game;
-                const payoutData = await Payouts.find({ _id: { $in: game.payout } });
 
-                this.gameSettings = { ...payoutData[0].data }
+                const game = platform[0].game;
+                console.log("game : ", game);
+
+                const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout)
+
+                if (!payout) {
+                    this.gameSettings = { ...gameData[0] }
+                    this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
+                    return
+                }
+
+                this.gameSettings = { ...payout }
                 this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
 
             } catch (error) {

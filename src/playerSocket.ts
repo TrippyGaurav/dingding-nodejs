@@ -3,9 +3,10 @@ import { verifyPlayerToken } from "./utils/playerAuth";
 import { getPlayerCredits } from "./game/TestGlobal";
 import { MESSAGEID, MESSAGETYPE } from "./utils/utils";
 import { Platform } from "./dashboard/games/gameModel";
-import { Payouts } from "./dashboard/games/gameModel";
 import SlotGame from "./dashboard/games/slotGame";
 import { gameData } from "./game/slotBackend/testData";
+import Payouts from "./dashboard/payouts/payoutModel";
+import payoutController from "./dashboard/payouts/payoutController";
 export let users: Map<string, SocketUser> = new Map();
 
 
@@ -82,9 +83,9 @@ export class SocketUser {
 
                 }
                 const game = platform[0].game;
-                const payoutData = await Payouts.find({ _id: { $in: game.payout } });
+                const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout)
 
-                this.gameSettings = { ...payoutData[0].data }
+                this.gameSettings = { ...payout }
                 this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.socket }, this.gameSettings);
 
             } catch (error) {
