@@ -43,12 +43,12 @@ export class gambleCardGame {
     do {
       randomIndex = Math.floor(Math.random() * this.deck.length);
       randomCard = this.deck[randomIndex];
-    } while (this.chosenCards.has(`${randomCard.value}-${randomCard.suit}`));
-
+    } while (!this.chosenCards.has(`${randomCard.value}-${randomCard.suit}`));
     this.chosenCards.add(`${randomCard.value}-${randomCard.suit}`);
     return randomCard;
   }
-
+ 
+  
   isCardRed(card: Card): boolean {
     return card.suit === 'Hearts' || card.suit === 'Diamonds';
   }
@@ -102,68 +102,66 @@ export class gambleCardGame {
   }
 
   getResult(data: any): void {
-
     const gambleData = data;
     console.log("GAMBLE DATA " + gambleData);
 
     let resultData = {
       playerWon: this.shouldWin,
-      winningAmount: 0
+      currentWining: 0,
+      Balance: 0
     };
 
-
-
     if (gambleData == GAMBLETYPE.BlACKRED) {
-
-
-      // result = this.shouldWin;
       if (this.shouldWin) {
-        resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount * 2;
+        resultData.currentWining = this.sltGame.settings._winData.totalWinningAmount * 2;
         resultData.playerWon = true;
-        this.sltGame.sendMessage("GambleResult", resultData);
         if (!this.initialUpdate) {
           this.initialUpdate = true;
           this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
-
+          resultData.Balance = this.sltGame.player.credits;
+          this.sltGame.sendMessage("GambleResult", resultData); // Ensure message is sent on initial update
           return;
         }
         this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount * 2);
+        resultData.Balance = this.sltGame.player.credits;
+        this.sltGame.sendMessage("GambleResult", resultData);
         return;
-      }
-      else {
+      } else {
         this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
-        resultData.winningAmount = 0;
+        resultData.Balance = this.sltGame.player.credits;
+        resultData.currentWining = 0;
         resultData.playerWon = false;
         this.sltGame.sendMessage("GambleResult", resultData);
         return;
       }
-      //RESULT == TRUE MEANS PLAYER WON MAKE IT FOR IF PLAYER HAS NOT WON
-      //UPDATE AMOUNT IF WONNN ELSE MAKE IT ZERO
     }
 
     if (gambleData == GAMBLETYPE.HIGHCARD) {
       if (this.shouldWin) {
-        resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount * 2;
+        resultData.currentWining = this.sltGame.settings._winData.totalWinningAmount * 2;
         resultData.playerWon = true;
-        this.sltGame.sendMessage("GambleResult", resultData);
         if (!this.initialUpdate) {
           this.initialUpdate = true;
           this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
+          resultData.Balance = this.sltGame.player.credits;
+          this.sltGame.sendMessage("GambleResult", resultData); // Ensure message is sent on initial update
           return;
         }
         this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount * 2);
+        resultData.Balance = this.sltGame.player.credits;
+        this.sltGame.sendMessage("GambleResult", resultData);
         return;
-      }
-      else {
+      } else {
         this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
-        resultData.winningAmount = 0;
+        resultData.Balance = this.sltGame.player.credits;
+        resultData.currentWining = 0;
         resultData.playerWon = false;
         this.sltGame.sendMessage("GambleResult", resultData);
         return;
       }
     }
-
   }
+
   checkForRedBlack(plCard: Card, isCardBlack: boolean) {
     if (isCardBlack) {
       return this.isCardBlack(plCard);

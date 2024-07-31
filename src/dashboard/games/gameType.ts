@@ -68,6 +68,7 @@ export interface GameSettings {
   fullPayTable: any[];
   _winData: WinData | undefined;
   freeSpinStarted: boolean;
+  freeSpinCount: number;
   resultReelIndex: any[];
   noOfBonus: number;
   noOfFreeSpins: number;

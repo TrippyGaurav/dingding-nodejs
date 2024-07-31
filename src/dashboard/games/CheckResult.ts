@@ -54,7 +54,6 @@ export class CheckResult {
                 this.currentGame.settings.currentMoolahCount++
             console.log("MOOLAH COUNT : ", this.currentGame.settings.currentMoolahCount);
             return;
-
         }
         else {
             if (this.currentGame.settings.currentMoolahCount >= 3 && (moolahPayOut.length + 3) > this.currentGame.settings.currentMoolahCount) {
@@ -411,11 +410,10 @@ export class CheckResult {
             console.log(
                 "FREE SPINS LEFTTT ::::" + (this.currentGame.settings._winData.freeSpins - i)
             );
-
         }
         this.currentGame.settings._winData.freeSpins = 0;
         this.currentGame.sendMessage("StoppedFreeSpins", {});
-        this.currentGame.settings.freeSpinStarted = false;
+        // this.currentGame.settings.freeSpinStarted = false;
         console.log("____----Stopped FREE SPIN ----_____");
     }
 
