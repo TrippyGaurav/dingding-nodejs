@@ -135,13 +135,21 @@ class Player {
                         { $match: { "games.tagName": tagName, "games.status": 'active' } },
                         { $project: { _id: 0, game: "$games" } },
                     ]);
-                    if (platform.length === 0) {
+                    console.log("Platform : ", platform);
+                    // For Development only
+                    if (platform.length == 0) {
                         this.gameSettings = Object.assign({}, testData_1.gameData[0]);
-                        new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
+                        this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
                         return;
                     }
                     const game = platform[0].game;
+                    console.log("game : ", game);
                     const payout = yield payoutController_1.default.getPayoutVersionData(game.tagName, game.payout);
+                    if (!payout) {
+                        this.gameSettings = Object.assign({}, testData_1.gameData[0]);
+                        this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
+                        return;
+                    }
                     this.gameSettings = Object.assign({}, payout);
                     this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
                 }
