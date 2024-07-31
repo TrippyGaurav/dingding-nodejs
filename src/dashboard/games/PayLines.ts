@@ -61,6 +61,7 @@ export default class PayLines {
                 if (!this.isEqual(p) && !this.containEqualLine(res, p)) res.push(p);
             }
         }
+        // console.log(res, "USE WILD CARD")
         return res;
     }
 
