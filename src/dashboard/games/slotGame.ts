@@ -269,7 +269,8 @@ export default class SlotGame {
     private handleSpecialSymbols(symbol: any) {
         this.settings.bonusPayTable = [];
         this.settings.scatterPayTable = [];
-
+        console.log("Handling special symbols" + symbol.Name); 
+        
         switch (symbol.Name) {
             case specialIcons.jackpot:
                 this.settings.jackpot.symbolName = symbol.Name;
@@ -375,13 +376,15 @@ export default class SlotGame {
             let payTableFull = [];
             this.settings.payLine.forEach((pLine) => {
                 payTable.push(
-                    new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolName, this)
+                    new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID, this)
                 )
             });
             for (let j = 0; j < payTable.length; j++) {
                 payTableFull.push(payTable[j]);
                 if (this.settings.useWild) {
+                    
                     let wildLines = payTable[j].getWildLines();
+                    
                     wildLines.forEach((wl) => {
                         payTableFull.push(wl)
                     })
