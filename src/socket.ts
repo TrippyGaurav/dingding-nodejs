@@ -68,8 +68,6 @@ const socketController = (io: Server) => {
             return;
         }
 
-        console.log("CUrrent users : ", users);
-
 
         const userAgent = (socket as any).userAgent;
         const username = decoded.username;

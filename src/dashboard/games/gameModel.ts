@@ -1,20 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import { IPlatform } from "./gameType";
 
-const PayoutsSchema = new Schema(
-  {
-    gameName: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    data: {
-      type: Schema.Types.Mixed,
-      required: true,
-    },
-  },
-  { timestamps: true }
-);
+
 
 const newGameSchema = new Schema({
   name: {
@@ -75,7 +62,6 @@ PlatformSchema.index({ 'games.slug': 1 })
 PlatformSchema.index({ 'games.category': 1 });
 
 
-const Payouts = mongoose.model("Payouts", PayoutsSchema);
 const Platform = mongoose.model("Platform", PlatformSchema)
 
-export { Payouts, Platform };
+export { Platform };

@@ -16,6 +16,7 @@ import Transaction from "../transactions/transactionModel";
 import { QueryParams } from "../../game/Utils/globalTypes";
 import { users } from "../../socket";
 import Player from "../../Player";
+import { IPlayer, IUser } from "./userType";
 
 
 
@@ -118,15 +119,11 @@ export class UserController {
         throw createHttpError(400, "Username, password are required");
       }
 
-      let user;
-      user = await this.userService.findUserByUsername(username);
+      let user: IUser | IPlayer = await User.findOne({ username }) || await PlayerModel.findOne({ username })
+
 
       if (!user) {
-        user = await this.userService.findPlayerByUsername(username);
-
-        if (!user) {
-          throw createHttpError(401, "User not found");
-        }
+        throw createHttpError(401, "User not found");
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -135,10 +132,19 @@ export class UserController {
         throw createHttpError(401, "Invalid username or password");
       }
 
-      user.lastLogin = new Date();
-
-      user.loginTimes = (user.loginTimes || 0) + 1;
-      await user.save();
+      if (user.role === "player") {
+        await PlayerModel.updateOne(
+          { _id: user._id },
+          { $set: { lastLogin: new Date(), $inc: { loginTimes: 1 } } }
+        )
+      }
+      else {
+        await User.updateOne(
+          { _id: user._id },
+          {
+            $set: { lastLogin: new Date(), $inc: { loginTimes: 1 } }
+          });
+      }
 
       const token = jwt.sign(
         { id: user._id, username: user.username, role: user.role },
