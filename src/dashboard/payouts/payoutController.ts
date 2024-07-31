@@ -140,16 +140,26 @@ class PayoutsController {
 
     async getPayoutVersionData(tagName: string, versionId: ObjectId) {
         try {
+
+            console.log("TagName : ", tagName);
+            console.log("versionId : ", versionId);
+
             const payout = await Payouts.findOne(
                 { gameName: tagName, "content._id": versionId },
                 { "content.$": 1, _id: 0 }
             )
 
+            console.log("Payout : ", payout);
+
+
             if (!payout || payout.content.length === 0) {
                 throw createHttpError(404, "Payout version not found")
             }
 
-            const payoutData = payout.content[0].data.data;
+            const payoutData = payout.content[0].data;
+
+            console.log("payoutData : ", payoutData);
+
 
             if (!payoutData) {
                 throw createHttpError(404, "Payout data not found for the specified version.");
