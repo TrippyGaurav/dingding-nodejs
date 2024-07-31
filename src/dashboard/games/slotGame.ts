@@ -139,6 +139,7 @@ export default class SlotGame {
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = betMultiplier[res.data.currentBet];
                             this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
+                            
                             this.spinResult();
                         }
                         break;
@@ -385,7 +386,6 @@ export default class SlotGame {
                 if (this.settings.useWild) {
                     
                     let wildLines = payTable[j].getWildLines();
-                    console.log("WILD LINES",wildLines);
                     
                     wildLines.forEach((wl) => {
                         payTableFull.push(wl)
