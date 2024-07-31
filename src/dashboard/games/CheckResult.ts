@@ -118,7 +118,6 @@ export class CheckResult {
             this.currentGame.settings.fullPayTable.forEach((Payline: PayLines) => {
                 //  find max win (or win with max symbols count)
                 const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
-
                 if (winTemp != null) {
                     if (win == null) win = winTemp;
                     else {
