@@ -31,6 +31,8 @@ const userModel_1 = require("../users/userModel");
 const cloudinary_1 = __importDefault(require("cloudinary"));
 const config_1 = require("../../config/config");
 const socket_1 = require("../../socket");
+const payoutModel_1 = __importDefault(require("../payouts/payoutModel"));
+const path_1 = __importDefault(require("path"));
 cloudinary_1.default.v2.config({
     cloud_name: config_1.config.cloud_name,
     api_key: config_1.config.api_key,
@@ -240,20 +242,39 @@ class GameController {
                     throw (0, http_errors_1.default)(500, "Failed to upload thumbnail");
                 }
                 // Handle file for payout
-                const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString("utf-8"));
-                // Check if a Payout with the same gameName already exists
-                let payoutId;
-                let existingPayout = yield gameModel_1.Payouts.findOne({ gameName: tagName });
-                if (existingPayout) {
-                    payoutId = existingPayout._id;
+                const payoutFile = req.files.payoutFile[0];
+                const payoutJSONData = JSON.parse(payoutFile.buffer.toString("utf-8"));
+                let payoutFileName = path_1.default.parse(payoutFile.originalname).name;
+                let payout = yield payoutModel_1.default.findOne({ gameName: tagName });
+                let contentId;
+                if (!payout) {
+                    payout = new payoutModel_1.default({
+                        gameName: tagName,
+                        content: [
+                            {
+                                _id: new mongoose_1.default.Types.ObjectId(),
+                                name: `${payoutFileName}-1`,
+                                data: payoutJSONData,
+                                version: 1
+                            }
+                        ],
+                        latestVersion: 1
+                    });
+                    yield payout.save({ session });
+                    contentId = payout.content[0]._id;
                 }
                 else {
-                    const newPayout = new gameModel_1.Payouts({
-                        gameName: tagName,
-                        data: jsonData,
-                    });
-                    yield newPayout.save({ session });
-                    payoutId = newPayout._id;
+                    payout.latestVersion += 1;
+                    const newVersion = payout.latestVersion;
+                    contentId = new mongoose_1.default.Types.ObjectId();
+                    const newContent = {
+                        _id: contentId,
+                        name: `${payoutFileName}-${newVersion}`,
+                        data: payoutJSONData,
+                        version: newVersion,
+                        createdAt: new Date()
+                    };
+                    yield payoutModel_1.default.updateOne({ gameName: tagName }, { $push: { content: newContent }, $set: { latestVersion: newVersion } }, { session });
                 }
                 const newGame = {
                     name,
@@ -264,7 +285,7 @@ class GameController {
                     status,
                     tagName,
                     slug,
-                    payout: payoutId,
+                    payout: contentId
                 };
                 platform.games.push(newGame);
                 yield platform.save({ session });
@@ -399,11 +420,11 @@ class GameController {
                     console.log("Payout FIle : ", (_b = req.files) === null || _b === void 0 ? void 0 : _b.payoutFile);
                     // Delete the old payout
                     if (game.payout) {
-                        yield gameModel_1.Payouts.findByIdAndDelete(game.payout);
+                        yield payoutModel_1.default.findByIdAndDelete(game.payout);
                     }
                     // Add the new payout
                     const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString("utf-8"));
-                    const newPayout = new gameModel_1.Payouts({
+                    const newPayout = new payoutModel_1.default({
                         gameName: game.tagName,
                         data: jsonData,
                     });

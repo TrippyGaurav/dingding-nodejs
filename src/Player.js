@@ -14,10 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const TestGlobal_1 = require("./game/TestGlobal");
 const gameModel_1 = require("./dashboard/games/gameModel");
-const gameModel_2 = require("./dashboard/games/gameModel");
+// import { Payouts } from "./dashboard/games/gameModel";
 const slotGame_1 = __importDefault(require("./dashboard/games/slotGame"));
 const testData_1 = require("./game/slotBackend/testData");
 const socket_1 = require("./socket");
+const payoutController_1 = __importDefault(require("./dashboard/payouts/payoutController"));
 class Player {
     constructor(username, role, credits, userAgent, gameSocket) {
         this.currentGame = null;
@@ -140,8 +141,8 @@ class Player {
                         return;
                     }
                     const game = platform[0].game;
-                    const payoutData = yield gameModel_2.Payouts.find({ _id: { $in: game.payout } });
-                    this.gameSettings = Object.assign({}, payoutData[0].data);
+                    const payout = yield payoutController_1.default.getPayoutVersionData(game.tagName, game.payout);
+                    this.gameSettings = Object.assign({}, payout);
                     this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
                 }
                 catch (error) {

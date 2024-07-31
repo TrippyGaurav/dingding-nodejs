@@ -70,7 +70,6 @@ const socketController = (io) => {
             socket.disconnect(true);
             return;
         }
-        console.log("CUrrent users : ", exports.users);
         const userAgent = socket.userAgent;
         const username = decoded.username;
         const existingUser = exports.users.get(username);

@@ -26,6 +26,9 @@ const config_1 = require("./config/config");
 const svg_captcha_1 = __importDefault(require("svg-captcha"));
 const http_errors_1 = __importDefault(require("http-errors"));
 const socket_1 = __importDefault(require("./socket"));
+const checkAdmin_1 = require("./dashboard/middleware/checkAdmin");
+const payoutRoutes_1 = __importDefault(require("./dashboard/payouts/payoutRoutes"));
+const checkUser_1 = require("./dashboard/middleware/checkUser");
 const app = (0, express_1.default)();
 app.use((0, express_session_1.default)({
     secret: config_1.config.jwtSecret,
@@ -86,6 +89,7 @@ app.use("/api/company", companyRoutes_1.default);
 app.use("/api/users", userRoutes_1.default);
 app.use("/api/transactions", transactionRoutes_1.default);
 app.use("/api/games", gameRoutes_1.default);
+app.use("/api/payouts", checkUser_1.checkUser, checkAdmin_1.checkAdmin, payoutRoutes_1.default);
 const io = new socket_io_1.Server(server, {
     cors: {
         origin: "*",

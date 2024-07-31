@@ -17,9 +17,9 @@ exports.default = enterPlayer;
 const playerAuth_1 = require("./utils/playerAuth");
 const TestGlobal_1 = require("./game/TestGlobal");
 const gameModel_1 = require("./dashboard/games/gameModel");
-const gameModel_2 = require("./dashboard/games/gameModel");
 const slotGame_1 = __importDefault(require("./dashboard/games/slotGame"));
 const testData_1 = require("./game/slotBackend/testData");
+const payoutController_1 = __importDefault(require("./dashboard/payouts/payoutController"));
 exports.users = new Map();
 class SocketUser {
     constructor(socket, platformData, gameSetting) {
@@ -75,8 +75,8 @@ class SocketUser {
                     return;
                 }
                 const game = platform[0].game;
-                const payoutData = yield gameModel_2.Payouts.find({ _id: { $in: game.payout } });
-                this.gameSettings = Object.assign({}, payoutData[0].data);
+                const payout = yield payoutController_1.default.getPayoutVersionData(game.tagName, game.payout);
+                this.gameSettings = Object.assign({}, payout);
                 this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.socket }, this.gameSettings);
             }
             catch (error) {
