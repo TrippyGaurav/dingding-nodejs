@@ -8,6 +8,7 @@ import SlotGame from "./dashboard/games/slotGame";
 import { gameData } from "./game/slotBackend/testData";
 import { users } from "./socket";
 import payoutController from "./dashboard/payouts/payoutController";
+import { messageType } from "./dashboard/games/gameUtils";
 
 
 export default class Player {
@@ -157,14 +158,26 @@ export default class Player {
                     { $project: { _id: 0, game: "$games" } },
                 ]);
 
-                if (platform.length === 0) {
-                    this.gameSettings = { ...gameData[0] }
-                    new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
-                    return
+                console.log("Platform : ", platform);
 
+
+                // For Development only
+                if (platform.length == 0) {
+                    this.gameSettings = { ...gameData[0] }
+                    this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
+                    return
                 }
+
                 const game = platform[0].game;
+                console.log("game : ", game);
+
                 const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout)
+
+                if (!payout) {
+                    this.gameSettings = { ...gameData[0] }
+                    this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
+                    return
+                }
 
                 this.gameSettings = { ...payout }
                 this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
