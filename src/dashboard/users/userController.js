@@ -106,21 +106,22 @@ class UserController {
                 if (!username || !password) {
                     throw (0, http_errors_1.default)(400, "Username, password are required");
                 }
-                let user;
-                user = yield this.userService.findUserByUsername(username);
+                let user = (yield userModel_1.User.findOne({ username })) || (yield userModel_1.Player.findOne({ username }));
                 if (!user) {
-                    user = yield this.userService.findPlayerByUsername(username);
-                    if (!user) {
-                        throw (0, http_errors_1.default)(401, "User not found");
-                    }
+                    throw (0, http_errors_1.default)(401, "User not found");
                 }
                 const isPasswordValid = yield bcrypt_1.default.compare(password, user.password);
                 if (!isPasswordValid) {
                     throw (0, http_errors_1.default)(401, "Invalid username or password");
                 }
-                user.lastLogin = new Date();
-                user.loginTimes = (user.loginTimes || 0) + 1;
-                yield user.save();
+                if (user.role === "player") {
+                    yield userModel_1.Player.updateOne({ _id: user._id }, { $set: { lastLogin: new Date(), $inc: { loginTimes: 1 } } });
+                }
+                else {
+                    yield userModel_1.User.updateOne({ _id: user._id }, {
+                        $set: { lastLogin: new Date(), $inc: { loginTimes: 1 } }
+                    });
+                }
                 const token = jsonwebtoken_1.default.sign({ id: user._id, username: user.username, role: user.role }, config_1.config.jwtSecret, { expiresIn: "7d" });
                 res.cookie("userToken", token, {
                     maxAge: 1000 * 60 * 60 * 24 * 7,
