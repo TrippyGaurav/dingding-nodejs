@@ -10,7 +10,7 @@ const multer_1 = __importDefault(require("multer"));
 const checkUser_1 = require("../middleware/checkUser");
 const gameController = new gameController_1.GameController();
 const gameRoutes = express_1.default.Router();
-const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage() });
+const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit
 // GET : Get all Games
 gameRoutes.get("/", middlware_1.validateApiKey, checkUser_1.checkUser, gameController.getGames);
 // POST : Add a Game
