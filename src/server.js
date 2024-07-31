@@ -41,8 +41,8 @@ app.use((0, express_session_1.default)({
     },
 }));
 //Cloudinary configs
-app.use(express_1.default.json({ limit: "25mb" }));
-app.use(express_1.default.urlencoded({ limit: "25mb", extended: true }));
+app.use(express_1.default.json({ limit: "50mb" }));
+app.use(express_1.default.urlencoded({ limit: "50mb", extended: true }));
 const allowedOrigins = ['http://localhost:3000', 'https://game-rtp-backend-w7g7.onrender.com'];
 app.use((req, res, next) => {
     const origin = req.headers.origin;
