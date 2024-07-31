@@ -13,7 +13,7 @@ export default class PayLines {
     currentGame: SlotGame;
 
 
-    constructor(line, pay, freeSpins, wild, currentGame) {
+    constructor(line, pay, freeSpins, wild , currentGame) {
         this.line = line;
         this.pay = pay;
         this.freeSpins = freeSpins;

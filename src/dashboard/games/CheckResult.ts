@@ -48,21 +48,21 @@ export class CheckResult {
 
         this.searchWinSymbols();
 
-        if (this.currentGame.settings._winData.winningSymbols.length !== 0) {
-            if (!this.currentGame.settings.freeSpinStarted)
-                this.currentGame.settings.currentMoolahCount++
-            this.currentGame.checkforMoolah();
-            console.log("MOOLAH COUNT : ", this.currentGame.settings.currentMoolahCount);
-            return;
-        }
-        else {
-            if (this.currentGame.settings.currentMoolahCount >= 3 && (moolahPayOut.length + 3) > this.currentGame.settings.currentMoolahCount) {
-                this.currentGame.settings._winData.freeSpins += moolahPayOut[3 - this.currentGame.settings.currentMoolahCount]
-                if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings._winData.freeSpins != 0)
-                    this.startFreeSpin();
-            }
-            this.currentGame.settings.currentMoolahCount = 0;
-        }
+        // if (this.currentGame.settings._winData.winningSymbols.length !== 0) {
+        //     if (!this.currentGame.settings.freeSpinStarted)
+        //         this.currentGame.settings.currentMoolahCount++
+        //     this.currentGame.checkforMoolah();
+        //     console.log("MOOLAH COUNT : ", this.currentGame.settings.currentMoolahCount);
+        //     return;
+        // }
+        // else {
+        //     if (this.currentGame.settings.currentMoolahCount >= 3 && (moolahPayOut.length + 3) > this.currentGame.settings.currentMoolahCount) {
+        //         this.currentGame.settings._winData.freeSpins += moolahPayOut[3 - this.currentGame.settings.currentMoolahCount]
+        //         if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings._winData.freeSpins != 0)
+        //             this.startFreeSpin();
+        //     }
+        //     this.currentGame.settings.currentMoolahCount = 0;
+        // }
 
     }
 
@@ -136,25 +136,26 @@ export class CheckResult {
             this.currentGame.settings.fullPayTable.forEach((Payline: PayLines) => {
                 //  find max win (or win with max symbols count)
                 const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
-                if(winTemp.pay != 0 )
-                    console.log("TEMP WIN : ",winTemp);
-                    
-
+                console.log("win Temp : ",winTemp);
+                
                 if (winTemp != null) {
                     if (win == null) win = winTemp;
                     else {
                         if (win.Pay < winTemp.pay || win.FreeSpins < winTemp.freeSpins)
                             win = winTemp;
                     }
+                    
                     this.currentGame.settings._winData.winningLines.push(index);
                     console.log(`Line Index : ${index} : ` + lb + " - line win: " + win);
                 }
             });
         });
-
+        
         const filteredArray = this.checkforDuplicate(allComboWin);
+        console.log(filteredArray);
         let BonusArray = [];
         filteredArray.forEach((element) => {
+            
             this.currentGame.settings._winData.winningSymbols.push(element.pos);
             this.currentGame.settings._winData.totalWinningAmount +=
                 element.pay * this.currentGame.settings.BetPerLines;

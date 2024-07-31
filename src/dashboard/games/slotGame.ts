@@ -376,7 +376,8 @@ export default class SlotGame {
             let payTableFull = [];
             this.settings.payLine.forEach((pLine) => {
                 payTable.push(
-                    new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID, this)
+                    
+                    new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID.toString(), this)
                 )
             });
             for (let j = 0; j < payTable.length; j++) {
@@ -384,6 +385,7 @@ export default class SlotGame {
                 if (this.settings.useWild) {
                     
                     let wildLines = payTable[j].getWildLines();
+                    console.log("WILD LINES",wildLines);
                     
                     wildLines.forEach((wl) => {
                         payTableFull.push(wl)
