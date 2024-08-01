@@ -13,7 +13,7 @@ export default class PayLines {
     currentGame: SlotGame;
 
 
-    constructor(line, pay, freeSpins, wild , currentGame) {
+    constructor(line, pay, freeSpins, wild, currentGame) {
         this.line = line;
         this.pay = pay;
         this.freeSpins = freeSpins;
@@ -30,8 +30,8 @@ export default class PayLines {
         const maxWildsCount = this.useWildInFirstPosition
             ? wPoss.length - 1
             : wPoss.length;
-            
-        
+
+
         let minWildsCount = 1;
         let maxCounterValues: any[] = [];
 
@@ -62,8 +62,7 @@ export default class PayLines {
                 if (!this.isEqual(p) && !this.containEqualLine(res, p)) res.push(p);
             }
         }
-        console.log(res);
-        
+
         return res;
     }
 
@@ -89,8 +88,8 @@ export default class PayLines {
                     // don't use first
                     counter++;
                 } else {
-                    
-                    
+
+
                     if (symbolsDict[sName]?.useWildSub) wPoss.push(i);
                     counter++;
                 }

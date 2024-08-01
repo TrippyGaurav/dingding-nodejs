@@ -18,9 +18,10 @@ export default class SlotGame {
         haveWon: number,
         currentWining: number,
         socket: Socket
+        totalbet: number
     }
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
-        this.player = { ...player, haveWon: 0, currentWining: 0 };
+        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0 };
         this.settings = {
             currentGamedata: {
                 id: "",
@@ -130,8 +131,8 @@ export default class SlotGame {
                 switch (res.id) {
                     case "SPIN":
                         // if (this.settings.currentBet > this.player.credits) {
-                        //     console.log("Low Balance : ", this.player.credits);
-                        //     console.log("Current Bet : ", this.settings.currentBet);
+                        //     
+                        //     
                         //     this.sendError("Low Balance");
                         //     break;
                         // }
@@ -146,8 +147,8 @@ export default class SlotGame {
 
                     case "GENRTP":
                         // if (this.settings.currentBet > this.player.credits) {
-                        //     console.log("Low Balance : ", this.player.credits);
-                        //     console.log("Current Bet : ", this.settings.currentBet);
+                        //     
+                        //     
                         //     this.sendError("Low Balance");
                         //     break;
                         // }
@@ -197,10 +198,10 @@ export default class SlotGame {
             )
 
             if (!result) {
-                console.log(`Player with username ${this.player.username} not found in database.`);
+
             }
             else {
-                console.log(`Updated credits for player ${this.player.username} to ${this.player.credits}.`);
+
             }
         } catch (error) {
             console.error("Failed to update database:", error);
@@ -211,8 +212,8 @@ export default class SlotGame {
     private checkPlayerBalance() {
         if (this.player.credits < this.settings.currentBet) {
             this.sendMessage("low-balance", true);
-            console.log("PLAYER BALANCE : ", this.player.credits);
-            console.log("CURRENT BET : ", this.settings.currentBet);
+
+
             console.error("LOW BALANCE");
             return;
         }
@@ -223,7 +224,8 @@ export default class SlotGame {
             this.player.credits += credit;
             this.player.haveWon += credit;
             this.player.currentWining = credit;
-            console.log("FINAL BALANCE : ", this.player.credits);
+
+
             // await this.updateDatabase();
         } catch (error) {
             console.error('Error updating credits in database:', error);
@@ -270,7 +272,6 @@ export default class SlotGame {
     private handleSpecialSymbols(symbol: any) {
         this.settings.bonusPayTable = [];
         this.settings.scatterPayTable = [];
-        console.log("Handling special symbols" + symbol.Name);
 
         switch (symbol.Name) {
             case specialIcons.jackpot:
@@ -337,12 +338,13 @@ export default class SlotGame {
             PlayerData: {
                 Balance: this.player.credits,
                 haveWon: this.player.haveWon,
-                currentWining: this.player.currentWining
+                currentWining: this.player.currentWining,
+                totalbet: this.player.totalbet
             },
             maxGambleBet: 300
         };
 
-        // console.log("Data to send : ", dataToSend);
+        // 
 
 
         this.sendMessage("InitData", dataToSend)
@@ -394,7 +396,7 @@ export default class SlotGame {
             }
             this.settings.fullPayTable = payTableFull;
         } catch (error) {
-            console.log("MAKE FULL PAY TABLE : ", error);
+
 
         }
 
@@ -403,8 +405,8 @@ export default class SlotGame {
     private async spinResult() {
         try {
             if (this.settings.currentBet > this.player.credits) {
-                console.log("Low Balance : ", this.player.credits);
-                console.log("Current Bet : ", this.settings.currentBet);
+
+
                 this.sendError("Low Balance");
                 return
             }
@@ -426,7 +428,7 @@ export default class SlotGame {
 
             this.settings.tempReels = [[]];
             this.settings.bonus.start = false;
-
+            this.player.totalbet += this.settings.currentBet
             new RandomResultGenerator(this);
             const result = new CheckResult(this)
             result.makeResultJson(ResultType.normal)
@@ -447,14 +449,14 @@ export default class SlotGame {
                 won = this.settings._winData.totalWinningAmount
             }
             let rtp = 0;
-            console.log(`Bet:${this.settings.currentBet}\n,player total bet ${spend} and\n won ${won}`)
+
 
             if (spend > 0) {
                 rtp = (won / spend)
             }
-            console.log('BONUS :', this.settings.noOfBonus);
-            console.log('TOTAL BONUS : ', this.settings.totalBonuWinAmount);
-            console.log('GENERATED RTP : ', rtp)
+
+
+
             return
         } catch (error) {
             console.error("Failed to calculate RTP:", error);
@@ -476,11 +478,11 @@ export default class SlotGame {
 
     public checkforMoolah() {
         try {
-            console.log("--------------------- CALLED FOR CHECK FOR MOOLAHHHH ---------------------");
+
             this.settings.tempReels = this.settings.reels;
 
             const lastWinData = this.settings._winData
-            console.log("TEMP WINDATA  : ", lastWinData);
+
 
             lastWinData.winningSymbols = this.combineUniqueSymbols(
                 this.removeRecurringIndexSymbols(lastWinData.winningSymbols)
@@ -491,7 +493,7 @@ export default class SlotGame {
                 return index;
             });
 
-            console.log("Winning Indexes " + index);
+
 
             let matrix = [];
             matrix = this.settings.resultSymbolMatrix;
@@ -527,11 +529,11 @@ export default class SlotGame {
             // matrix.push(['1', '2', '3', '4', '5'])
             // matrix.push(['1', '1', '1', '1', '6'])
             // matrix.push(['0', '0', '0', '0', '0'])
-            console.log("iconsTofill", iconsToFill);
-            this.settings.resultSymbolMatrix = matrix;
-            console.log("New Moola Matrix  : " + matrix);
 
-            console.log('icons to fill', iconsToFill)
+            this.settings.resultSymbolMatrix = matrix;
+
+
+
             // tempGame.
             const result = new CheckResult(this);
             result.makeResultJson(ResultType.moolah, iconsToFill);

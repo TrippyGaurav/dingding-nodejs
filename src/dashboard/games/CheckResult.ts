@@ -90,9 +90,11 @@ export class CheckResult {
         console.log("TOTAL WINING : " + this.currentGame.settings._winData.totalWinningAmount);
         console.log("PT BETS :" + this.currentGame.settings.currentBet);
         const winRate: number =
-            (this.currentGame.player.currentWining / this.currentGame.settings.currentBet) * 100;
+            (this.currentGame.player.haveWon / this.currentGame.player.totalbet) * 100;
+        console.log("Total Bet : ", this.currentGame.player.totalbet);
+
         console.log(
-            `Total Spend : ${this.currentGame.settings.currentBet}  Total Won : ${this.currentGame.player.currentWining
+            `Total Spend : ${this.currentGame.player.totalbet}  Total Won : ${this.currentGame.player.haveWon
             } 
         Current RTP : ${winRate.toFixed(2)}% `
         );
@@ -222,7 +224,9 @@ export class CheckResult {
         // this.jackpotWin = [];
 
         if (this.useJackpot) {
+
             var temp = this.findSymbol(this.jackpot.symbolName);
+            console.log("!!!!!JACKPOT!!!!!", temp);
             if (temp.length > 0) this.jackpotWinSymbols.push(...temp);
 
             // console.log('find Jackpot symbols: ' + this.jackpotWinSymbols);
@@ -305,7 +309,7 @@ export class CheckResult {
                     tempWinSymbols.pay = payLine.pay;
 
                 tempWinSymbols.freeSpin = payLine.freeSpins;
-                console.log("PAYOUT FOR SYMBOL " + tempWinSymbols.symbol + " PAYOUT " + tempWinSymbols.pay);
+
             }
             // if (isMatched)
             //     break;
@@ -358,7 +362,9 @@ export class CheckResult {
         let symbolId: number = -1;
         let foundArray = [];
 
-        this.currentGame.settings.currentGamedata.Symbols.forEach((element) => {
+        this.currentGame.settings.resultSymbolMatrix.forEach((element) => {
+
+
             if (SymbolName == element.Name) symbolId = element.Id;
         });
 

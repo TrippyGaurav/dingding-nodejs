@@ -31,9 +31,9 @@ export class RandomResultGenerator {
         matrix.pop();
         matrix.pop();
         matrix.pop();
-        matrix.push(['7', '1', '3', '4', '5'])
-        matrix.push(['2', '1', '0', '0', '0'])
-        matrix.push(['10', '10', '10', '0', '0'])
+        matrix.push(['13', '1', '3', '4', '13'])
+        matrix.push(['2', '13', '0', '0', '13'])
+        matrix.push(['13', '1', '1', '1', '1'])
 
         current.settings.resultSymbolMatrix = matrix;
         // console.log("MATRIX " + matrix);
