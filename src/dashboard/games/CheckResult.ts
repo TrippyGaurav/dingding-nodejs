@@ -128,13 +128,16 @@ export class CheckResult {
 
     private checkForWin() {
         let allComboWin = [];
-
-        this.currentGame.settings.lineData.slice(0, this.currentGame.settings.currentLines).forEach((lb, index) => {
+        console.log("X");
+        
+        this.currentGame.settings.lineData.forEach((lb, index) => {
             let win = null;
             // console.log("Lines Index : :" + index);
 
             this.currentGame.settings.fullPayTable.forEach((Payline: PayLines) => {
                 //  find max win (or win with max symbols count)
+                // console.log(lb);
+                
                 const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
                 
                 if (winTemp != null) {
@@ -238,8 +241,7 @@ export class CheckResult {
 
     private getPayLineWin(payLine: PayLines, lineData: any, allComboWin: any[]) {
         if (payLine == null) return null;
-        
-        let isMatched = false; 
+
         let master = [];
         let winSymbols = [];
 
@@ -253,47 +255,27 @@ export class CheckResult {
             const symbol = this.getSymbolOnMatrix(i);
             const s = symbol[lineData[i]];
             tempWinSymbols.symbol = s;
-            if(tempWinSymbols.symbol === this.currentGame.settings.wildSymbol.SymbolID.toString())
-            {
-                isMatched = true;
-                if( i != 0)
-                tempWinSymbols.symbol =  this.getSymbolOnMatrix(i-1)[lineData[i]]
-                if(i == 0)
-                {
-                tempWinSymbols.symbol =  this.getSymbolOnMatrix(i+1)[lineData[i]]
-
-                }
-            }
 
             if (payLine.line[i] !== specialIcons.any && s !== payLine.line[i]) {
                 return;
             } else if (
-                payLine.line[i] !== specialIcons.any && (s === payLine.line[i]))
-             {
+                payLine.line[i] !== specialIcons.any &&
+                s === payLine.line[i]
+            ) {
                 const symbolIndex = i.toString() + "," + lineData[i].toString();
                 winSymbols.push(symbolIndex);
-                isMatched = true;
-                console.log(winSymbols);
-                
                 // gameSettings._winData.winningSymbols.push(symbolIndex);
 
                 tempWinSymbols.pos.push(symbolIndex);
                 tempWinSymbols.pay = payLine.pay;
                 tempWinSymbols.freeSpin = payLine.freeSpins;
-                //  console.log(s);
-
             }
-
             master.push(tempWinSymbols);
-
         }
-        console.log("MASTER  ",master);
-        
         // gameSettings._winData.winningSymbols.push(winSymbols);
         const filteredArray = master.filter((item) => item.pos.length > 0);
 
         const groupedBySymbol = filteredArray.reduce((acc, item) => {
-            
             if (!acc[item.symbol]) {
                 acc[item.symbol] = {
                     symbol: item.symbol,
@@ -305,20 +287,19 @@ export class CheckResult {
             acc[item.symbol].pos = acc[item.symbol].pos.concat(item.pos);
             return acc;
         }, {});
-        
 
-        // Step 3: Convert the grouped object back into an array of objects
-        const mergedArray = Object.values(groupedBySymbol);
+        // // Step 3: Convert the grouped object back into an array of objects
+        // // const mergedArray = Object.values(groupedBySymbol);
 
-        if (!payLine.pay) payLine.pay = 0;
+        // // if (!payLine.pay) payLine.pay = 0;
 
-        allComboWin.push(...mergedArray);
-        // gameSettings._winData.freeSpins += payLine.freeSpins;
-        // gameSettings._winData.totalWinningAmount += payLine.pay
+        // // allComboWin.push(...mergedArray);
+        // // gameSettings._winData.freeSpins += payLine.freeSpins;
+        // // gameSettings._winData.totalWinningAmount += payLine.pay
 
-        // const winData=new WinData(winSymbols, payLine.freeSpins, payLine.pay);
+        // // const winData=new WinData(winSymbols, payLine.freeSpins, payLine.pay);
 
-        return { freeSpins: payLine.freeSpins, pay: payLine.pay };
+        // return { freeSpins: payLine.freeSpins, pay: payLine.pay };
     }
 
     private getSymbolOnMatrix(index: number) {
