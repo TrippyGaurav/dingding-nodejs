@@ -22,17 +22,15 @@ export default class SlotGame {
     public settings: GameSettings;
 
     public player: {
-        username: string;
-        credits: number;
-        haveWon: number;
-        currentWining: number;
-        socket: Socket;
-    };
-    constructor(
-        player: { username: string; credits: number; socket: Socket },
-        GameData: any
-    ) {
-        this.player = { ...player, haveWon: 0, currentWining: 0 };
+        username: string,
+        credits: number,
+        haveWon: number,
+        currentWining: number,
+        socket: Socket
+        totalbet: number
+    }
+    constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
+        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0 };
         this.settings = {
             currentGamedata: {
                 id: "",
@@ -100,6 +98,7 @@ export default class SlotGame {
             startGame: false,
             gamble: new gambleCardGame(this),
             reels: [[]],
+            currentMoolahCount: 0,
         };
 
         this.initialize(GameData);
@@ -143,24 +142,21 @@ export default class SlotGame {
                 switch (res.id) {
                     case "SPIN":
                         // if (this.settings.currentBet > this.player.credits) {
-                        //
-                        //
                         //     this.sendError("Low Balance");
                         //     break;
                         // }
                         if (this.settings.startGame) {
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = betMultiplier[res.data.currentBet];
-                            this.settings.currentBet =
-                                betMultiplier[res.data.currentBet] * this.settings.currentLines;
+
+                            this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
+
                             this.spinResult();
                         }
                         break;
 
                     case "GENRTP":
                         // if (this.settings.currentBet > this.player.credits) {
-                        //
-                        //
                         //     this.sendError("Low Balance");
                         //     break;
                         // }
@@ -211,9 +207,12 @@ export default class SlotGame {
                 { new: true }
             );
 
-            if (!result) {
-            } else {
-            }
+    
+
+
+
+
+        
         } catch (error) {
             console.error("Failed to update database:", error);
             this.sendError("Database error");
@@ -223,7 +222,6 @@ export default class SlotGame {
     private checkPlayerBalance() {
         if (this.player.credits < this.settings.currentBet) {
             this.sendMessage("low-balance", true);
-
             console.error("LOW BALANCE");
             return;
         }
@@ -234,8 +232,8 @@ export default class SlotGame {
             this.player.credits += credit;
             this.player.haveWon += credit;
             this.player.currentWining = credit;
-
             await this.updateDatabase();
+
         } catch (error) {
             console.error("Error updating credits in database:", error);
         }
@@ -244,7 +242,7 @@ export default class SlotGame {
     async deductPlayerBalance(credit: number) {
         this.checkPlayerBalance();
         this.player.credits -= credit;
-        await this.updateDatabase();
+        // await this.updateDatabase();
     }
 
     private initSymbols() {
@@ -275,6 +273,7 @@ export default class SlotGame {
                 });
             } else {
                 this.handleSpecialSymbols(element);
+
             }
         });
     }
@@ -377,11 +376,10 @@ export default class SlotGame {
                 Balance: this.player.credits,
                 haveWon: this.player.haveWon,
                 currentWining: this.player.currentWining,
+                totalbet: this.player.totalbet
             },
             maxGambleBet: 300,
         };
-
-        //
 
         this.sendMessage("InitData", dataToSend);
     }
@@ -415,25 +413,34 @@ export default class SlotGame {
             let payTableFull = [];
             this.settings.payLine.forEach((pLine) => {
                 payTable.push(
-                    new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID, this)
+                    new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID.toString(), this)
                 )
             });
             for (let j = 0; j < payTable.length; j++) {
                 payTableFull.push(payTable[j]);
                 if (this.settings.useWild) {
+
                     let wildLines = payTable[j].getWildLines();
+
                     wildLines.forEach((wl) => {
                         payTableFull.push(wl);
                     });
                 }
             }
             this.settings.fullPayTable = payTableFull;
-        } catch (error) { }
+
+        } catch (error) {
+
+
+        }
+
+
     }
 
     private async spinResult() {
         try {
             if (this.settings.currentBet > this.player.credits) {
+
                 this.sendError("Low Balance");
                 return;
             }
@@ -460,7 +467,7 @@ export default class SlotGame {
 
             this.settings.tempReels = [[]];
             this.settings.bonus.start = false;
-
+            this.player.totalbet += this.settings.currentBet
             new RandomResultGenerator(this);
             const result = new CheckResult(this);
             result.makeResultJson(ResultType.normal);
@@ -481,22 +488,27 @@ export default class SlotGame {
                 won = this.settings._winData.totalWinningAmount;
             }
             let rtp = 0;
-
             if (spend > 0) {
                 rtp = won / spend;
             }
 
-            return;
+
+
+
+            return
+
         } catch (error) {
             console.error("Failed to calculate RTP:", error);
             this.sendError("RTP calculation error");
         }
     }
 
-    private checkforMoolah() {
+    public checkforMoolah() {
         try {
             this.settings.tempReels = this.settings.reels;
-            const lastWinData = this.settings._winData;
+
+            const lastWinData = this.settings._winData
+
 
             lastWinData.winningSymbols = this.combineUniqueSymbols(
                 this.removeRecurringIndexSymbols(lastWinData.winningSymbols)
@@ -527,6 +539,7 @@ export default class SlotGame {
                             this.settings.tempReels[i].length;
                         transposed[i][j] = this.settings.tempReels[i][index];
                         row.unshift(this.settings.tempReels[i][index]);
+                        this.settings.tempReels[i].splice(j, 1);
                     }
                 }
                 if (row.length > 0) iconsToFill.push(row);
@@ -536,17 +549,25 @@ export default class SlotGame {
             // matrix.pop();
             // matrix.pop();
             // matrix.pop();
-            // matrix.push([ '1', '2', '3', '4', '5' ])
-            // matrix.push([ '1', '1', '1', '1', '6' ])
-            // matrix.push(['0', '10', '10', '0', '0'])
+
+            // matrix.push(['1', '2', '3', '4', '5'])
+            // matrix.push(['1', '1', '1', '1', '6'])
+            // matrix.push(['0', '0', '0', '0', '0'])
+
 
             this.settings.resultSymbolMatrix = matrix;
 
+
+
+            // tempGame.
             const result = new CheckResult(this);
             result.makeResultJson(ResultType.moolah, iconsToFill);
+            this.settings._winData.winningSymbols = []
+            this.settings.tempReels = []
         } catch (error) {
             console.error("Failed to check for Moolah:", error);
             this.sendError("Moolah check error");
+            return error
         }
     }
 

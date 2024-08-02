@@ -28,12 +28,15 @@ export class RandomResultGenerator {
         console.log("indexs", randomIndexArray);
         console.log("gameSettings._winData.resultReelIndex", current.settings.resultReelIndex);
 
-        matrix.pop();
-        matrix.pop();
-        matrix.pop();
-        matrix.push(['1', '2', '3', '4', '5'])
-        matrix.push(['2', '1', '5', '6', '13'])
-        matrix.push(['0', '10', '0', '2', '5'])
+        // matrix.pop();
+        // matrix.pop();
+        // matrix.pop();
+
+        // matrix.push(['12', '1', '3', '4', '12'])
+        // matrix.push(['2', '12', '0', '0', '12'])
+        // matrix.push(['1', '1', '1', '1', '1'])
+
+
         current.settings.resultSymbolMatrix = matrix;
         // console.log("MATRIX " + matrix);
 

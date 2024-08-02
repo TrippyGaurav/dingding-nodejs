@@ -2,7 +2,7 @@
 // import { sendMessageToClient } from "./App";
 
 import { slotGameSettings, gameWining, getCurrentRTP } from "./_global";
-import { removeRecurringIndexSymbols, startFreeSpin } from "./slotUtils";
+import { checkforMoolah, removeRecurringIndexSymbols, startFreeSpin } from "./slotUtils";
 import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "./slotTypes";
 import { GData, PlayerData } from "../TestGlobal";
 import { Socket } from "socket.io";
@@ -181,7 +181,6 @@ export class CheckResult {
     });
 
 
-
     //check for bonus
     // if(BonusArray.length>0){
     //     if (!gameSettings.currentGamedata.bonus.isEnabled)
@@ -291,7 +290,7 @@ export class CheckResult {
         return;
       } else if (
         payLine.line[i] !== specialIcons.any &&
-        s === payLine.line[i]
+        s === payLine.line[i] 
       ) {
         const symbolIndex = i.toString() + "," + lineData[i].toString();
         winSymbols.push(symbolIndex);

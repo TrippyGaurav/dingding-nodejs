@@ -5,6 +5,8 @@ import SlotGame from "./slotGame";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import PayLines from "./PayLines";
 import { ScatterPayEntry, BonusPayEntry, ResultType } from "./gameUtils";
+import { moolahPayOut } from "./testData";
+import { log } from "console";
 
 export class CheckResult {
     scatter: string;
@@ -26,7 +28,6 @@ export class CheckResult {
 
     constructor(current) {
         current.settings._winData = new WinData(current);
-
         this.currentGame = current;
         this.scatter = specialIcons.scatter;
         this.useScatter = current.settings.useScatter && this.scatter !== null;
@@ -46,6 +47,23 @@ export class CheckResult {
         this.bonusResult = [];
 
         this.searchWinSymbols();
+
+        // if (this.currentGame.settings._winData.winningSymbols.length !== 0) {
+        //     if (!this.currentGame.settings.freeSpinStarted)
+        //         this.currentGame.settings.currentMoolahCount++
+        //     this.currentGame.checkforMoolah();
+        //     console.log("MOOLAH COUNT : ", this.currentGame.settings.currentMoolahCount);
+        //     return;
+        // }
+        // else {
+        //     if (this.currentGame.settings.currentMoolahCount >= 3 && (moolahPayOut.length + 3) > this.currentGame.settings.currentMoolahCount) {
+        //         this.currentGame.settings._winData.freeSpins += moolahPayOut[3 - this.currentGame.settings.currentMoolahCount]
+        //         if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings._winData.freeSpins != 0)
+        //             this.startFreeSpin();
+        //     }
+        //     this.currentGame.settings.currentMoolahCount = 0;
+        // }
+
     }
 
     searchWinSymbols() {
@@ -72,9 +90,11 @@ export class CheckResult {
         console.log("TOTAL WINING : " + this.currentGame.settings._winData.totalWinningAmount);
         console.log("PT BETS :" + this.currentGame.settings.currentBet);
         const winRate: number =
-            (this.currentGame.player.currentWining / this.currentGame.settings.currentBet) * 100;
+            (this.currentGame.player.haveWon / this.currentGame.player.totalbet) * 100;
+        console.log("Total Bet : ", this.currentGame.player.totalbet);
+
         console.log(
-            `Total Spend : ${this.currentGame.settings.currentBet}  Total Won : ${this.currentGame.player.currentWining
+            `Total Spend : ${this.currentGame.player.totalbet}  Total Won : ${this.currentGame.player.haveWon
             } 
         Current RTP : ${winRate.toFixed(2)}% `
         );
@@ -86,6 +106,8 @@ export class CheckResult {
         if (this.currentGame.settings.freeSpinStarted) return
         let bonusSymbols = [];
         let temp = this.findSymbol(specialIcons.bonus);
+        console.log("Bonus  : ", temp);
+
         if (temp.length > 0) bonusSymbols.push(...temp);
         this.bonusPaytable.forEach((element) => {
             if (
@@ -110,13 +132,16 @@ export class CheckResult {
 
     private checkForWin() {
         let allComboWin = [];
+        console.log("X");
 
-        this.currentGame.settings.lineData.slice(0, this.currentGame.settings.currentLines).forEach((lb, index) => {
+        this.currentGame.settings.lineData.forEach((lb, index) => {
             let win = null;
             // console.log("Lines Index : :" + index);
 
             this.currentGame.settings.fullPayTable.forEach((Payline: PayLines) => {
                 //  find max win (or win with max symbols count)
+                // console.log(lb);
+
                 const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
                 if (winTemp != null) {
                     if (win == null) win = winTemp;
@@ -124,6 +149,7 @@ export class CheckResult {
                         if (win.Pay < winTemp.pay || win.FreeSpins < winTemp.freeSpins)
                             win = winTemp;
                     }
+
                     this.currentGame.settings._winData.winningLines.push(index);
                     console.log(`Line Index : ${index} : ` + lb + " - line win: " + win);
                 }
@@ -131,13 +157,18 @@ export class CheckResult {
         });
 
         const filteredArray = this.checkforDuplicate(allComboWin);
+        console.log("Element Pay ", filteredArray);
         let BonusArray = [];
         filteredArray.forEach((element) => {
+
             this.currentGame.settings._winData.winningSymbols.push(element.pos);
             this.currentGame.settings._winData.totalWinningAmount +=
                 element.pay * this.currentGame.settings.BetPerLines;
+
             this.currentGame.settings._winData.freeSpins += element.freeSpin;
         });
+
+
     }
 
     private checkforDuplicate(allComboWin: any[]): any[] {
@@ -194,7 +225,8 @@ export class CheckResult {
         // this.jackpotWin = [];
 
         if (this.useJackpot) {
-            var temp = this.findSymbol(this.jackpot.symbolName);
+
+            var temp = this.findSymbol(specialIcons.jackpot);
             if (temp.length > 0) this.jackpotWinSymbols.push(...temp);
 
             // console.log('find Jackpot symbols: ' + this.jackpotWinSymbols);
@@ -203,6 +235,7 @@ export class CheckResult {
                 this.jackpot.symbolsCount > 0 &&
                 this.jackpot.symbolsCount == this.jackpotWinSymbols.length
             ) {
+                console.log("!!!!!JACKPOT!!!!!", temp);
                 this.currentGame.settings._winData.winningSymbols.push(this.jackpotWinSymbols);
                 this.currentGame.settings._winData.totalWinningAmount += this.jackpot.defaultAmount;
                 this.currentGame.settings._winData.jackpotwin += this.jackpot.defaultAmount;
@@ -213,11 +246,12 @@ export class CheckResult {
 
     private getPayLineWin(payLine: PayLines, lineData: any, allComboWin: any[]) {
         if (payLine == null) return null;
-
         let master = [];
         let winSymbols = [];
 
         for (let i = 0; i < lineData.length; i++) {
+            let isMatched = false;
+            let wildTempPointer = undefined;
             let tempWinSymbols = {
                 pos: [],
                 symbol: "",
@@ -225,23 +259,62 @@ export class CheckResult {
                 freeSpin: 0,
             };
             const symbol = this.getSymbolOnMatrix(i);
-            const s = symbol[lineData[i]];
+            let s = symbol[lineData[i]];
             tempWinSymbols.symbol = s;
 
-            if (payLine.line[i] !== specialIcons.any && s !== payLine.line[i]) {
+
+            if (tempWinSymbols.symbol === this.currentGame.settings.wildSymbol.SymbolID.toString()) {
+
+                if (i != 0 && !wildTempPointer) {
+                    isMatched = true;
+
+                    tempWinSymbols.symbol = wildTempPointer = this.getSymbolOnMatrix(i - 1)[lineData[i]]
+                }
+                if (i == 0 && !wildTempPointer) {
+                    {
+                        isMatched = true;
+
+                        tempWinSymbols.symbol = wildTempPointer = this.getSymbolOnMatrix(i + 1)[lineData[i]]
+                    }
+                }
+                if (i != 0 && wildTempPointer) {
+                    isMatched = true;
+
+                    tempWinSymbols.symbol = wildTempPointer
+                }
+                if (i == 0 && wildTempPointer) {
+                    {
+                        isMatched = true;
+
+                        tempWinSymbols.symbol = wildTempPointer
+                    }
+                }
+            }
+
+
+
+            // if (symbol === this.currentGame.settings.wildSymbol.SymbolID as )
+            if (payLine.line[i] !== specialIcons.any && tempWinSymbols.symbol !== payLine.line[i]) {
                 return;
-            } else if (
-                payLine.line[i] !== specialIcons.any &&
-                s === payLine.line[i]
-            ) {
+            } else if
+                (payLine.line[i] !== specialIcons.any && tempWinSymbols.symbol === payLine.line[i]) {
+
                 const symbolIndex = i.toString() + "," + lineData[i].toString();
                 winSymbols.push(symbolIndex);
                 // gameSettings._winData.winningSymbols.push(symbolIndex);
 
                 tempWinSymbols.pos.push(symbolIndex);
-                tempWinSymbols.pay = payLine.pay;
+                if (isMatched)
+                    tempWinSymbols.pay = 0;
+                else
+                    tempWinSymbols.pay = payLine.pay;
+
                 tempWinSymbols.freeSpin = payLine.freeSpins;
+
             }
+            // if (isMatched)
+            //     break;
+
             master.push(tempWinSymbols);
         }
         // gameSettings._winData.winningSymbols.push(winSymbols);
@@ -260,16 +333,12 @@ export class CheckResult {
             return acc;
         }, {});
 
-        // Step 3: Convert the grouped object back into an array of objects
+        // // Step 3: Convert the grouped object back into an array of objects
         const mergedArray = Object.values(groupedBySymbol);
 
         if (!payLine.pay) payLine.pay = 0;
 
         allComboWin.push(...mergedArray);
-        // gameSettings._winData.freeSpins += payLine.freeSpins;
-        // gameSettings._winData.totalWinningAmount += payLine.pay
-
-        // const winData=new WinData(winSymbols, payLine.freeSpins, payLine.pay);
 
         return { freeSpins: payLine.freeSpins, pay: payLine.pay };
     }
@@ -295,6 +364,8 @@ export class CheckResult {
         let foundArray = [];
 
         this.currentGame.settings.currentGamedata.Symbols.forEach((element) => {
+
+
             if (SymbolName == element.Name) symbolId = element.Id;
         });
 
@@ -331,12 +402,13 @@ export class CheckResult {
                 currentWining: this.currentGame.player.currentWining
             }
         };
-        this.currentGame.updateDatabase()
+        // this.currentGame.updateDatabase()
         if (isResult == ResultType.normal)
             this.currentGame.sendMessage("ResultData", ResultData);
         if (isResult == ResultType.moolah) {
             ResultData.GameData['iconstoFill'] = iconsToFill;
             this.currentGame.sendMessage("MoolahResultData", ResultData);
+
         }
     }
 
@@ -381,16 +453,15 @@ export class CheckResult {
 
         this.currentGame.sendMessage('StartedFreeSpin', {})
         this.currentGame.settings.freeSpinStarted = true;
-        // for (let i = 0; i <= this.currentGame.settings._winData.freeSpins; i++) {
-        //     this.currentGame.settings.bonus.start = false;
-        //     new RandomResultGenerator(this.currentGame);
-        //     new CheckResult(this.currentGame);
-        //     console.log(
-        //         "FREE SPINS LEFTTT ::::" + (this.currentGame.settings._winData.freeSpins - i)
-        //     );
-        //     return
-        // }
-        // this.currentGame.settings._winData.freeSpins = 0;
+        for (let i = 0; i <= this.currentGame.settings._winData.freeSpins; i++) {
+            this.currentGame.settings.bonus.start = false;
+            new RandomResultGenerator(this.currentGame);
+            new CheckResult(this.currentGame);
+            console.log(
+                "FREE SPINS LEFTTT ::::" + (this.currentGame.settings._winData.freeSpins - i)
+            );
+        }
+        this.currentGame.settings._winData.freeSpins = 0;
         this.currentGame.sendMessage("StoppedFreeSpins", {});
         // this.currentGame.settings.freeSpinStarted = false;
         console.log("____----Stopped FREE SPIN ----_____");

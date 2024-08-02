@@ -92,6 +92,7 @@ export interface GameSettings {
   startGame: boolean;
   gamble: gambleCardGame;
   reels: any[][];
+  currentMoolahCount: number,
 }
 
 export interface WildSymbol {
