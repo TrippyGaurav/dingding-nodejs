@@ -370,11 +370,12 @@ class SlotGame {
                 /*
                 MIDDLEWARE GOES HERE
                 */
-                if (!this.settings.freeSpinStarted) {
+                if (!this.settings.freeSpinStarted && this.settings.freeSpinCount === 0) {
                     yield this.deductPlayerBalance(this.settings.currentBet);
                 }
-                else {
+                if (this.settings.freeSpinStarted && this.settings.freeSpinCount > 0) {
                     this.settings.freeSpinCount--;
+                    console.log(this.settings.freeSpinCount, 'this.settings.freeSpinCount');
                     if (this.settings.freeSpinCount <= 0) {
                         this.settings.freeSpinStarted = false;
                     }
