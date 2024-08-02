@@ -34,7 +34,7 @@ export class RandomResultGenerator {
 
         // matrix.push(['12', '1', '3', '4', '12'])
         // matrix.push(['2', '12', '0', '0', '12'])
-        // matrix.push(['1', '1', '1', '1', '1'])
+        // matrix.push(['11', '11', '11', '10', '1'])
 
 
         current.settings.resultSymbolMatrix = matrix;

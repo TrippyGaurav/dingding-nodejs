@@ -72,7 +72,7 @@ export class CheckResult {
         this.checkForWin();
         this.checkForBonus();
         this.checkForJackpot();
-
+        this.checkForScatter();
 
         this.currentGame.settings._winData.winningLines =
             this.currentGame.settings._winData.winningLines.filter(
@@ -198,10 +198,11 @@ export class CheckResult {
     private checkForScatter() {
         this.scatterWinSymbols = [];
         // this.scatterWin = null;
-
+        
         if (this.useScatter) {
             // console.log("scattersds", this.scatter);
-            let temp = this.findSymbol(this.scatter);
+            let temp = this.findSymbol(specialIcons.scatter);
+            console.log("useScatter", temp.length);
 
             if (temp.length > 0) this.scatterWinSymbols.push(...temp);
 

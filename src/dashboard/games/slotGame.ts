@@ -258,11 +258,7 @@ export default class SlotGame {
 
     private makePayLines() {
         this.settings.currentGamedata.Symbols.forEach((element) => {
-            if (
-                element.useWildSub ||
-                element.Name == "FreeSpin" ||
-                element.Name == "Scatter"
-            ) {
+            if ( element.useWildSub || element.Name == "FreeSpin" ) {
                 element.multiplier?.forEach((item, index) => {
                     this.addPayLineSymbols(
                         element.Id?.toString(),
@@ -419,7 +415,6 @@ export default class SlotGame {
             for (let j = 0; j < payTable.length; j++) {
                 payTableFull.push(payTable[j]);
                 if (this.settings.useWild) {
-
                     let wildLines = payTable[j].getWildLines();
 
                     wildLines.forEach((wl) => {
