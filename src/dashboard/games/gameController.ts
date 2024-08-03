@@ -63,7 +63,7 @@ export class GameController {
           const favoriteGames = await Platform.aggregate([
             { $match: { name: platform } },
             { $unwind: "$games" },
-            { $match: { "games._id": { $in: favoriteGameIds } } },
+            { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
             {
               $group: {
                 _id: "$_id",
@@ -86,9 +86,7 @@ export class GameController {
           const platformDoc = await Platform.aggregate([
             { $match: { name: platform } },
             { $unwind: "$games" },
-            {
-              $match: category !== "all" ? { "games.category": category } : {},
-            },
+            { $match: { "games.status": { $ne: "inactive" }, ...(category !== "all" ? { "games.category": category } : {}) } },
             { $sort: { "games.createdAt": -1 } },
             {
               $group: {
@@ -163,7 +161,7 @@ export class GameController {
 
       const platform = await Platform.aggregate([
         { $unwind: "$games" },
-        { $match: { "games.slug": slug } },
+        { $match: { "games.slug": slug, "games.status": { $ne: "inactive" } } },
         {
           $project: {
             _id: 0,
