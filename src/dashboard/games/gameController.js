@@ -52,7 +52,7 @@ class GameController {
     // GET : Get Games
     getGames(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
+            var _a;
             try {
                 const _req = req;
                 const { category, platform } = req.query;
@@ -67,11 +67,10 @@ class GameController {
                             throw (0, http_errors_1.default)(404, "Player not found");
                         }
                         const favoriteGameIds = player.favouriteGames.map((game) => new mongoose_1.default.Types.ObjectId(game));
-                        console.log("favoriteGameIds : ", favoriteGameIds);
                         const favoriteGames = yield gameModel_1.Platform.aggregate([
                             { $match: { name: platform } },
                             { $unwind: "$games" },
-                            { $match: { "games._id": { $in: favoriteGameIds } } },
+                            { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
                             {
                                 $group: {
                                     _id: "$_id",
@@ -80,21 +79,18 @@ class GameController {
                             },
                             { $project: { "games.url": 0 } },
                         ]);
-                        console.log("favoriteGames : ", (_a = favoriteGames[0]) === null || _a === void 0 ? void 0 : _a.games);
                         if (!favoriteGames.length) {
                             return res.status(200).json({ featured: [], others: [] });
                         }
                         return res
                             .status(200)
-                            .json({ featured: [], others: (_b = favoriteGames[0]) === null || _b === void 0 ? void 0 : _b.games });
+                            .json({ featured: [], others: (_a = favoriteGames[0]) === null || _a === void 0 ? void 0 : _a.games });
                     }
                     else {
                         const platformDoc = yield gameModel_1.Platform.aggregate([
                             { $match: { name: platform } },
                             { $unwind: "$games" },
-                            {
-                                $match: category !== "all" ? { "games.category": category } : {},
-                            },
+                            { $match: Object.assign({ "games.status": { $ne: "inactive" } }, (category !== "all" ? { "games.category": category } : {})) },
                             { $sort: { "games.createdAt": -1 } },
                             {
                                 $group: {
@@ -156,7 +152,7 @@ class GameController {
                 }
                 const platform = yield gameModel_1.Platform.aggregate([
                     { $unwind: "$games" },
-                    { $match: { "games.slug": slug } },
+                    { $match: { "games.slug": slug, "games.status": { $ne: "inactive" } } },
                     {
                         $project: {
                             _id: 0,
@@ -196,9 +192,6 @@ class GameController {
                     throw (0, http_errors_1.default)(401, "Access denied: You don't have permission to add games");
                 }
                 const { name, url, type, category, status, tagName, slug, platform: platformName, } = req.body;
-                console.log("Add : ", req.body);
-                console.log("Thumb : ", req.files.thumbnail);
-                console.log("payoutFile : ", req.files.payoutFile);
                 if (!name ||
                     !url ||
                     !type ||
@@ -300,10 +293,8 @@ class GameController {
                 if (thumbnailUploadResult && thumbnailUploadResult.public_id) {
                     cloudinary_1.default.v2.uploader.destroy(thumbnailUploadResult.public_id, (destroyError, result) => {
                         if (destroyError) {
-                            console.log("Failed to delete thumbnail from Cloudinary:", destroyError);
                         }
                         else {
-                            console.log("Thumbnail deleted from Cloudinary:", result);
                         }
                     });
                 }
@@ -359,7 +350,7 @@ class GameController {
     // PUT : Update a Game
     updateGame(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d;
+            var _a, _b;
             const session = yield mongoose_1.default.startSession();
             session.startTransaction();
             let thumbnailUploadResult;
@@ -367,8 +358,7 @@ class GameController {
                 const _req = req;
                 const { username, role } = _req.user;
                 const { gameId } = req.params;
-                const _e = req.body, { status, slug, platformName } = _e, updateFields = __rest(_e, ["status", "slug", "platformName"]);
-                console.log("Update Game : ", req.body);
+                const _c = req.body, { status, slug, platformName } = _c, updateFields = __rest(_c, ["status", "slug", "platformName"]);
                 if (!gameId) {
                     throw (0, http_errors_1.default)(400, "Game ID is required");
                 }
@@ -417,7 +407,6 @@ class GameController {
                 }
                 // Handle file for payout update
                 if ((_a = req.files) === null || _a === void 0 ? void 0 : _a.payoutFile) {
-                    console.log("Payout FIle : ", (_b = req.files) === null || _b === void 0 ? void 0 : _b.payoutFile);
                     // Delete the old payout
                     if (game.payout) {
                         yield payoutModel_1.default.findByIdAndDelete(game.payout);
@@ -432,8 +421,7 @@ class GameController {
                     fieldsToUpdate.payout = newPayout._id;
                 }
                 // Handle file for thumbnail update
-                if ((_c = req.files) === null || _c === void 0 ? void 0 : _c.thumbnail) {
-                    console.log("Thumb : ", (_d = req.files) === null || _d === void 0 ? void 0 : _d.thumbnail);
+                if ((_b = req.files) === null || _b === void 0 ? void 0 : _b.thumbnail) {
                     const thumbnailBuffer = req.files.thumbnail[0].buffer;
                     thumbnailUploadResult = yield new Promise((resolve, reject) => {
                         cloudinary_1.default.v2.uploader
@@ -470,10 +458,8 @@ class GameController {
                 if (thumbnailUploadResult && thumbnailUploadResult.public_id) {
                     cloudinary_1.default.v2.uploader.destroy(thumbnailUploadResult.public_id, (destroyError, result) => {
                         if (destroyError) {
-                            console.log("Failed to delete thumbnail from Cloudinary:", destroyError);
                         }
                         else {
-                            console.log("Thumbnail deleted from Cloudinary:", result);
                         }
                     });
                 }
