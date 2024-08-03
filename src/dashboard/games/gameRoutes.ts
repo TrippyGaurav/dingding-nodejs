@@ -6,7 +6,8 @@ import { checkUser } from "../middleware/checkUser";
 
 const gameController = new GameController()
 const gameRoutes = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit
+
 
 // GET : Get all Games
 gameRoutes.get("/", validateApiKey, checkUser, gameController.getGames);
