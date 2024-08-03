@@ -58,12 +58,12 @@ export class GameController {
           const favoriteGameIds = player.favouriteGames.map(
             (game) => new mongoose.Types.ObjectId(game)
           );
-          console.log("favoriteGameIds : ", favoriteGameIds);
+          
 
           const favoriteGames = await Platform.aggregate([
             { $match: { name: platform } },
             { $unwind: "$games" },
-            { $match: { "games._id": { $in: favoriteGameIds } } },
+            { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
             {
               $group: {
                 _id: "$_id",
@@ -73,7 +73,7 @@ export class GameController {
             { $project: { "games.url": 0 } },
           ]);
 
-          console.log("favoriteGames : ", favoriteGames[0]?.games);
+          
 
           if (!favoriteGames.length) {
             return res.status(200).json({ featured: [], others: [] });
@@ -86,9 +86,7 @@ export class GameController {
           const platformDoc = await Platform.aggregate([
             { $match: { name: platform } },
             { $unwind: "$games" },
-            {
-              $match: category !== "all" ? { "games.category": category } : {},
-            },
+            { $match: { "games.status": { $ne: "inactive" }, ...(category !== "all" ? { "games.category": category } : {}) } },
             { $sort: { "games.createdAt": -1 } },
             {
               $group: {
@@ -163,7 +161,7 @@ export class GameController {
 
       const platform = await Platform.aggregate([
         { $unwind: "$games" },
-        { $match: { "games.slug": slug } },
+        { $match: { "games.slug": slug, "games.status": { $ne: "inactive" } } },
         {
           $project: {
             _id: 0,
@@ -219,9 +217,9 @@ export class GameController {
         slug,
         platform: platformName,
       } = req.body;
-      console.log("Add : ", req.body);
-      console.log("Thumb : ", req.files.thumbnail);
-      console.log("payoutFile : ", req.files.payoutFile);
+      
+      
+      
 
       if (
         !name ||
@@ -353,12 +351,9 @@ export class GameController {
           thumbnailUploadResult.public_id,
           (destroyError, result) => {
             if (destroyError) {
-              console.log(
-                "Failed to delete thumbnail from Cloudinary:",
-                destroyError
-              );
+              
             } else {
-              console.log("Thumbnail deleted from Cloudinary:", result);
+              
             }
           }
         );
@@ -437,7 +432,7 @@ export class GameController {
       const { username, role } = _req.user;
       const { gameId } = req.params;
       const { status, slug, platformName, ...updateFields } = req.body;
-      console.log("Update Game : ", req.body);
+      
 
       if (!gameId) {
         throw createHttpError(400, "Game ID is required");
@@ -506,7 +501,7 @@ export class GameController {
 
       // Handle file for payout update
       if (req.files?.payoutFile) {
-        console.log("Payout FIle : ", req.files?.payoutFile);
+        
 
         // Delete the old payout
         if (game.payout) {
@@ -528,7 +523,7 @@ export class GameController {
 
       // Handle file for thumbnail update
       if (req.files?.thumbnail) {
-        console.log("Thumb : ", req.files?.thumbnail);
+        
 
         const thumbnailBuffer = req.files.thumbnail[0].buffer;
 
@@ -583,12 +578,9 @@ export class GameController {
           thumbnailUploadResult.public_id,
           (destroyError, result) => {
             if (destroyError) {
-              console.log(
-                "Failed to delete thumbnail from Cloudinary:",
-                destroyError
-              );
+              
             } else {
-              console.log("Thumbnail deleted from Cloudinary:", result);
+              
             }
           }
         );
