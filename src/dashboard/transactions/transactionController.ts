@@ -56,6 +56,7 @@ export class TransactionController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = req.query.search as string;
+      const filter = req.query.filter || "";
       let parsedData: QueryParams = {
         role: "",
         status: "",
@@ -81,10 +82,22 @@ export class TransactionController {
       if (type) {
         query.type = type;
       }
+      if (filter) {
+        query.$or = [
+          { creditor: { $regex: filter, $options: "i" } },
+          { debtor: { $regex: filter, $options: "i" } },
+        ];
+      }
       if (updatedAt) {
+        const fromDate = new Date(parsedData.updatedAt.From);
+        const toDate = new Date(parsedData.updatedAt.To) || new Date();
+
+        fromDate.setHours(0, 0, 0, 0);
+        toDate.setHours(23, 59, 59, 999);
+
         query.updatedAt = {
-          $gte: parsedData.updatedAt.From,
-          $lte: parsedData.updatedAt.To,
+          $gte: fromDate,
+          $lte: toDate,
         };
       }
 
@@ -206,9 +219,6 @@ export class TransactionController {
     }
   }
 
-  /**
-   * Retrieves All transactions
-   */
   async getAllTransactions(req: Request, res: Response, next: NextFunction) {
     try {
       const _req = req as AuthRequest;
@@ -224,6 +234,7 @@ export class TransactionController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = req.query.search as string;
+      const filter = req.query.filter || "";
       let parsedData: QueryParams = {
         role: "",
         status: "",
@@ -249,10 +260,24 @@ export class TransactionController {
       if (type) {
         query.type = type;
       }
+      if (filter) {
+        query.$or = [
+          { creditor: { $regex: filter, $options: "i" } },
+          { debtor: { $regex: filter, $options: "i" } },
+        ];
+      }
       if (updatedAt) {
+        const fromDate = new Date(parsedData.updatedAt.From);
+        const toDate = parsedData.updatedAt.To
+          ? new Date(parsedData.updatedAt.To)
+          : new Date();
+
+        fromDate.setHours(0, 0, 0, 0);
+        toDate.setHours(23, 59, 59, 999);
+
         query.updatedAt = {
-          $gte: parsedData.updatedAt.From,
-          $lte: parsedData.updatedAt.To,
+          $gte: fromDate,
+          $lte: toDate,
         };
       }
 
@@ -269,7 +294,7 @@ export class TransactionController {
       const totalPages = Math.ceil(totalTransactions / limit);
 
       // Check if the requested page is out of range
-      if (page > totalPages) {
+      if (page > totalPages && totalPages !== 0) {
         return res.status(400).json({
           message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
           totalTransactions,
@@ -279,7 +304,9 @@ export class TransactionController {
         });
       }
 
-      const transactions = await Transaction.find(query).skip(skip).limit(limit);
+      const transactions = await Transaction.find(query)
+        .skip(skip)
+        .limit(limit);
 
       res.status(200).json({
         totalTransactions,
