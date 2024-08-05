@@ -8,6 +8,7 @@ import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
 import { gambleCardGame } from "./newGambleGame";
+import { log } from "console";
 
 export default class SlotGame {
     public settings: GameSettings;
@@ -408,22 +409,25 @@ export default class SlotGame {
             /*
             MIDDLEWARE GOES HERE
             */
-            if (!this.settings.freeSpinStarted) {
+            if (!this.settings.freeSpinStarted && this.settings.freeSpinCount===0) {
                 await this.deductPlayerBalance(this.settings.currentBet);
-            } else {
+            }
+            if(this.settings.freeSpinStarted &&this.settings.freeSpinCount>0) {
                 this.settings.freeSpinCount--;
+                console.log(this.settings.freeSpinCount,'this.settings.freeSpinCount');
+                
                 if (this.settings.freeSpinCount <= 0) {
                     this.settings.freeSpinStarted = false
 
                 }
             }
-
             this.settings.tempReels = [[]];
             this.settings.bonus.start = false;
 
             new RandomResultGenerator(this);
             const result = new CheckResult(this)
             result.makeResultJson(ResultType.normal)
+           
         } catch (error) {
             console.error("Failed to generate spin results:", error);
             this.sendError("Spin error");

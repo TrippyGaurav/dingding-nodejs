@@ -58,7 +58,7 @@ export class GameController {
           const favoriteGameIds = player.favouriteGames.map(
             (game) => new mongoose.Types.ObjectId(game)
           );
-          console.log("favoriteGameIds : ", favoriteGameIds);
+          
 
           const favoriteGames = await Platform.aggregate([
             { $match: { name: platform } },
@@ -73,7 +73,7 @@ export class GameController {
             { $project: { "games.url": 0 } },
           ]);
 
-          console.log("favoriteGames : ", favoriteGames[0]?.games);
+          
 
           if (!favoriteGames.length) {
             return res.status(200).json({ featured: [], others: [] });
@@ -217,9 +217,9 @@ export class GameController {
         slug,
         platform: platformName,
       } = req.body;
-      console.log("Add : ", req.body);
-      console.log("Thumb : ", req.files.thumbnail);
-      console.log("payoutFile : ", req.files.payoutFile);
+      
+      
+      
 
       if (
         !name ||
@@ -351,12 +351,9 @@ export class GameController {
           thumbnailUploadResult.public_id,
           (destroyError, result) => {
             if (destroyError) {
-              console.log(
-                "Failed to delete thumbnail from Cloudinary:",
-                destroyError
-              );
+              
             } else {
-              console.log("Thumbnail deleted from Cloudinary:", result);
+              
             }
           }
         );
@@ -435,7 +432,7 @@ export class GameController {
       const { username, role } = _req.user;
       const { gameId } = req.params;
       const { status, slug, platformName, ...updateFields } = req.body;
-      console.log("Update Game : ", req.body);
+      
 
       if (!gameId) {
         throw createHttpError(400, "Game ID is required");
@@ -504,7 +501,7 @@ export class GameController {
 
       // Handle file for payout update
       if (req.files?.payoutFile) {
-        console.log("Payout FIle : ", req.files?.payoutFile);
+        
 
         // Delete the old payout
         if (game.payout) {
@@ -526,7 +523,7 @@ export class GameController {
 
       // Handle file for thumbnail update
       if (req.files?.thumbnail) {
-        console.log("Thumb : ", req.files?.thumbnail);
+        
 
         const thumbnailBuffer = req.files.thumbnail[0].buffer;
 
@@ -581,12 +578,9 @@ export class GameController {
           thumbnailUploadResult.public_id,
           (destroyError, result) => {
             if (destroyError) {
-              console.log(
-                "Failed to delete thumbnail from Cloudinary:",
-                destroyError
-              );
+              
             } else {
-              console.log("Thumbnail deleted from Cloudinary:", result);
+              
             }
           }
         );

@@ -83,7 +83,7 @@ export class TransactionService {
       };
     }
 
-    if (page > totalPages) {
+    if (page > totalPages && totalPages!== 0) {
       return {
         transactions: [],
         totalTransactions,
@@ -94,12 +94,18 @@ export class TransactionService {
     }
 
     const transactions = await Transaction.find({
-      $or: [{ debtor: user.username }, { creditor: user.username }],
-      ...query,
+      $and: [
+        {
+          $or: [{ debtor: user.username }, { creditor: user.username }],
+        },
+        query,
+      ],
     })
       .skip(skip)
       .limit(limit);
 
+    
+    
     return {
       transactions,
       totalTransactions,
