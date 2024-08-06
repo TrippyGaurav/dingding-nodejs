@@ -41,25 +41,26 @@ app.use((0, express_session_1.default)({
     },
 }));
 //Cloudinary configs
-app.use(express_1.default.json({ limit: "50mb" }));
-app.use(express_1.default.urlencoded({ limit: "50mb", extended: true }));
-const allowedOrigins = ['http://localhost:3000', 'https://game-rtp-backend-w7g7.onrender.com'];
+app.use(express_1.default.json({ limit: "25mb" }));
+app.use(express_1.default.urlencoded({ limit: "25mb", extended: true }));
 app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
     next();
 });
-//cors config
+// CORS config
 app.use((0, cors_1.default)({
-    origin: "*",
+    origin: (origin, callback) => {
+        callback(null, true); // Allow all origins
+    },
     credentials: true,
     optionsSuccessStatus: 200,
 }));
-app.use(express_1.default.json());
 const server = (0, http_1.createServer)(app);
 // HEALTH ROUTES
 app.get("/", (req, res, next) => {
