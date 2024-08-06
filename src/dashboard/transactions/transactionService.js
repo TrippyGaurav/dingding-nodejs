@@ -70,7 +70,7 @@ class TransactionService {
                     outOfRange: false,
                 };
             }
-            if (page > totalPages) {
+            if (page > totalPages && totalPages !== 0) {
                 return {
                     transactions: [],
                     totalTransactions,
@@ -79,7 +79,14 @@ class TransactionService {
                     outOfRange: true,
                 };
             }
-            const transactions = yield transactionModel_1.default.find(Object.assign({ $or: [{ debtor: user.username }, { creditor: user.username }] }, query))
+            const transactions = yield transactionModel_1.default.find({
+                $and: [
+                    {
+                        $or: [{ debtor: user.username }, { creditor: user.username }],
+                    },
+                    query,
+                ],
+            })
                 .skip(skip)
                 .limit(limit);
             return {
