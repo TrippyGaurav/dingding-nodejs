@@ -5,8 +5,7 @@ import SlotGame from "./slotGame";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import PayLines from "./PayLines";
 import { ScatterPayEntry, BonusPayEntry, ResultType } from "./gameUtils";
-import { moolahPayOut } from "./testData";
-import { log } from "console";
+
 
 export class CheckResult {
     scatter: string;
@@ -85,7 +84,7 @@ export class CheckResult {
         // console.log("win data", this.currentGame.settings._winData);
         console.log("Bonus start", this.currentGame.settings.bonus.start);
 
-        if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings._winData.freeSpins != 0)
+        if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings.freeSpinCount != 0)
             this.startFreeSpin();
         console.log("TOTAL WINING : " + this.currentGame.settings._winData.totalWinningAmount);
         console.log("PT BETS :" + this.currentGame.settings.currentBet);
@@ -165,7 +164,14 @@ export class CheckResult {
             this.currentGame.settings._winData.totalWinningAmount +=
                 element.pay * this.currentGame.settings.BetPerLines;
 
-            this.currentGame.settings._winData.freeSpins += element.freeSpin;
+            if(!this.currentGame.settings.freeSpinStarted && this.currentGame.settings.freeSpinCount==0){
+console.log("IMIT FREESPINS",element.freeSpin);
+
+
+                this.currentGame.settings.freeSpinCount += element.freeSpin;
+                console.log("IMIT FREESPINS GLOBAL",this.currentGame.settings.freeSpinCount);
+            }
+
         });
 
 
@@ -391,7 +397,7 @@ export class CheckResult {
                     this.currentGame.settings._winData.winningSymbols
                 ),
                 WinAmout: this.currentGame.settings._winData.totalWinningAmount,
-                freeSpins: this.currentGame.settings._winData.freeSpins,
+                freeSpins: this.currentGame.settings.freeSpinCount,
                 jackpot: this.currentGame.settings._winData.jackpotwin,
                 isBonus: this.currentGame.settings.bonus.start,
                 BonusStopIndex: this.currentGame.settings.bonus.stopIndex,
