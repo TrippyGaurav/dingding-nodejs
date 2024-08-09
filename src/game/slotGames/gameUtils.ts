@@ -6,6 +6,7 @@ export enum specialIcons {
     jackpot = "Jackpot",
     wild = "Wild",
     any = "any",
+    FreeSpin = "FreeSpin"
 }
 
 export enum bonusGameType {

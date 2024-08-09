@@ -3,7 +3,8 @@ import { RandomResultGenerator } from "./RandomResultGenerator";
 import { ScatterPayEntry, BonusPayEntry, ResultType } from "./gameUtils";
 import PayLines from "./PayLines";
 import { WinData } from "./WinData";
-import { bonusGameType,specialIcons } from "./gameUtils";
+import { bonusGameType, specialIcons } from "./gameUtils";
+import { log } from "console";
 export class CheckResult {
     scatter: string;
     useScatter: boolean;
@@ -66,8 +67,8 @@ export class CheckResult {
         // console.log("search win symbols");
 
         this.checkForWin();
-        // this.checkforWild();
-        //this.checkforFreeSpins(); ON LINE
+
+        this.checkForFreeSpin();
         this.checkForBonus();
         this.checkForJackpot();
         this.checkForScatter();
@@ -128,52 +129,88 @@ export class CheckResult {
         });
     }
 
+    checkForFreeSpin() {
+        let freeSpin = [];
+        let temp = this.findSymbol(specialIcons.FreeSpin);
+        console.log("FreeSpin  : ", temp);
+    }
+
     private checkForWin() {
         let allComboWin = [];
-        console.log("X");
 
         this.currentGame.settings.lineData.forEach((lb, index) => {
             let win = null;
             // console.log("Lines Index : :" + index);
+            const Matched = this.findMatchingElements(lb);
+            if (Matched != null && Matched.result.length != 0) {
+                // console.log(this.currentGame.settings.Symbols);
 
-            this.currentGame.settings.fullPayTable.forEach((Payline: PayLines) => {
-                //  find max win (or win with max symbols count)
-                // console.log(lb);
+                const symbolMultiplier = this.accessData(Matched.leftMostValue);
 
-                const winTemp = this.getPayLineWin(Payline, lb, allComboWin);
-                if (winTemp != null) {
-                    if (win == null) win = winTemp;
-                    else {
-                        if (win.Pay < winTemp.pay || win.FreeSpins < winTemp.freeSpins)
-                            win = winTemp;
-                    }
-
-                    this.currentGame.settings._winData.winningLines.push(index);
-                    console.log(`Line Index : ${index} : ` + lb + " - line win: " + win);
-                }
-            });
-        });
-
-        const filteredArray = this.checkforDuplicate(allComboWin);
-        console.log("Element Pay ", filteredArray);
-        let BonusArray = [];
-        filteredArray.forEach((element) => {
-
-            this.currentGame.settings._winData.winningSymbols.push(element.pos);
-            this.currentGame.settings._winData.totalWinningAmount +=
-                element.pay * this.currentGame.settings.BetPerLines;
-
-            if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings.freeSpinCount == 0) {
-                console.log("IMIT FREESPINS", element.freeSpin);
-
-
-                this.currentGame.settings.freeSpinCount += element.freeSpin;
-                console.log("IMIT FREESPINS GLOBAL", this.currentGame.settings.freeSpinCount);
+                console.log("Symbol : ", Matched.leftMostValue, "Payout : ", symbolMultiplier);
+                // console.log("Matched ", Matched, " Lines : ", lb, "Matching Symbol : ", Matched.leftMostValue);
             }
 
         });
 
+        // const filteredArray = this.checkforDuplicate(allComboWin);
+        // console.log("Element Pay ", filteredArray);
+        // let BonusArray = [];
+        // filteredArray.forEach((element) => {
 
+        //     this.currentGame.settings._winData.winningSymbols.push(element.pos);
+        //     this.currentGame.settings._winData.totalWinningAmount +=
+        //         element.pay * this.currentGame.settings.BetPerLines;
+
+        //     if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings.freeSpinCount == 0) {
+        //         console.log("IMIT FREESPINS", element.freeSpin);
+
+
+        //         this.currentGame.settings.freeSpinCount += element.freeSpin;
+        //         console.log("IMIT FREESPINS GLOBAL", this.currentGame.settings.freeSpinCount);
+        //     }
+
+        // });
+
+
+    }
+    accessData(number: string | number) {
+        const index = this.currentGame.settings.Symbols.indexOf(number);
+        if (index !== -1 && Array.isArray(this.currentGame.settings.Symbols[index + 1])) {
+            return this.currentGame.settings.Symbols[index + 1];
+        }
+        return undefined;
+    }
+    // Function to check the matrix values against the first most value or wild and return matching elements or null
+    findMatchingElements(line) {
+        let leftMostValue = this.currentGame.settings.resultSymbolMatrix[line[0]][0];
+        let result = [];
+        const wildSymbol = this.currentGame.settings.wildSymbol.SymbolID.toString();
+
+        for (let x = 0; x < line.length; x++) {
+            const y = line[x];
+
+            if (leftMostValue === wildSymbol) {
+                if (x === line.length - 1)
+                    leftMostValue = this.currentGame.settings.resultSymbolMatrix[line[0]][x];
+                else
+                    leftMostValue = this.currentGame.settings.resultSymbolMatrix[line[x + 1]][x];
+            }
+            else
+                return null;
+
+            const matrixValue = this.currentGame.settings.resultSymbolMatrix[y][x];
+
+            // Check if the current value matches the first value or is a wild symbol
+            if (matrixValue === leftMostValue || matrixValue === wildSymbol) {
+                // Add the matching element or wild to the result array
+                result.push(matrixValue);
+            }
+            const values = this.currentGame.settings.Symbols[leftMostValue];
+            console.log("Payouts 2: ", values);
+            return { leftMostValue, result };  // Return the array of matching elements
+        }
+        return null;
     }
 
     private checkforDuplicate(allComboWin: any[]): any[] {

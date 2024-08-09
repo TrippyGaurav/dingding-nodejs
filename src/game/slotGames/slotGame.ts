@@ -242,7 +242,8 @@ export default class SlotGame {
     private initSymbols() {
         for (let i = 0; i < this.settings.currentGamedata.Symbols.length; i++) {
             this.settings.Symbols.push(
-                this.settings.currentGamedata.Symbols[i].Id?.toString()
+                this.settings.currentGamedata.Symbols[i].Id?.toString(),
+                this.settings.currentGamedata.Symbols[i].multiplier
             );
             this.settings.Weights.push(
                 this.settings.currentGamedata.Symbols[i]?.weightedRandomness
@@ -394,10 +395,10 @@ export default class SlotGame {
 
     private gameDataInit() {
         this.settings.lineData = this.settings.currentGamedata.linesApiData;
-        this.makeFullPayTable();
+        this.makeWildPayTable();
     }
 
-    private makeFullPayTable() {
+    private makeWildPayTable() {
         try {
             let payTable: PayLines[] = [];
             let payTableFull = [];
@@ -406,6 +407,8 @@ export default class SlotGame {
                     new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID.toString(), this)
                 )
             });
+            console.log("PAYTABLE : " + payTable.length);
+
             for (let j = 0; j < payTable.length; j++) {
                 payTableFull.push(payTable[j]);
                 if (this.settings.useWild) {
@@ -416,6 +419,8 @@ export default class SlotGame {
                     });
                 }
             }
+            // console.log(payTableFull);
+
             this.settings.fullPayTable = payTableFull;
 
         } catch (error) {

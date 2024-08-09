@@ -63,8 +63,6 @@ export default class PayLines {
             }
         }
 
-
-
         return res;
     }
 
