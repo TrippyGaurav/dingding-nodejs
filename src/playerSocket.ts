@@ -1,11 +1,9 @@
 import { Socket } from "socket.io";
 import { verifyPlayerToken } from "./utils/playerAuth";
-import { getPlayerCredits } from "./game/TestGlobal";
-import { MESSAGEID, MESSAGETYPE } from "./utils/utils";
+import { getPlayerCredits } from "./game/slotGames/gameUtils";
 import { Platform } from "./dashboard/games/gameModel";
-import SlotGame from "./dashboard/games/slotGame";
-import { gameData } from "./game/slotBackend/testData";
-import Payouts from "./dashboard/payouts/payoutModel";
+import SlotGame from "./game/slotGames/slotGame";
+import { gameData } from "./game/slotGames/testData";
 import payoutController from "./dashboard/payouts/payoutController";
 export let users: Map<string, SocketUser> = new Map();
 
@@ -52,7 +50,7 @@ export class SocketUser {
 
             socket.emit("socketState", this.socketReady);
 
-            
+
         } catch (error) {
             console.error(`Error initializing user ${this.username}:`, error);
             if (socket.connected) {
@@ -115,7 +113,7 @@ export class SocketUser {
 
     public disconnectHandler() {
         this.socket.on("disconnect", (reason) => {
-            
+
 
             this.attemptReconnection();
         });
@@ -128,23 +126,23 @@ export class SocketUser {
                 this.reconnectionAttempts++;
 
                 if (this.socket && this.socket.connected) {
-                    
+
                     this.reconnectionAttempts = 0;
                     return;
                 }
 
-                
+
             }
 
-            
+
             users.delete(this.username);
             this.cleanup();
 
-            
 
-            
+
+
         } catch (error) {
-            
+
         }
     }
 
@@ -170,7 +168,7 @@ export class SocketUser {
             users.delete(this.username)
             this.socket.disconnect();
             this.cleanup();
-            
+
 
         })
     }
@@ -214,14 +212,14 @@ export default async function enterPlayer(socket: Socket) {
         if (existingUser) {
             await existingUser.updateSocket(socket);
             existingUser.sendAlert(`Welcome back, ${platformData.username}!`)
-            
+
         }
         else {
             socket.data = { platformData, gameSetting };
             const newUser = new SocketUser(socket, platformData, gameSetting);
             users.set(platformData.username, newUser);
             newUser.sendAlert(`Welcome, ${platformData.username}!`);
-            
+
         }
 
     } catch (error) {

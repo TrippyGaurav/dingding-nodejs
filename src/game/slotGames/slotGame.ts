@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { GameData, GameSettings, WildSymbol } from "./gameType";
+import { GameData, GameSettings, WildSymbol } from "../../dashboard/games/gameType";
 import {
     messageType,
     bonusGameType,
@@ -12,7 +12,7 @@ import {
 } from "./gameUtils";
 import { BonusGame } from "./BonusGame";
 import { WinData } from "./WinData";
-import { Player } from "../users/userModel";
+import { Player } from "../../dashboard/users/userModel";
 import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
@@ -207,13 +207,6 @@ export default class SlotGame {
                 { credits: finalBalance.toFixed(2) },
                 { new: true }
             );
-
-    
-
-
-
-
-        
         } catch (error) {
             console.error("Failed to update database:", error);
             this.sendError("Database error");
@@ -259,7 +252,7 @@ export default class SlotGame {
 
     private makePayLines() {
         this.settings.currentGamedata.Symbols.forEach((element) => {
-            if ( element.useWildSub || element.Name == "FreeSpin" ) {
+            if (element.useWildSub || element.Name == "FreeSpin") {
                 element.multiplier?.forEach((item, index) => {
                     this.addPayLineSymbols(
                         element.Id?.toString(),
@@ -452,14 +445,14 @@ export default class SlotGame {
             /*
             MIDDLEWARE GOES HERE
             */
-            if (!this.settings.freeSpinStarted && this.settings.freeSpinCount===0) {
+            if (!this.settings.freeSpinStarted && this.settings.freeSpinCount === 0) {
 
                 await this.deductPlayerBalance(this.settings.currentBet);
             }
-            if(this.settings.freeSpinStarted &&this.settings.freeSpinCount>0) {
+            if (this.settings.freeSpinStarted && this.settings.freeSpinCount > 0) {
                 this.settings.freeSpinCount--;
-                console.log(this.settings.freeSpinCount,'this.settings.freeSpinCount');
-                
+                console.log(this.settings.freeSpinCount, 'this.settings.freeSpinCount');
+
                 if (this.settings.freeSpinCount <= 0) {
                     this.settings.freeSpinStarted = false;
                 }
@@ -471,7 +464,7 @@ export default class SlotGame {
 
             const result = new CheckResult(this)
             result.makeResultJson(ResultType.normal)
-           
+
         } catch (error) {
             console.error("Failed to generate spin results:", error);
             this.sendError("Spin error");

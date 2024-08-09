@@ -1,4 +1,4 @@
-import SlotGame from "../../dashboard/games/slotGame";
+import SlotGame from "../../game/slotGames/slotGame";
 
 type Suit = 'Hearts' | 'Diamonds' | 'Clubs' | 'Spades';
 type Value = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A';
@@ -8,10 +8,9 @@ export enum GAMBLETYPE {
   HIGHCARD = "HIGHCARD"
 }
 
-export interface gambleDataSet
-{
-  chosenCard : { pl : Card , dl : Card},
-  isPlayerBlack : Boolean
+export interface gambleDataSet {
+  chosenCard: { pl: Card, dl: Card },
+  isPlayerBlack: Boolean
 }
 
 export class gambleCardGame {
@@ -20,9 +19,9 @@ export class gambleCardGame {
   suitRanks: { [key in Suit]: number } = { 'Hearts': 1, 'Diamonds': 2, 'Clubs': 3, 'Spades': 4 };
   deck: Card[];
   chosenCards: Set<string>;
-  initialUpdate : boolean = false;
+  initialUpdate: boolean = false;
 
-  constructor(public sltGame : SlotGame) {
+  constructor(public sltGame: SlotGame) {
     this.resetGamble();
   }
 
@@ -73,93 +72,82 @@ export class gambleCardGame {
       return this.getCardSuitRank(card1) - this.getCardSuitRank(card2);
     }
   }
-  sendInitGambleData(gameType : GAMBLETYPE)
-  {
+  sendInitGambleData(gameType: GAMBLETYPE) {
     let gambleData;
-    if(gameType == GAMBLETYPE.BlACKRED)
-    return gambleData = {card : this.getRandomCard()} 
-    if(gameType == GAMBLETYPE.HIGHCARD)
-    return gambleData = {playerCard : this.getRandomCard(), dealerCard : this.getRandomCard()} 
+    if (gameType == GAMBLETYPE.BlACKRED)
+      return gambleData = { card: this.getRandomCard() }
+    if (gameType == GAMBLETYPE.HIGHCARD)
+      return gambleData = { playerCard: this.getRandomCard(), dealerCard: this.getRandomCard() }
   }
 
-  getResult(data : any):void{
-    const gambleData  = data.GambleData;
+  getResult(data: any): void {
+    const gambleData = data.GambleData;
     let resultData = {
-        playerWon : false,
-        winningAmount :0
+      playerWon: false,
+      winningAmount: 0
     };
 
     let result;
-    if(gambleData.gameType == GAMBLETYPE.BlACKRED)
-    {
-        result = this.checkForRedBlack(gambleData.chosenCard.pl,gambleData.isCardBlack);
-      if(result)
-      {
-        resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount*2;
+    if (gambleData.gameType == GAMBLETYPE.BlACKRED) {
+      result = this.checkForRedBlack(gambleData.chosenCard.pl, gambleData.isCardBlack);
+      if (result) {
+        resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount * 2;
         resultData.playerWon = true;
-        this.sltGame.sendMessage("GambleResult",resultData);
-        if(!this.initialUpdate)
-        {
+        this.sltGame.sendMessage("GambleResult", resultData);
+        if (!this.initialUpdate) {
           this.initialUpdate = true;
           this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
-        
-          return;
-        }
-        this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount*2);
-        return;
-      }
-      else
-      {
-            this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
-            resultData.winningAmount = 0;
-            resultData.playerWon = false;
-            this.sltGame.sendMessage("GambleResult",resultData);
-            return;
-      }
-        //RESULT == TRUE MEANS PLAYER WON MAKE IT FOR IF PLAYER HAS NOT WON
-      //UPDATE AMOUNT IF WONNN ELSE MAKE IT ZERO
-    }
-      
-    if(gambleData.gameType == GAMBLETYPE.HIGHCARD)
-    {
-      result = this.playHighCard(gambleData.gameTypechosenCard.pl,gambleData.gameType.chosenCard.dl);
-    }
 
-    if(result)
-      {
-        resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount*2;
-        resultData.playerWon = true;
-        this.sltGame.sendMessage("GambleResult",resultData);
-        if(!this.initialUpdate)
-        {
-          this.initialUpdate = true;
-          this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
           return;
         }
-        this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount*2);
+        this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount * 2);
         return;
       }
-      else
-      {
+      else {
         this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
         resultData.winningAmount = 0;
         resultData.playerWon = false;
-        this.sltGame.sendMessage("GambleResult",resultData);
+        this.sltGame.sendMessage("GambleResult", resultData);
         return;
       }
+      //RESULT == TRUE MEANS PLAYER WON MAKE IT FOR IF PLAYER HAS NOT WON
+      //UPDATE AMOUNT IF WONNN ELSE MAKE IT ZERO
+    }
+
+    if (gambleData.gameType == GAMBLETYPE.HIGHCARD) {
+      result = this.playHighCard(gambleData.gameTypechosenCard.pl, gambleData.gameType.chosenCard.dl);
+    }
+
+    if (result) {
+      resultData.winningAmount = this.sltGame.settings._winData.totalWinningAmount * 2;
+      resultData.playerWon = true;
+      this.sltGame.sendMessage("GambleResult", resultData);
+      if (!this.initialUpdate) {
+        this.initialUpdate = true;
+        this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
+        return;
+      }
+      this.sltGame.updatePlayerBalance(this.sltGame.settings._winData.totalWinningAmount * 2);
+      return;
+    }
+    else {
+      this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount);
+      resultData.winningAmount = 0;
+      resultData.playerWon = false;
+      this.sltGame.sendMessage("GambleResult", resultData);
+      return;
+    }
 
   }
-  checkForRedBlack(plCard : Card,isCardBlack)
-  {
-    if(isCardBlack)
-    {
+  checkForRedBlack(plCard: Card, isCardBlack) {
+    if (isCardBlack) {
       return this.isCardBlack(plCard);
     }
     else
-    return this.isCardRed(plCard);
+      return this.isCardRed(plCard);
   }
-  
-  playHighCard(plCard : Card, dlCard : Card): boolean {
+
+  playHighCard(plCard: Card, dlCard: Card): boolean {
 
     console.log(`Player's card: ${plCard.value} of ${plCard.suit}`);
     console.log(`Dealer's card: ${dlCard.value} of ${dlCard.suit}`);
@@ -173,8 +161,7 @@ export class gambleCardGame {
     }
   }
 
-  resetGamble()
-  {
+  resetGamble() {
     this.deck = this.createDeck();
     this.chosenCards = new Set();
     this.initialUpdate = false;

@@ -1,16 +1,14 @@
 import { Socket } from "socket.io";
 import { verifyPlayerToken } from "./utils/playerAuth";
-import { getPlayerCredits } from "./game/TestGlobal";
+import { getPlayerCredits } from "./game/slotGames/gameUtils";
 import { Platform } from "./dashboard/games/gameModel";
 // import { Payouts } from "./dashboard/games/gameModel";
 
-import SlotGame from "./dashboard/games/slotGame";
-import { gameData } from "./game/slotBackend/testData";
 import { users } from "./socket";
 import payoutController from "./dashboard/payouts/payoutController";
-import { messageType } from "./dashboard/games/gameUtils";
-
-
+import SlotGame from "./game/slotGames/slotGame";
+import { messageType } from "./game/slotGames/gameUtils";
+import { gameData } from "./game/slotGames/testData";
 export default class Player {
     username: string;
     role: string;
@@ -48,11 +46,11 @@ export default class Player {
         this.onExit();
         socket.emit("socketState", true);
 
-        
+
     }
 
     handleGameDisconnection() {
-        
+
         this.attemptReconnection();
     }
 
@@ -63,26 +61,26 @@ export default class Player {
                 this.reconnectionAttempts++;
 
                 if (this.cleanedUp) {
-                    
+
                     return;
                 }
 
                 if (this.gameSocket && this.gameSocket.connected) {
-                    
+
                     this.reconnectionAttempts = 0;
                     return;
                 }
 
-                
+
             }
 
-            
+
             users.delete(this.username);
             this.cleanup();
 
 
         } catch (error) {
-            
+
         }
     }
 
@@ -124,8 +122,8 @@ export default class Player {
             this.gameSocket.on("EXIT", () => {
                 users.delete(this.username);
                 this.cleanup();
-                
-                
+
+
             });
         }
 
@@ -169,7 +167,7 @@ export default class Player {
                 }
 
                 const game = platform[0].game;
-                
+
 
                 const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout)
 

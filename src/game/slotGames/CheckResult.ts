@@ -1,12 +1,9 @@
-
-import { WinData } from "./WinData";
-import { bonusGameType, specialIcons } from "./gameUtils";
 import SlotGame from "./slotGame";
 import { RandomResultGenerator } from "./RandomResultGenerator";
-import PayLines from "./PayLines";
 import { ScatterPayEntry, BonusPayEntry, ResultType } from "./gameUtils";
-
-
+import PayLines from "./PayLines";
+import { WinData } from "./WinData";
+import { bonusGameType,specialIcons } from "./gameUtils";
 export class CheckResult {
     scatter: string;
     useScatter: boolean;
@@ -69,6 +66,8 @@ export class CheckResult {
         // console.log("search win symbols");
 
         this.checkForWin();
+        // this.checkforWild();
+        //this.checkforFreeSpins(); ON LINE
         this.checkForBonus();
         this.checkForJackpot();
         this.checkForScatter();
@@ -164,12 +163,12 @@ export class CheckResult {
             this.currentGame.settings._winData.totalWinningAmount +=
                 element.pay * this.currentGame.settings.BetPerLines;
 
-            if(!this.currentGame.settings.freeSpinStarted && this.currentGame.settings.freeSpinCount==0){
-console.log("IMIT FREESPINS",element.freeSpin);
+            if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings.freeSpinCount == 0) {
+                console.log("IMIT FREESPINS", element.freeSpin);
 
 
                 this.currentGame.settings.freeSpinCount += element.freeSpin;
-                console.log("IMIT FREESPINS GLOBAL",this.currentGame.settings.freeSpinCount);
+                console.log("IMIT FREESPINS GLOBAL", this.currentGame.settings.freeSpinCount);
             }
 
         });
@@ -204,7 +203,7 @@ console.log("IMIT FREESPINS",element.freeSpin);
     private checkForScatter() {
         this.scatterWinSymbols = [];
         // this.scatterWin = null;
-        
+
         if (this.useScatter) {
             // console.log("scattersds", this.scatter);
             let temp = this.findSymbol(specialIcons.scatter);

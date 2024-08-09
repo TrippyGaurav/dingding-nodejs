@@ -1,5 +1,5 @@
-import { UserData } from "./gameType";
-
+import { UserData } from "../../dashboard/games/gameType";
+import { Player } from "../../dashboard/users/userModel";
 export enum specialIcons {
     bonus = "Bonus",
     scatter = "Scatter",
@@ -109,5 +109,18 @@ export function shuffleArray(array: any[]) {
         let k = array[i];
         array[i] = array[j];
         array[j] = k;
+    }
+}
+
+export async function getPlayerCredits(playerName: string) {
+    try {
+        const currentUser = await Player.findOne({ username: playerName }).exec();
+        if (!currentUser) {
+            return `No user found with playerName ${playerName}`;
+        }
+        return currentUser.credits;
+    } catch (error) {
+        console.error(`Error fetching credits for player ${playerName}:`, error);
+        return `An error occurred while fetching credits for player ${playerName}.`;
     }
 }

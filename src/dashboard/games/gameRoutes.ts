@@ -1,6 +1,6 @@
 import express from "express";
 import { extractRoleFromCookie, validateApiKey } from "../middleware/middlware";
-import { GameController } from "./gameController";
+import { GameController } from "../../dashboard/games/gameController";
 import multer from "multer";
 import { checkUser } from "../middleware/checkUser";
 

@@ -1,6 +1,5 @@
-import { bonusGameType } from "./gameUtils";
 import SlotGame from "./slotGame";
-
+import { bonusGameType } from "./gameUtils";
 export class BonusGame {
     type: String;
     noOfItems: number;

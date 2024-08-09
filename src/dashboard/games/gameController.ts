@@ -58,7 +58,7 @@ export class GameController {
           const favoriteGameIds = player.favouriteGames.map(
             (game) => new mongoose.Types.ObjectId(game)
           );
-          
+
 
           const favoriteGames = await Platform.aggregate([
             { $match: { name: platform } },
@@ -73,7 +73,7 @@ export class GameController {
             { $project: { "games.url": 0 } },
           ]);
 
-          
+
 
           if (!favoriteGames.length) {
             return res.status(200).json({ featured: [], others: [] });
@@ -217,9 +217,9 @@ export class GameController {
         slug,
         platform: platformName,
       } = req.body;
-      
-      
-      
+
+
+
 
       if (
         !name ||
@@ -351,9 +351,9 @@ export class GameController {
           thumbnailUploadResult.public_id,
           (destroyError, result) => {
             if (destroyError) {
-              
+
             } else {
-              
+
             }
           }
         );
@@ -432,7 +432,7 @@ export class GameController {
       const { username, role } = _req.user;
       const { gameId } = req.params;
       const { status, slug, platformName, ...updateFields } = req.body;
-      
+
 
       if (!gameId) {
         throw createHttpError(400, "Game ID is required");
@@ -501,7 +501,7 @@ export class GameController {
 
       // Handle file for payout update
       if (req.files?.payoutFile) {
-        
+
 
         // Delete the old payout
         if (game.payout) {
@@ -523,7 +523,7 @@ export class GameController {
 
       // Handle file for thumbnail update
       if (req.files?.thumbnail) {
-        
+
 
         const thumbnailBuffer = req.files.thumbnail[0].buffer;
 
@@ -578,9 +578,9 @@ export class GameController {
           thumbnailUploadResult.public_id,
           (destroyError, result) => {
             if (destroyError) {
-              
+
             } else {
-              
+
             }
           }
         );

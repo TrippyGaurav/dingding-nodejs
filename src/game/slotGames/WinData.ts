@@ -1,7 +1,4 @@
-import { Socket } from "socket.io";
-import { getCurrentRTP } from "./gameUtils";
 import SlotGame from "./slotGame";
-
 export class WinData {
     freeSpins: number;
     winningSymbols: any[];
