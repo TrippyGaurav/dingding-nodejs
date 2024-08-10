@@ -134,108 +134,80 @@ export class CheckResult {
         let temp = this.findSymbol(specialIcons.FreeSpin);
         console.log("FreeSpin  : ", temp);
     }
-
-    private checkForWin() {
-        let allComboWin = [];
-
-        this.currentGame.settings.lineData.forEach((lb, index) => {
-            let win = null;
-            // console.log("Lines Index : :" + index);
-            const Matched = this.findMatchingElements(lb);
-            if (Matched != null && Matched.result.length != 0) {
-                // console.log(this.currentGame.settings.Symbols);
-
-                const symbolMultiplier = this.accessData(Matched.leftMostValue);
-
-                console.log("Symbol : ", Matched.leftMostValue, "Payout : ", symbolMultiplier);
-                // console.log("Matched ", Matched, " Lines : ", lb, "Matching Symbol : ", Matched.leftMostValue);
+    checkForWin() {
+        const winningLines = [];
+        this.currentGame.settings.lineData.forEach((line, index) => {
+            const firstSymbolPosition = line[0];
+            let firstSymbol = this.currentGame.settings.resultSymbolMatrix[firstSymbolPosition][0];
+            if (firstSymbol === this.currentGame.settings.wildSymbol.SymbolID.toString()) {
+                firstSymbol = this.findFirstNonWildSymbol(line);
             }
 
+            const { isWinningLine, matchCount } = this.checkLineSymbols(firstSymbol, line);
+            if (isWinningLine && matchCount >= 3) {
+                const symbolMultiplier = this.accessData(firstSymbol, matchCount);
+                console.log(`Line ${index} matched with symbol: ${firstSymbol}, Payout: ${symbolMultiplier}, Match Count: ${matchCount}`);
+                winningLines.push({ line, symbol: firstSymbol, multiplier: symbolMultiplier, matchCount });
+            }
         });
-
-        // const filteredArray = this.checkforDuplicate(allComboWin);
-        // console.log("Element Pay ", filteredArray);
-        // let BonusArray = [];
-        // filteredArray.forEach((element) => {
-
-        //     this.currentGame.settings._winData.winningSymbols.push(element.pos);
-        //     this.currentGame.settings._winData.totalWinningAmount +=
-        //         element.pay * this.currentGame.settings.BetPerLines;
-
-        //     if (!this.currentGame.settings.freeSpinStarted && this.currentGame.settings.freeSpinCount == 0) {
-        //         console.log("IMIT FREESPINS", element.freeSpin);
-
-
-        //         this.currentGame.settings.freeSpinCount += element.freeSpin;
-        //         console.log("IMIT FREESPINS GLOBAL", this.currentGame.settings.freeSpinCount);
-        //     }
-
-        // });
-
-
+        return winningLines;
     }
-    accessData(number: string | number) {
-        const index = this.currentGame.settings.Symbols.indexOf(number);
-        if (index !== -1 && Array.isArray(this.currentGame.settings.Symbols[index + 1])) {
-            return this.currentGame.settings.Symbols[index + 1];
-        }
-        return undefined;
-    }
-    // Function to check the matrix values against the first most value or wild and return matching elements or null
-    findMatchingElements(line) {
-        let leftMostValue = this.currentGame.settings.resultSymbolMatrix[line[0]][0];
-        let result = [];
+
+
+    findFirstNonWildSymbol(line) {
         const wildSymbol = this.currentGame.settings.wildSymbol.SymbolID.toString();
-
-        for (let x = 0; x < line.length; x++) {
-            const y = line[x];
-
-            if (leftMostValue === wildSymbol) {
-                if (x === line.length - 1)
-                    leftMostValue = this.currentGame.settings.resultSymbolMatrix[line[0]][x];
-                else
-                    leftMostValue = this.currentGame.settings.resultSymbolMatrix[line[x + 1]][x];
-            }
-            else
-                return null;
-
-            const matrixValue = this.currentGame.settings.resultSymbolMatrix[y][x];
-
-            // Check if the current value matches the first value or is a wild symbol
-            if (matrixValue === leftMostValue || matrixValue === wildSymbol) {
-                // Add the matching element or wild to the result array
-                result.push(matrixValue);
-            }
-            const values = this.currentGame.settings.Symbols[leftMostValue];
-            console.log("Payouts 2: ", values);
-            return { leftMostValue, result };  // Return the array of matching elements
-        }
-        return null;
-    }
-
-    private checkforDuplicate(allComboWin: any[]): any[] {
-        allComboWin.sort((a, b) => b.pos.length - a.pos.length);
-
-        const filteredArray = [];
-
-        for (const currentItem of allComboWin) {
-            const isSubsetOfAny = filteredArray.some(
-                (item) =>
-                    item.symbol === currentItem.symbol &&
-                    this.isSubset(currentItem.pos, item.pos)
-            );
-            if (!isSubsetOfAny) {
-                filteredArray.push(currentItem);
+        for (let i = 0; i < line.length; i++) {
+            const rowIndex = line[i];
+            const symbol = this.currentGame.settings.resultSymbolMatrix[rowIndex][i];
+            if (symbol !== wildSymbol) {
+                console.log(symbol, 'firstnonwild')
+                return symbol;
             }
         }
-
-        return filteredArray;
+        return wildSymbol;
     }
 
-    private isSubset(subset: string[], superset: string[]): boolean {
-        const supersetSet = new Set(superset);
-        return subset.every((elem) => supersetSet.has(elem));
+
+    checkLineSymbols(firstSymbol, line) {
+        const wildSymbol = this.currentGame.settings.wildSymbol.SymbolID.toString();
+        let matchCount = 1;
+        let currentSymbol = firstSymbol;
+        for (let i = 1; i < line.length; i++) {
+            const rowIndex = line[i];
+            const symbol = this.currentGame.settings.resultSymbolMatrix[rowIndex][i];
+            if (symbol === undefined) {
+                console.error(`Symbol at position [${rowIndex}, ${i}] is undefined.`);
+                return { isWinningLine: false, matchCount: 0 };
+            }
+            if (symbol === currentSymbol || symbol === wildSymbol) {
+                matchCount++;
+            } else if (currentSymbol === wildSymbol) {
+                currentSymbol = symbol;
+                matchCount++;
+            } else {
+                break;
+            }
+        }
+        return { isWinningLine: matchCount >= 3, matchCount };
     }
+
+    accessData(symbol, matchCount) {
+        console.log(symbol, 'symbol')
+        const symbolData = this.currentGame.settings.currentGamedata.Symbols.find(s => s.Id.toString() === symbol.toString());
+        if (symbolData) {
+            const multiplierArray = symbolData.multiplier;
+            if (multiplierArray && multiplierArray[5-matchCount]) {
+                console.log(multiplierArray)
+                return multiplierArray[5-matchCount][0];
+            }
+        }
+        console.warn("Symbol not found or no multiplier data available for symbol", symbol);
+        return 0;
+    }
+
+
+
+
 
     private checkForScatter() {
         this.scatterWinSymbols = [];
@@ -287,120 +259,11 @@ export class CheckResult {
         }
     }
 
-    private getPayLineWin(payLine: PayLines, lineData: any, allComboWin: any[]) {
-        if (payLine == null) return null;
-        let master = [];
-        let winSymbols = [];
-
-        for (let i = 0; i < lineData.length; i++) {
-            let isMatched = false;
-            let wildTempPointer = undefined;
-            let tempWinSymbols = {
-                pos: [],
-                symbol: "",
-                pay: 0,
-                freeSpin: 0,
-            };
-            const symbol = this.getSymbolOnMatrix(i);
-            let s = symbol[lineData[i]];
-            tempWinSymbols.symbol = s;
-
-
-            if (tempWinSymbols.symbol === this.currentGame.settings.wildSymbol.SymbolID.toString()) {
-
-                if (i != 0 && !wildTempPointer) {
-                    isMatched = true;
-
-                    tempWinSymbols.symbol = wildTempPointer = this.getSymbolOnMatrix(i - 1)[lineData[i]]
-                }
-                if (i == 0 && !wildTempPointer) {
-                    {
-                        isMatched = true;
-
-                        tempWinSymbols.symbol = wildTempPointer = this.getSymbolOnMatrix(i + 1)[lineData[i]]
-                    }
-                }
-                if (i != 0 && wildTempPointer) {
-                    isMatched = true;
-
-                    tempWinSymbols.symbol = wildTempPointer
-                }
-                if (i == 0 && wildTempPointer) {
-                    {
-                        isMatched = true;
-
-                        tempWinSymbols.symbol = wildTempPointer
-                    }
-                }
-            }
 
 
 
-            // if (symbol === this.currentGame.settings.wildSymbol.SymbolID as )
-            if (payLine.line[i] !== specialIcons.any && tempWinSymbols.symbol !== payLine.line[i]) {
-                return;
-            } else if
-                (payLine.line[i] !== specialIcons.any && tempWinSymbols.symbol === payLine.line[i]) {
 
-                const symbolIndex = i.toString() + "," + lineData[i].toString();
-                winSymbols.push(symbolIndex);
-                // gameSettings._winData.winningSymbols.push(symbolIndex);
 
-                tempWinSymbols.pos.push(symbolIndex);
-                if (isMatched)
-                    tempWinSymbols.pay = 0;
-                else
-                    tempWinSymbols.pay = payLine.pay;
-
-                tempWinSymbols.freeSpin = payLine.freeSpins;
-
-            }
-            // if (isMatched)
-            //     break;
-
-            master.push(tempWinSymbols);
-        }
-        // gameSettings._winData.winningSymbols.push(winSymbols);
-        const filteredArray = master.filter((item) => item.pos.length > 0);
-
-        const groupedBySymbol = filteredArray.reduce((acc, item) => {
-            if (!acc[item.symbol]) {
-                acc[item.symbol] = {
-                    symbol: item.symbol,
-                    pos: [],
-                    pay: item.pay,
-                    freeSpin: item.freeSpin,
-                };
-            }
-            acc[item.symbol].pos = acc[item.symbol].pos.concat(item.pos);
-            return acc;
-        }, {});
-
-        // // Step 3: Convert the grouped object back into an array of objects
-        const mergedArray = Object.values(groupedBySymbol);
-
-        if (!payLine.pay) payLine.pay = 0;
-
-        allComboWin.push(...mergedArray);
-
-        return { freeSpins: payLine.freeSpins, pay: payLine.pay };
-    }
-
-    private getSymbolOnMatrix(index: number) {
-        let symbolsOnGrid = [];
-        for (let i = 0; i < this.currentGame.settings.matrix.y; i++) {
-            const symbol = this.currentGame.settings.resultSymbolMatrix[i][index];
-            symbolsOnGrid.push(symbol);
-        }
-        return symbolsOnGrid;
-    }
-
-    private getIndexForResult(index: number) {
-        for (let i = 0; i < this.currentGame.settings.matrix.y; i++) {
-            let symbolIndex = index.toString() + "," + i.toString();
-            return symbolIndex;
-        }
-    }
 
     private findSymbol(SymbolName: string) {
         let symbolId: number = -1;
@@ -478,15 +341,7 @@ export class CheckResult {
 
         return result;
     }
-    // return symbols from windows
-    private getWindowsSymbols(reel: number) {
-        let vSymbols = [];
-        for (let si = 0; si < this.currentGame.settings.matrix.y; si++) {
-            const order = si;
-            vSymbols.push(this.currentGame.settings.resultSymbolMatrix[reel]);
-        }
-        return vSymbols;
-    }
+
 
     private startFreeSpin() {
         console.log(
