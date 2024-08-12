@@ -29,10 +29,10 @@ export default class SlotGame {
         socket: Socket
         totalbet: number,
         rtpSpinCount: number
-
+        totalSpin:number
     }
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
-        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0 };
+        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0,totalSpin:0 };
         this.settings = {
             currentGamedata: {
                 id: "",
@@ -320,9 +320,11 @@ export default class SlotGame {
                 break;
 
             case specialIcons.scatter:
-                this.settings.scatter.symbolID = symbol.ID,
-                    this.settings.scatter.multiplier = symbol.multiplier;
+
+                this.settings.scatter.symbolID = symbol.Id,
+                this.settings.scatter.multiplier = symbol.multiplier;
                 this.settings.scatter.useScatter = true;
+                
                 break;
 
             case specialIcons.bonus:
@@ -471,7 +473,7 @@ export default class SlotGame {
             this.settings.tempReels = [[]];
             this.settings.bonus.start = false;
             this.player.totalbet += this.settings.currentBet
-            new RandomResultGenerator(this);
+             new RandomResultGenerator(this);
             const result = new CheckResult(this)
             result.makeResultJson(ResultType.normal)
 
@@ -497,7 +499,8 @@ export default class SlotGame {
                 rtp = won / spend;
             }
 
-
+            
+            
 
 
             return
@@ -553,7 +556,7 @@ export default class SlotGame {
             matrix = this.transposeMatrix(transposed);
             // matrix.pop();
             // matrix.pop();
-            // matrix.pop();
+            // matrix.();
 
             // matrix.push(['1', '2', '3', '4', '5'])
             // matrix.push(['1', '1', '1', '1', '6'])

@@ -33,9 +33,9 @@ export class RandomResultGenerator {
         matrix.pop();
 
 
-        matrix.push(['0', '3', '1', '13', '4'])
-        matrix.push(['13', '9', '9', '13', '4'])
-        matrix.push(['9', '1', '5', '9', '0'])
+        matrix.push(['0', '3', '11', '13', '4'])
+        matrix.push(['11', '6', '9', '11', '4'])
+        matrix.push(['11', '1', '5', '9', '11'])
 
 
 

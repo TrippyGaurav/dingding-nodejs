@@ -23,7 +23,6 @@ export class CheckResult {
         current.settings._winData = new WinData(current);
         this.currentGame = current;
         this.scatter = specialIcons.scatter;
-        this.useScatter = current.settings.useScatter && this.scatter !== null;
         this.jackpot = current.settings.jackpot;
         this.useJackpot = this.jackpot !== null;
         this.scatterPayTable = current.settings.scatterPayTable;
@@ -58,6 +57,8 @@ export class CheckResult {
             } 
         Current RTP : ${winRate.toFixed(2)}% `
         );
+        console.log(this.currentGame.player.rtpSpinCount,'this.currentGame.player.rtpSpinCount');
+        console.log("Free spin Count",this.currentGame.player.totalSpin)
         console.log("_____________RESULT_END________________");
     }
 
@@ -89,12 +90,14 @@ export class CheckResult {
 
     private checkForFreeSpin() {
         let temp = this.findSymbol(specialIcons.FreeSpin);
+    
         const freeSpins = this.accessData(this.currentGame.settings.freeSpin.symbolID, temp.length)
         if (freeSpins > 0) {
             this.currentGame.settings.freeSpin.freeSpinStarted = true;
             this.currentGame.settings.freeSpin.freeSpinCount += freeSpins;
-
+            this.currentGame.player.totalSpin += freeSpins;
             this.currentGame.player.rtpSpinCount += freeSpins;
+
         }
         this.currentGame.settings._winData.winningSymbols.push(temp);
     }
@@ -197,13 +200,18 @@ export class CheckResult {
     //payouts to user according to symbols count in matched lines
     private accessData(symbol, matchCount) {
         try {
+            // console.log("Symbol:",symbol);
+            
             const symbolData = this.currentGame.settings.currentGamedata.Symbols.find(s => s.Id.toString() === symbol.toString());
             if (symbolData) {
                 const multiplierArray = symbolData.multiplier;
                 if (multiplierArray && multiplierArray[5 - matchCount]) {
                     if (symbol == this.currentGame.settings.freeSpin.symbolID) {
                         return multiplierArray[5 - matchCount][1];
-                    } else {
+                    } else  if (symbol == this.currentGame.settings.scatter.symbolID) {
+                        return multiplierArray[5 - matchCount][0];
+                    }
+                    {
                         return multiplierArray[5 - matchCount][0];
                     }
                 }
@@ -218,20 +226,25 @@ export class CheckResult {
     //special case for Scatter
     private checkForScatter() {
         this.scatterWinSymbols = [];
-        if (this.useScatter) {
+        if (this.currentGame.settings.scatter.useScatter) {
             let temp = this.findSymbol(specialIcons.scatter);
-            if (temp.length > 0) this.scatterWinSymbols.push(...temp);
 
-            this.scatterPayTable.forEach((sPL) => {
-                if (
-                    sPL.symbolCount > 0 &&
-                    sPL.symbolCount == this.scatterWinSymbols.length
-                ) {
-                    this.currentGame.settings._winData.winningSymbols.push(this.scatterWinSymbols);
-                    this.currentGame.settings._winData.freeSpins += sPL.freeSpins;
-                    this.currentGame.settings._winData.totalWinningAmount += sPL.pay;
-                }
-            });
+            const winningAmount = this.accessData(this.currentGame.settings.scatter.symbolID,temp.length);
+            this.currentGame.settings._winData.totalWinningAmount += winningAmount;
+            // console.log("Temp Scatter" , temp.length);
+            
+
+            // this.scatterPayTable.forEach((sPL) => {
+            //     if (
+            //         sPL.symbolCount > 0 &&
+            //         sPL.symbolCount == this.scatterWinSymbols.length
+            //     ) {
+            //         console.log( sPL.pay," sPL.pay")
+            //         this.currentGame.settings._winData.winningSymbols.push(this.scatterWinSymbols);
+            //         this.currentGame.settings._winData.freeSpins += sPL.freeSpins;
+            //         this.currentGame.settings._winData.totalWinningAmount += sPL.pay;
+            //     }
+            // });
         }
     }
 
