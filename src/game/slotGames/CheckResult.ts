@@ -230,7 +230,7 @@ export class CheckResult {
             let temp = this.findSymbol(specialIcons.scatter);
 
             const winningAmount = this.accessData(this.currentGame.settings.scatter.symbolID,temp.length);
-            this.currentGame.settings._winData.totalWinningAmount += winningAmount;
+            this.currentGame.settings._winData.totalWinningAmount += winningAmount*this.currentGame.settings.currentBet;
             // console.log("Temp Scatter" , temp.length);
             
 
@@ -259,8 +259,8 @@ export class CheckResult {
             ) {
                 // console.log("!!!!!JACKPOT!!!!!");
                 this.currentGame.settings._winData.winningSymbols.push(this.jackpotWinSymbols);
-                this.currentGame.settings._winData.totalWinningAmount += this.jackpot.defaultAmount;
-                this.currentGame.settings._winData.jackpotwin += this.jackpot.defaultAmount;
+                this.currentGame.settings._winData.totalWinningAmount += this.jackpot.defaultAmount*this.currentGame.settings.currentBet;;
+                this.currentGame.settings._winData.jackpotwin += this.jackpot.defaultAmount*this.currentGame.settings.currentBet;;
             }
         }
     }
