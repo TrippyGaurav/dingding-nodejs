@@ -47,8 +47,8 @@ export class gambleCardGame {
     this.chosenCards.add(`${randomCard.value}-${randomCard.suit}`);
     return randomCard;
   }
- 
-  
+
+
   isCardRed(card: Card): boolean {
     return card.suit === 'Hearts' || card.suit === 'Diamonds';
   }

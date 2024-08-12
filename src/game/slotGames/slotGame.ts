@@ -17,7 +17,6 @@ import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
 import { gambleCardGame } from "./newGambleGame";
-import { log } from "console";
 
 export default class SlotGame {
     public settings: GameSettings;
@@ -28,10 +27,12 @@ export default class SlotGame {
         haveWon: number,
         currentWining: number,
         socket: Socket
-        totalbet: number
+        totalbet: number,
+        rtpSpinCount: number
+
     }
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
-        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0 };
+        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0 };
         this.settings = {
             currentGamedata: {
                 id: "",
@@ -63,7 +64,6 @@ export default class SlotGame {
             tempReels: [[]],
             matrix: { x: 5, y: 3 },
             payLine: [],
-            scatterPayTable: [],
             bonusPayTable: [],
             useScatter: false,
             useWild: false,
@@ -74,11 +74,9 @@ export default class SlotGame {
             lineData: [],
             fullPayTable: [],
             _winData: undefined,
-            freeSpinStarted: false,
-            freeSpinCount: 0,
+
             resultReelIndex: [],
             noOfBonus: 0,
-            noOfFreeSpins: 0,
             totalBonuWinAmount: [],
             jackpot: {
                 symbolName: "",
@@ -92,6 +90,18 @@ export default class SlotGame {
                 stopIndex: -1,
                 game: null,
                 id: -1,
+            },
+            freeSpin: {
+                symbolID: "-1",
+                freeSpinMuiltiplier: [],
+                freeSpinStarted: false,
+                freeSpinCount: 0,
+                noOfFreeSpins: 0,
+            },
+            scatter: {
+                symbolID: "-1",
+                multiplier: [],
+                useScatter: false
             },
             currentBet: 0,
             currentLines: 0,
@@ -108,7 +118,6 @@ export default class SlotGame {
 
     private initialize(GameData: GameData) {
         this.settings.bonusPayTable = [];
-        this.settings.scatterPayTable = [];
         this.settings.Symbols = [];
         this.settings.Weights = [];
         this.settings._winData = new WinData(this);
@@ -166,6 +175,8 @@ export default class SlotGame {
                         this.settings.BetPerLines = betMultiplier[res.data.currentBet];
                         this.settings.currentBet =
                             betMultiplier[res.data.currentBet] * this.settings.currentLines;
+
+
                         this.getRTP(res.data.spins);
                         break;
 
@@ -179,7 +190,6 @@ export default class SlotGame {
                         const sendData = this.settings.gamble.sendInitGambleData(
                             res.data.GAMBLETYPE
                         );
-
                         this.sendMessage("gambleInitData", sendData);
                         break;
 
@@ -253,7 +263,7 @@ export default class SlotGame {
 
     private makePayLines() {
         this.settings.currentGamedata.Symbols.forEach((element) => {
-            if (element.useWildSub || element.Name == "FreeSpin") {
+            if (element.useWildSub) {
                 element.multiplier?.forEach((item, index) => {
                     this.addPayLineSymbols(
                         element.Id?.toString(),
@@ -287,9 +297,14 @@ export default class SlotGame {
 
     private handleSpecialSymbols(symbol: any) {
         this.settings.bonusPayTable = [];
-        this.settings.scatterPayTable = [];
 
         switch (symbol.Name) {
+
+            case specialIcons.FreeSpin:
+                this.settings.freeSpin.symbolID = symbol.Id;
+                this.settings.freeSpin.freeSpinMuiltiplier = symbol.multiplier;
+                break;
+
             case specialIcons.jackpot:
                 this.settings.jackpot.symbolName = symbol.Name;
                 this.settings.jackpot.symbolId = symbol.Id;
@@ -305,13 +320,9 @@ export default class SlotGame {
                 break;
 
             case specialIcons.scatter:
-                this.settings.scatterPayTable.push({
-                    symbolCount: symbol.count,
-                    symbolID: symbol.Id,
-                    pay: symbol.pay,
-                    freeSpins: symbol.freeSpin,
-                });
-                this.settings.useScatter = true;
+                this.settings.scatter.symbolID = symbol.ID,
+                    this.settings.scatter.multiplier = symbol.multiplier;
+                this.settings.scatter.useScatter = true;
                 break;
 
             case specialIcons.bonus:
@@ -407,7 +418,7 @@ export default class SlotGame {
                     new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID.toString(), this)
                 )
             });
-            console.log("PAYTABLE : " + payTable.length);
+
 
             for (let j = 0; j < payTable.length; j++) {
                 payTableFull.push(payTable[j]);
@@ -419,7 +430,7 @@ export default class SlotGame {
                     });
                 }
             }
-            // console.log(payTableFull);
+            // 
 
             this.settings.fullPayTable = payTableFull;
 
@@ -434,39 +445,33 @@ export default class SlotGame {
     private async spinResult() {
         try {
             if (this.settings.currentBet > this.player.credits) {
-
+                console.log("Low Balance : ", this.player.credits);
+                console.log("Current Bet : ", this.settings.currentBet);
                 this.sendError("Low Balance");
-                return;
+                return
             }
-            if (
-                this.settings.currentGamedata.bonus.isEnabled &&
-                this.settings.currentGamedata.bonus.type == bonusGameType.tap
-            ) {
-                this.settings.bonus.game = new BonusGame(
-                    this.settings.currentGamedata.bonus.noOfItem,
-                    this
-                );
+            if (this.settings.currentGamedata.bonus.isEnabled && this.settings.currentGamedata.bonus.type == bonusGameType.tap) {
+                this.settings.bonus.game = new BonusGame(this.settings.currentGamedata.bonus.noOfItem, this)
             }
             /*
             MIDDLEWARE GOES HERE
             */
-            if (!this.settings.freeSpinStarted && this.settings.freeSpinCount === 0) {
-
+            if (!this.settings.freeSpin.freeSpinStarted && this.settings.freeSpin.freeSpinCount === 0) {
                 await this.deductPlayerBalance(this.settings.currentBet);
             }
-            if (this.settings.freeSpinStarted && this.settings.freeSpinCount > 0) {
-                this.settings.freeSpinCount--;
-                console.log(this.settings.freeSpinCount, 'this.settings.freeSpinCount');
+            if (this.settings.freeSpin.freeSpinStarted && this.settings.freeSpin.freeSpinCount > 0) {
+                this.settings.freeSpin.freeSpinCount--;
+                console.log(this.settings.freeSpin.freeSpinCount, 'this.settings.freeSpinCount');
 
-                if (this.settings.freeSpinCount <= 0) {
-                    this.settings.freeSpinStarted = false;
+                if (this.settings.freeSpin.freeSpinCount <= 0) {
+                    this.settings.freeSpin.freeSpinStarted = false
+
                 }
             }
             this.settings.tempReels = [[]];
             this.settings.bonus.start = false;
             this.player.totalbet += this.settings.currentBet
             new RandomResultGenerator(this);
-
             const result = new CheckResult(this)
             result.makeResultJson(ResultType.normal)
 
@@ -476,12 +481,13 @@ export default class SlotGame {
         }
     }
 
+
     private getRTP(spins: number) {
         try {
             let spend: number = 0;
             let won: number = 0;
-
-            for (let i = 0; i < spins; i++) {
+            this.player.rtpSpinCount = spins;
+            for (let i = 0; i < this.player.rtpSpinCount; i++) {
                 this.spinResult();
                 spend += this.settings.currentBet;
                 won = this.settings._winData.totalWinningAmount;

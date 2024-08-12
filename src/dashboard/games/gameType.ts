@@ -56,7 +56,6 @@ export interface GameSettings {
   tempReels: any[][];
   matrix: { x: number; y: number };
   payLine: any[];
-  scatterPayTable: any[];
   bonusPayTable: any[];
   useScatter: boolean;
   useWild: boolean;
@@ -67,11 +66,8 @@ export interface GameSettings {
   lineData: any[];
   fullPayTable: any[];
   _winData: WinData | undefined;
-  freeSpinStarted: boolean;
-  freeSpinCount: number;
   resultReelIndex: any[];
   noOfBonus: number;
-  noOfFreeSpins: number;
   totalBonuWinAmount: any[];
   jackpot: {
     symbolName: string;
@@ -86,6 +82,18 @@ export interface GameSettings {
     game: any;
     id: number;
   };
+  freeSpin: {
+    symbolID: string,
+    freeSpinMuiltiplier: [],
+    freeSpinStarted: boolean,
+    freeSpinCount: 0,
+    noOfFreeSpins: 0,
+  };
+  scatter: {
+    symbolID: string,
+    multiplier: [],
+    useScatter: boolean
+  }
   currentBet: number;
   currentLines: number;
   BetPerLines: number;
