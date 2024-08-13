@@ -57,8 +57,8 @@ export class CheckResult {
             } 
         Current RTP : ${winRate.toFixed(2)}% `
         );
-        console.log(this.currentGame.player.rtpSpinCount,'this.currentGame.player.rtpSpinCount');
-        console.log("Free spin Count",this.currentGame.player.totalSpin)
+        console.log(this.currentGame.player.rtpSpinCount, 'this.currentGame.player.rtpSpinCount');
+        console.log("Free spin Count", this.currentGame.player.totalSpin)
         console.log("_____________RESULT_END________________");
     }
 
@@ -90,16 +90,16 @@ export class CheckResult {
 
     private checkForFreeSpin() {
         let temp = this.findSymbol(specialIcons.FreeSpin);
-    
-        const freeSpins = this.accessData(this.currentGame.settings.freeSpin.symbolID, temp.length)
-        if (freeSpins > 0) {
+
+        if (temp.length > this.currentGame.settings.freeSpin.freeSpinMuiltiplier.length - 1) {
+            const freeSpins = this.accessData(this.currentGame.settings.freeSpin.symbolID, temp.length)
             this.currentGame.settings.freeSpin.freeSpinStarted = true;
             this.currentGame.settings.freeSpin.freeSpinCount += freeSpins;
             this.currentGame.player.totalSpin += freeSpins;
             this.currentGame.player.rtpSpinCount += freeSpins;
 
+            this.currentGame.settings._winData.winningSymbols.push(temp);
         }
-        this.currentGame.settings._winData.winningSymbols.push(temp);
     }
 
     //check for win function
@@ -107,7 +107,6 @@ export class CheckResult {
         try {
             const winningLines = [];
             let totalPayout = 0;
-
             this.currentGame.settings.lineData.forEach((line, index) => {
                 const firstSymbolPosition = line[0];
                 let firstSymbol = this.currentGame.settings.resultSymbolMatrix[firstSymbolPosition][0];
@@ -118,7 +117,7 @@ export class CheckResult {
                 const { isWinningLine, matchCount, matchedIndices } = this.checkLineSymbols(firstSymbol, line);
                 if (isWinningLine && matchCount >= 3) {
                     const symbolMultiplier = this.accessData(firstSymbol, matchCount);
-
+                    console.log(matchedIndices)
                     if (symbolMultiplier > 0) {
                         totalPayout += symbolMultiplier;
                         this.currentGame.settings._winData.winningLines.push(index);
@@ -128,13 +127,16 @@ export class CheckResult {
                             multiplier: symbolMultiplier,
                             matchCount
                         });
-                        const formattedIndices = matchedIndices.map(({ row, col }) => `${row},${col}`);
-                        this.currentGame.settings._winData.winningSymbols.push(formattedIndices);
+                        const formattedIndices = matchedIndices.map(({ col, row }) => `${col},${row}`);
+                        const validIndices = formattedIndices.filter(index => index.length > 2);
+                        if (validIndices.length > 0) {
+                            this.currentGame.settings._winData.winningSymbols.push(validIndices);
+                        }
                     }
                 }
             });
 
-            this.currentGame.settings._winData.totalWinningAmount = totalPayout;
+            this.currentGame.settings._winData.totalWinningAmount = totalPayout * this.currentGame.settings.BetPerLines
             return winningLines;
         } catch (error) {
             // console.error("Error in checkForWin");
@@ -150,7 +152,8 @@ export class CheckResult {
             const wildSymbol = this.currentGame.settings.wildSymbol.SymbolID.toString();
             let matchCount = 1;
             let currentSymbol = firstSymbol;
-            const matchedIndices = [{ row: line[0], col: 0 }];
+            const matchedIndices = [{ col: 0, row: line[0] }];
+
             for (let i = 1; i < line.length; i++) {
                 const rowIndex = line[i];
                 const symbol = this.currentGame.settings.resultSymbolMatrix[rowIndex][i];
@@ -162,22 +165,28 @@ export class CheckResult {
 
                 if (symbol === currentSymbol || symbol === wildSymbol) {
                     matchCount++;
-                    matchedIndices.push({ row: rowIndex, col: i });
+                    matchedIndices.push({ col: i, row: rowIndex });
                 } else if (currentSymbol === wildSymbol) {
                     currentSymbol = symbol;
                     matchCount++;
-                    matchedIndices.push({ row: rowIndex, col: i });
+                    matchedIndices.push({ col: i, row: rowIndex });
                 } else {
                     break;
                 }
             }
+
             return { isWinningLine: matchCount >= 3, matchCount, matchedIndices };
         } catch (error) {
-            // console.error("Error in checkLineSymbols:");
+            console.error("Error in checkLineSymbols:", error);
             return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
         }
     }
 
+    // [
+    //     ['0,0', '0,1', '0,2', '0,3', '0,4'],
+    //     ['0,1', '1,1', '1,2', '1,3', '1,4'],
+    //     ['0,2', '2,1', '2,2', '2,3', '2,4'],
+    // ]
 
     //checking first non wild symbol in lines which start with wild symbol
     private findFirstNonWildSymbol(line) {
@@ -201,18 +210,18 @@ export class CheckResult {
     private accessData(symbol, matchCount) {
         try {
             // console.log("Symbol:",symbol);
-            
+
             const symbolData = this.currentGame.settings.currentGamedata.Symbols.find(s => s.Id.toString() === symbol.toString());
             if (symbolData) {
                 const multiplierArray = symbolData.multiplier;
                 if (multiplierArray && multiplierArray[5 - matchCount]) {
                     if (symbol == this.currentGame.settings.freeSpin.symbolID) {
                         return multiplierArray[5 - matchCount][1];
-                    } else  if (symbol == this.currentGame.settings.scatter.symbolID) {
+                    } else if (symbol == this.currentGame.settings.scatter.symbolID) {
                         return multiplierArray[5 - matchCount][0];
                     }
                     {
-                        return multiplierArray[5 - matchCount][0];
+                        return multiplierArray[5 - matchCount][0]
                     }
                 }
             }
@@ -228,23 +237,12 @@ export class CheckResult {
         this.scatterWinSymbols = [];
         if (this.currentGame.settings.scatter.useScatter) {
             let temp = this.findSymbol(specialIcons.scatter);
+            if (temp.length > this.currentGame.settings.scatter.multiplier.length - 1) {
+                const winningAmount = this.accessData(this.currentGame.settings.scatter.symbolID, temp.length);
+                this.currentGame.settings._winData.totalWinningAmount += winningAmount * this.currentGame.settings.BetPerLines;
+                this.currentGame.settings._winData.winningSymbols.push(temp);
 
-            const winningAmount = this.accessData(this.currentGame.settings.scatter.symbolID,temp.length);
-            this.currentGame.settings._winData.totalWinningAmount += winningAmount*this.currentGame.settings.currentBet;
-            // console.log("Temp Scatter" , temp.length);
-            
-
-            // this.scatterPayTable.forEach((sPL) => {
-            //     if (
-            //         sPL.symbolCount > 0 &&
-            //         sPL.symbolCount == this.scatterWinSymbols.length
-            //     ) {
-            //         console.log( sPL.pay," sPL.pay")
-            //         this.currentGame.settings._winData.winningSymbols.push(this.scatterWinSymbols);
-            //         this.currentGame.settings._winData.freeSpins += sPL.freeSpins;
-            //         this.currentGame.settings._winData.totalWinningAmount += sPL.pay;
-            //     }
-            // });
+            }
         }
     }
 
@@ -259,8 +257,8 @@ export class CheckResult {
             ) {
                 // console.log("!!!!!JACKPOT!!!!!");
                 this.currentGame.settings._winData.winningSymbols.push(this.jackpotWinSymbols);
-                this.currentGame.settings._winData.totalWinningAmount += this.jackpot.defaultAmount*this.currentGame.settings.currentBet;;
-                this.currentGame.settings._winData.jackpotwin += this.jackpot.defaultAmount*this.currentGame.settings.currentBet;;
+                this.currentGame.settings._winData.totalWinningAmount += this.jackpot.defaultAmount * this.currentGame.settings.BetPerLines;;
+                this.currentGame.settings._winData.jackpotwin += this.jackpot.defaultAmount * this.currentGame.settings.BetPerLines;;
             }
         }
     }
@@ -288,9 +286,7 @@ export class CheckResult {
             GameData: {
                 ResultReel: this.currentGame.settings.resultSymbolMatrix,
                 linesToEmit: this.currentGame.settings._winData.winningLines,
-                symbolsToEmit: this.removeRecurringIndexSymbols(
-                    this.currentGame.settings._winData.winningSymbols
-                ),
+                symbolsToEmit: this.currentGame.settings._winData.winningSymbols,
                 WinAmout: this.currentGame.settings._winData.totalWinningAmount,
                 freeSpins: this.currentGame.settings.freeSpin.freeSpinCount,
                 jackpot: this.currentGame.settings._winData.jackpotwin,
@@ -314,28 +310,28 @@ export class CheckResult {
         }
     }
 
-    private removeRecurringIndexSymbols(symbolsToEmit: string[][]): string[][] {
-        const seen = new Set<string>();
-        const result: string[][] = [];
+    // private removeRecurringIndexSymbols(symbolsToEmit: string[][]): string[][] {
+    //     const seen = new Set<string>();
+    //     const result: string[][] = [];
 
-        symbolsToEmit.forEach((subArray) => {
-            if (!Array.isArray(subArray)) {
-                return;
-            }
-            const uniqueSubArray: string[] = [];
-            subArray.forEach((symbol) => {
-                if (!seen.has(symbol)) {
-                    seen.add(symbol);
-                    uniqueSubArray.push(symbol);
-                }
-            });
-            if (uniqueSubArray.length > 0) {
-                result.push(uniqueSubArray);
-            }
-        });
+    //     symbolsToEmit.forEach((subArray) => {
+    //         if (!Array.isArray(subArray)) {
+    //             return;
+    //         }
+    //         const uniqueSubArray: string[] = [];
+    //         subArray.forEach((symbol) => {
+    //             if (!seen.has(symbol)) {
+    //                 seen.add(symbol);
+    //                 uniqueSubArray.push(symbol);
+    //             }
+    //         });
+    //         if (uniqueSubArray.length > 0) {
+    //             result.push(uniqueSubArray);
+    //         }
+    //     });
 
-        return result;
-    }
+    //     return result;
+    // }
 
 
     private startFreeSpin() {
