@@ -68,51 +68,35 @@ export class CheckResult {
 
         let temp = this.findSymbol(specialIcons.bonus);
 
+        console.log("Bonus Found Length :  ", temp.length, " Game Type : ", this.currentGame.settings.currentGamedata.bonus.type);
         if (this.currentGame.settings.bonus.symbolCount <= temp.length) {
 
-            console.log("Bonus Found Length :  ", temp.length, " Game Type : ", this.currentGame.settings.currentGamedata.bonus.type);
             this.currentGame.settings._winData.winningSymbols.push(temp);
             this.currentGame.settings.bonus.start = true;
             this.currentGame.settings.noOfBonus++;
 
             if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.tap) {
-
-                console.log('TAP')
                 this.bonusResult = this.currentGame.settings.bonus.game.generateData();
                 this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();
             }
-
-
             if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.spin)
                 this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();
-
-
         }
 
-        // if (temp.length > 0) bonusSymbols.push(...temp);
-        // this.bonusPaytable.forEach((element) => {
-        //     // console.log(element.symbolCount, 'BONUS symbol', " bonusSymbols.length ", temp.length)
-        //     if (
-
-        //     ) {
-        //         console.log('BONUS', temp)
-        //        
-        //     } else {
-        //       
-        //     }
-        // });
     }
 
     private checkForFreeSpin() {
         let temp = this.findSymbol(specialIcons.FreeSpin);
 
-        if (temp.length > this.currentGame.settings.freeSpin.freeSpinMuiltiplier.length - 1) {
+        if (temp.length > (5 - this.currentGame.settings.freeSpin.freeSpinMuiltiplier.length)) {
+            console.log("!!!! FREEE SPINNN !!!!!"
+            );
+
             const freeSpins = this.accessData(this.currentGame.settings.freeSpin.symbolID, temp.length)
             this.currentGame.settings.freeSpin.freeSpinStarted = true;
             this.currentGame.settings.freeSpin.freeSpinCount += freeSpins;
             this.currentGame.player.totalSpin += freeSpins;
             this.currentGame.player.rtpSpinCount += freeSpins;
-
             this.currentGame.settings._winData.winningSymbols.push(temp);
         }
     }
@@ -122,6 +106,7 @@ export class CheckResult {
         try {
             const winningLines = [];
             let totalPayout = 0;
+            console.log(this.currentGame.settings.resultSymbolMatrix)
             this.currentGame.settings.lineData.forEach((line, index) => {
                 const firstSymbolPosition = line[0];
                 let firstSymbol = this.currentGame.settings.resultSymbolMatrix[firstSymbolPosition][0];
@@ -252,7 +237,7 @@ export class CheckResult {
         this.scatterWinSymbols = [];
         if (this.currentGame.settings.scatter.useScatter) {
             let temp = this.findSymbol(specialIcons.scatter);
-            if (temp.length > this.currentGame.settings.scatter.multiplier.length - 1) {
+            if (temp.length > (5 - this.currentGame.settings.scatter.multiplier.length)) {
                 const winningAmount = this.accessData(this.currentGame.settings.scatter.symbolID, temp.length);
                 this.currentGame.settings._winData.totalWinningAmount += winningAmount * this.currentGame.settings.BetPerLines;
                 this.currentGame.settings._winData.winningSymbols.push(temp);

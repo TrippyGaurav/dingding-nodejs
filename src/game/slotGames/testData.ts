@@ -163,7 +163,7 @@ export const gameData = [
             20
         ],
         "bonus": {
-            "type": "tap",
+            "type": "spin",
             "isEnabled": true,
             "noOfItem": 8,
             "payOut": [200, 100, 70, 50, 30, 20, 10, 5],

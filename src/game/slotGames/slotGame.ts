@@ -399,6 +399,7 @@ export default class SlotGame {
             shuffleArray(reel);
             matrix.push(reel);
         }
+
         return matrix;
     }
 

@@ -1,3 +1,4 @@
+import { start } from "repl";
 import SlotGame from "./slotGame";
 
 export class RandomResultGenerator {
@@ -5,37 +6,28 @@ export class RandomResultGenerator {
 
     constructor(current) {
         let matrix: string[][] = [];
-        let randomIndexArray: number[] = [];
-        for (let j = 0; j < current.settings.matrix.y; j++) {
-            let row: string[] = [];
-            for (let i = 0; i < current.settings.matrix.x; i++) {
-                if (j == 0) {
-                    let rowrandomIndex =
-                        Math.floor(Math.random() * (current.settings.reels[i].length - 1 - 0)) +
-                        0;
-                    randomIndexArray.push(rowrandomIndex);
-                    row.push(current.settings.reels[i][rowrandomIndex].toString());
-                } else {
-                    let initialRandomIndex = randomIndexArray[i];
-                    let adjustedIndex = (initialRandomIndex + j) % current.settings.reels[i].length;
-                    row.push(current.settings.reels[i][adjustedIndex].toString());
-                }
+        for (let x = 0; x < current.settings.matrix.x; x++) {
+
+            const startPosition = this.getRandomIndex((current.settings.reels[x].length - 1));
+            // console.log("StartIndex : ", startPosition);
+            for (let y = 0; y < current.settings.matrix.y; y++) {
+                if (!matrix[y]) matrix[y] = [];
+                matrix[y][x] = current.settings.reels[x][(startPosition + y) % current.settings.reels[x].length];
+                // console.log("X Index ", x, " Yindex ", y, " ", current.settings.reels[x][(startPosition + y) % current.settings.reels[x].length]);
             }
-            matrix.push(row);
-
         }
-        current.settings.resultReelIndex = randomIndexArray;
-        console.log("indexs", randomIndexArray);
+
+        console.log("Matrix  :   ", matrix);
+        current.settings.resultReelIndex = matrix;
         console.log("gameSettings._winData.resultReelIndex", current.settings.resultReelIndex);
+        // matrix.pop();
+        // matrix.pop();
+        // matrix.pop();
 
-        matrix.pop();
-        matrix.pop();
-        matrix.pop();
 
-
-        matrix.push(['0', '13', '13', '13', '4'])
-        matrix.push(['5', '11', '2', '12', '4'])
-        matrix.push(['2', '13', '5', '7', '2'])
+        // matrix.push(['0', '3', '12', '11', '4'])
+        // matrix.push(['5', '11', '2', '12', '4'])
+        // matrix.push(['2', '12', '5', '7', '12'])
 
 
 
@@ -43,18 +35,9 @@ export class RandomResultGenerator {
         // console.log("MATRIX " + matrix);
 
     }
-    // Function to generate a random number based on weights
-    randomWeightedIndex(weights: number[]): number {
-        const totalWeight: number = weights.reduce((acc, val) => acc + val, 0);
-        const randomNumber: number = Math.random() * totalWeight;
-        let weightSum: number = 0;
-        for (let i = 0; i < weights.length; i++) {
-            weightSum += weights[i];
-            if (randomNumber <= weightSum) {
-                return i;
-            }
-        }
-        // Default to last index if not found
-        return weights.length - 1;
+    getRandomIndex(maxValue: number): number {
+        return Math.floor(Math.random() * (maxValue + 1));
     }
+
+
 }
