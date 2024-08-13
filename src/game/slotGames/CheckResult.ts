@@ -127,6 +127,8 @@ export class CheckResult {
                             multiplier: symbolMultiplier,
                             matchCount
                         });
+                        console.log(`Line ${index + 1}:`, line);
+                        console.log(`Payout for Line ${index + 1}:`, 'payout', symbolMultiplier);
                         const formattedIndices = matchedIndices.map(({ col, row }) => `${col},${row}`);
                         const validIndices = formattedIndices.filter(index => index.length > 2);
                         if (validIndices.length > 0) {
@@ -147,12 +149,15 @@ export class CheckResult {
 
 
     //checking matching lines with first symbol and wild subs
-    private checkLineSymbols(firstSymbol, line) {
+    private checkLineSymbols(firstSymbol: string, line: number[]): { isWinningLine: boolean, matchCount: number, matchedIndices: { col: number, row: number }[] } {
         try {
             const wildSymbol = this.currentGame.settings.wildSymbol.SymbolID.toString();
+            const freeSpinSymbol = this.currentGame.settings.freeSpin.symbolID.toString();
+            const bonus = this.currentGame.settings.bonus.id.toString()
+            const jackpot = this.currentGame.settings.jackpot.symbolId.toString()
             let matchCount = 1;
             let currentSymbol = firstSymbol;
-            const matchedIndices = [{ col: 0, row: line[0] }];
+            const matchedIndices: { col: number, row: number }[] = [{ col: 0, row: line[0] }];
 
             for (let i = 1; i < line.length; i++) {
                 const rowIndex = line[i];
@@ -161,6 +166,12 @@ export class CheckResult {
                 if (symbol === undefined) {
                     console.error(`Symbol at position [${rowIndex}, ${i}] is undefined.`);
                     return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
+                }
+
+                if (i === 1 && currentSymbol !== wildSymbol) {
+                    if (symbol === freeSpinSymbol || symbol === bonus || symbol === jackpot) {
+                        break;
+                    }
                 }
 
                 if (symbol === currentSymbol || symbol === wildSymbol) {
@@ -177,7 +188,7 @@ export class CheckResult {
 
             return { isWinningLine: matchCount >= 3, matchCount, matchedIndices };
         } catch (error) {
-            console.error("Error in checkLineSymbols:", error);
+            console.error('Error in checkLineSymbols:', error);
             return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
         }
     }

@@ -1,4 +1,3 @@
-
 export const moolahPayOut = [5, 10, 15, 20]
 export const gameData = [
 
@@ -156,12 +155,7 @@ export const gameData = [
             15,
             20
         ],
-        "bets": [
-            1,
-            5,
-            15,
-            20
-        ],
+        "bets": [0.1, 0.25, 0.5, 0.75, 1]   ,
         "bonus": {
             "type": "spin",
             "isEnabled": true,
@@ -187,15 +181,15 @@ export const gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        200,
+                        100,
                         0
                     ],
                     [
-                        120,
+                        50,
                         0
                     ],
                     [
-                        60,
+                        20,
                         0
                     ]
                 ]
@@ -213,15 +207,15 @@ export const gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        200,
+                        100,
                         0
                     ],
                     [
-                        120,
+                        50,
                         0
                     ],
                     [
-                        60,
+                        20,
                         0
                     ]
                 ]
@@ -239,15 +233,15 @@ export const gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        200,
+                        100,
                         0
                     ],
                     [
-                        120,
+                        50,
                         0
                     ],
                     [
-                        60,
+                        20,
                         0
                     ]
                 ]
@@ -265,15 +259,15 @@ export const gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        200,
+                        100,
                         0
                     ],
                     [
-                        120,
+                        50,
                         0
                     ],
                     [
-                        60,
+                        20,
                         0
                     ]
                 ]
@@ -291,15 +285,15 @@ export const gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        200,
+                        100,
                         0
                     ],
                     [
-                        120,
+                        50,
                         0
                     ],
                     [
-                        60,
+                        20,
                         0
                     ]
                 ]
@@ -317,15 +311,15 @@ export const gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        400,
-                        0
-                    ],
-                    [
                         200,
                         0
                     ],
                     [
                         80,
+                        0
+                    ],
+                    [
+                        35,
                         0
                     ]
                 ]
@@ -343,15 +337,15 @@ export const gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        400,
-                        0
-                    ],
-                    [
                         200,
                         0
                     ],
                     [
                         80,
+                        0
+                    ],
+                    [
+                        35,
                         0
                     ]
                 ]
@@ -369,15 +363,15 @@ export const gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        400,
-                        0
-                    ],
-                    [
                         200,
                         0
                     ],
                     [
                         80,
+                        0
+                    ],
+                    [
+                        35,
                         0
                     ]
                 ]
@@ -395,15 +389,15 @@ export const gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        400,
-                        0
-                    ],
-                    [
                         200,
                         0
                     ],
                     [
                         80,
+                        0
+                    ],
+                    [
+                        35,
                         0
                     ]
                 ]
@@ -412,11 +406,11 @@ export const gameData = [
                 "Name": "FreeSpin",
                 "Id": 9,
                 "reelInstance": {
-                    "0": 4,
-                    "1": 4,
-                    "2": 4,
-                    "3": 4,
-                    "4": 4
+                    "0": 3,
+                    "1": 3,
+                    "2": 3,
+                    "3": 3,
+                    "4": 3
                 },
                 "useWildSub": false,
                 "multiplier": [
@@ -427,6 +421,10 @@ export const gameData = [
                     [
                         0,
                         5
+                    ],
+                    [
+                        0,
+                        3
                     ]
                 ]
             },
@@ -434,11 +432,11 @@ export const gameData = [
                 "Name": "Wild",
                 "Id": 10,
                 "reelInstance": {
-                    "0": 1,
-                    "1": 1,
-                    "2": 1,
-                    "3": 1,
-                    "4": 1
+                    "0": 2,
+                    "1": 2,
+                    "2": 2,
+                    "3": 2,
+                    "4": 2
                 },
                 "useWildSub": false,
                 "multiplier": []
@@ -483,7 +481,7 @@ export const gameData = [
                 },
                 "useWildSub": false,
                 "multiplier": [],
-                "defaultAmount": 12000,
+                "defaultAmount": 5000,
                 "symbolsCount": 5,
                 "increaseValue": 5
             },

@@ -17,17 +17,18 @@ export class RandomResultGenerator {
             }
         }
 
-        console.log("Matrix  :   ", matrix);
+        // console.log("Matrix  :   ", matrix);
         current.settings.resultReelIndex = matrix;
-        console.log("gameSettings._winData.resultReelIndex", current.settings.resultReelIndex);
-        // matrix.pop();
-        // matrix.pop();
-        // matrix.pop();
+        // console.log("gameSettings._winData.resultReelIndex", current.settings.resultReelIndex);
+        matrix.pop();
+        matrix.pop();
+        matrix.pop();
 
 
-        // matrix.push(['0', '3', '12', '11', '4'])
-        // matrix.push(['5', '11', '2', '12', '4'])
-        // matrix.push(['2', '12', '5', '7', '12'])
+        matrix.push(['8', '12', '2', '2', '4'])
+        matrix.push(['10', '13', '10', '8', '7'])
+        matrix.push(['1', '6', '4', '13', '1'])
+
 
 
 
@@ -41,3 +42,4 @@ export class RandomResultGenerator {
 
 
 }
+
