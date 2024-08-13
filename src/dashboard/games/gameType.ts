@@ -56,7 +56,6 @@ export interface GameSettings {
   tempReels: any[][];
   matrix: { x: number; y: number };
   payLine: any[];
-  bonusPayTable: any[];
   useScatter: boolean;
   useWild: boolean;
   wildSymbol: WildSymbol;
@@ -81,6 +80,8 @@ export interface GameSettings {
     stopIndex: number;
     game: any;
     id: number;
+    symbolCount: number,
+    pay: number
   };
   freeSpin: {
     symbolID: string,

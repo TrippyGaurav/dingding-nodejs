@@ -29,10 +29,10 @@ export default class SlotGame {
         socket: Socket
         totalbet: number,
         rtpSpinCount: number
-        totalSpin:number
+        totalSpin: number
     }
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
-        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0,totalSpin:0 };
+        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0, totalSpin: 0 };
         this.settings = {
             currentGamedata: {
                 id: "",
@@ -64,7 +64,6 @@ export default class SlotGame {
             tempReels: [[]],
             matrix: { x: 5, y: 3 },
             payLine: [],
-            bonusPayTable: [],
             useScatter: false,
             useWild: false,
             wildSymbol: {} as WildSymbol,
@@ -90,6 +89,8 @@ export default class SlotGame {
                 stopIndex: -1,
                 game: null,
                 id: -1,
+                symbolCount: -1,
+                pay: -1,
             },
             freeSpin: {
                 symbolID: "-1",
@@ -117,7 +118,6 @@ export default class SlotGame {
     }
 
     private initialize(GameData: GameData) {
-        this.settings.bonusPayTable = [];
         this.settings.Symbols = [];
         this.settings.Weights = [];
         this.settings._winData = new WinData(this);
@@ -296,7 +296,6 @@ export default class SlotGame {
     }
 
     private handleSpecialSymbols(symbol: any) {
-        this.settings.bonusPayTable = [];
 
         switch (symbol.Name) {
 
@@ -322,18 +321,15 @@ export default class SlotGame {
             case specialIcons.scatter:
 
                 this.settings.scatter.symbolID = symbol.Id,
-                this.settings.scatter.multiplier = symbol.multiplier;
+                    this.settings.scatter.multiplier = symbol.multiplier;
                 this.settings.scatter.useScatter = true;
-                
+
                 break;
 
             case specialIcons.bonus:
-                this.settings.bonusPayTable.push({
-                    symbolCount: symbol.symbolCount,
-                    symbolID: symbol.Id,
-                    pay: symbol.pay,
-                    highestPayMultiplier: symbol.highestMultiplier,
-                });
+                this.settings.bonus.id = symbol.Id;
+                this.settings.bonus.symbolCount = symbol.symbolCount;
+                this.settings.bonus.pay = symbol.pay;
                 break;
 
             default:
@@ -372,7 +368,7 @@ export default class SlotGame {
             BonusData:
                 this.settings.bonus.game != null
                     ? this.settings.bonus.game.generateData(
-                        this.settings.bonusPayTable[0]?.pay
+                        this.settings.bonus.pay
                     )
                     : [],
             UIData: UiInitData,
@@ -473,7 +469,7 @@ export default class SlotGame {
             this.settings.tempReels = [[]];
             this.settings.bonus.start = false;
             this.player.totalbet += this.settings.currentBet
-             new RandomResultGenerator(this);
+            new RandomResultGenerator(this);
             const result = new CheckResult(this)
             result.makeResultJson(ResultType.normal)
 
@@ -499,8 +495,8 @@ export default class SlotGame {
                 rtp = won / spend;
             }
 
-            
-            
+
+
 
 
             return

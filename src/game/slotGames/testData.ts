@@ -1,3 +1,4 @@
+
 export const moolahPayOut = [5, 10, 15, 20]
 export const gameData = [
 
@@ -162,7 +163,7 @@ export const gameData = [
             20
         ],
         "bonus": {
-            "type": "spin",
+            "type": "tap",
             "isEnabled": true,
             "noOfItem": 8,
             "payOut": [200, 100, 70, 50, 30, 20, 10, 5],
@@ -421,10 +422,6 @@ export const gameData = [
                 "multiplier": [
                     [
                         0,
-                        15
-                    ],
-                    [
-                        0,
                         10
                     ],
                     [
@@ -437,11 +434,11 @@ export const gameData = [
                 "Name": "Wild",
                 "Id": 10,
                 "reelInstance": {
-                    "0": 2,
-                    "1": 2,
-                    "2": 2,
-                    "3": 2,
-                    "4": 2
+                    "0": 1,
+                    "1": 1,
+                    "2": 1,
+                    "3": 1,
+                    "4": 1
                 },
                 "useWildSub": false,
                 "multiplier": []
@@ -494,11 +491,11 @@ export const gameData = [
                 "Name": "Bonus",
                 "Id": 13,
                 "reelInstance": {
-                    "0": 2,
-                    "1": 2,
-                    "2": 2,
-                    "3": 2,
-                    "4": 2
+                    "0": 3,
+                    "1": 3,
+                    "2": 3,
+                    "3": 3,
+                    "4": 3
                 },
                 "useWildSub": false,
                 "symbolCount": 3,
@@ -508,4 +505,4 @@ export const gameData = [
         ]
     }
 
-];
+]
