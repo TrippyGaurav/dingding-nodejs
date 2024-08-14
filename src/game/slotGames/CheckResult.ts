@@ -94,6 +94,8 @@ export class CheckResult {
 
             const freeSpins = this.accessData(this.currentGame.settings.freeSpin.symbolID, temp.length)
             this.currentGame.settings.freeSpin.freeSpinStarted = true;
+            this.currentGame.settings.freeSpin.freeSpinsAdded = true;
+
             this.currentGame.settings.freeSpin.freeSpinCount += freeSpins;
             this.currentGame.player.totalSpin += freeSpins;
             this.currentGame.player.rtpSpinCount += freeSpins;
@@ -111,9 +113,11 @@ export class CheckResult {
                 const firstSymbolPosition = line[0];
                 let firstSymbol = this.currentGame.settings.resultSymbolMatrix[firstSymbolPosition][0];
 
-                if (firstSymbol === this.currentGame.settings.wildSymbol.SymbolID.toString()) {
+                if (this.currentGame.settings.wildSymbol.useWild && firstSymbol === this.currentGame.settings.bonus.id.toString()) {
                     firstSymbol = this.findFirstNonWildSymbol(line);
                 }
+
+
                 const { isWinningLine, matchCount, matchedIndices } = this.checkLineSymbols(firstSymbol, line);
                 if (isWinningLine && matchCount >= 3) {
                     const symbolMultiplier = this.accessData(firstSymbol, matchCount);
@@ -141,7 +145,7 @@ export class CheckResult {
             this.currentGame.settings._winData.totalWinningAmount = totalPayout * this.currentGame.settings.BetPerLines
             return winningLines;
         } catch (error) {
-            // console.error("Error in checkForWin");
+            console.error("Error in checkForWin", error);
             return [];
         }
     }
@@ -151,10 +155,8 @@ export class CheckResult {
     //checking matching lines with first symbol and wild subs
     private checkLineSymbols(firstSymbol: string, line: number[]): { isWinningLine: boolean, matchCount: number, matchedIndices: { col: number, row: number }[] } {
         try {
-            const wildSymbol = this.currentGame.settings.wildSymbol.SymbolID.toString();
-            const freeSpinSymbol = this.currentGame.settings.freeSpin.symbolID.toString();
-            const bonus = this.currentGame.settings.bonus.id.toString()
-            const jackpot = this.currentGame.settings.jackpot.symbolId.toString()
+
+            const wildSymbol = this.currentGame.settings.wildSymbol.SymbolID.toString() || "";
             let matchCount = 1;
             let currentSymbol = firstSymbol;
             const matchedIndices: { col: number, row: number }[] = [{ col: 0, row: line[0] }];
@@ -168,10 +170,9 @@ export class CheckResult {
                     return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
                 }
 
-                if (i === 1 && currentSymbol !== wildSymbol) {
-                    if (symbol === freeSpinSymbol || symbol === bonus || symbol === jackpot) {
-                        break;
-                    }
+                if (this.currentGame.settings.wildSymbol.useWild && i === 1 && currentSymbol !== wildSymbol) {
+
+                    break;
                 }
 
                 if (symbol === currentSymbol || symbol === wildSymbol) {
@@ -299,7 +300,10 @@ export class CheckResult {
                 linesToEmit: this.currentGame.settings._winData.winningLines,
                 symbolsToEmit: this.currentGame.settings._winData.winningSymbols,
                 WinAmout: this.currentGame.settings._winData.totalWinningAmount,
-                freeSpins: this.currentGame.settings.freeSpin.freeSpinCount,
+                freeSpins: {
+                    count: this.currentGame.settings.freeSpin.freeSpinCount,
+                    isNewAdded: this.currentGame.settings.freeSpin.freeSpinsAdded
+                },
                 jackpot: this.currentGame.settings._winData.jackpotwin,
                 isBonus: this.currentGame.settings.bonus.start,
                 BonusStopIndex: this.currentGame.settings.bonus.stopIndex,

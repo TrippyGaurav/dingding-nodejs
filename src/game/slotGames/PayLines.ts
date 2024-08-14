@@ -24,7 +24,7 @@ export default class PayLines {
 
     getWildLines() {
         let res: PayLines[] = [];
-        if (!this.currentGame.settings.useWild) return res;
+        if (!this.currentGame.settings.wildSymbol.useWild) return res;
 
         let wPoss = this.getPositionsForWild();
         const maxWildsCount = this.useWildInFirstPosition

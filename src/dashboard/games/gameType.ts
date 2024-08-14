@@ -57,7 +57,6 @@ export interface GameSettings {
   matrix: { x: number; y: number };
   payLine: any[];
   useScatter: boolean;
-  useWild: boolean;
   wildSymbol: WildSymbol;
   Symbols: any[];
   Weights: any[];
@@ -74,6 +73,7 @@ export interface GameSettings {
     symbolId: number;
     defaultAmount: number;
     increaseValue: number;
+    useJackpot: boolean;
   };
   bonus: {
     start: boolean;
@@ -81,7 +81,8 @@ export interface GameSettings {
     game: any;
     id: number;
     symbolCount: number,
-    pay: number
+    pay: number,
+    useBonus: boolean
   };
   freeSpin: {
     symbolID: string,
@@ -89,6 +90,8 @@ export interface GameSettings {
     freeSpinStarted: boolean,
     freeSpinCount: 0,
     noOfFreeSpins: 0,
+    useFreeSpin: boolean,
+    freeSpinsAdded: boolean,
   };
   scatter: {
     symbolID: string,
@@ -107,6 +110,8 @@ export interface GameSettings {
 export interface WildSymbol {
   SymbolName: string;
   SymbolID: number;
+  useWild: boolean
+
 }
 
 

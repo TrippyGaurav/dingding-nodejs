@@ -65,8 +65,11 @@ export default class SlotGame {
             matrix: { x: 5, y: 3 },
             payLine: [],
             useScatter: false,
-            useWild: false,
-            wildSymbol: {} as WildSymbol,
+            wildSymbol: {
+                SymbolName: "-1",
+                SymbolID: -1,
+                useWild: false
+            },
             Symbols: [],
             Weights: [],
             resultSymbolMatrix: [],
@@ -83,6 +86,7 @@ export default class SlotGame {
                 symbolId: 0,
                 defaultAmount: 0,
                 increaseValue: 0,
+                useJackpot: false,
             },
             bonus: {
                 start: false,
@@ -91,13 +95,16 @@ export default class SlotGame {
                 id: -1,
                 symbolCount: -1,
                 pay: -1,
+                useBonus: false,
             },
             freeSpin: {
                 symbolID: "-1",
                 freeSpinMuiltiplier: [],
                 freeSpinStarted: false,
+                freeSpinsAdded: false,
                 freeSpinCount: 0,
                 noOfFreeSpins: 0,
+                useFreeSpin: false,
             },
             scatter: {
                 symbolID: "-1",
@@ -148,6 +155,8 @@ export default class SlotGame {
         this.player.socket.on("message", (message) => {
             try {
                 const res = JSON.parse(message);
+                console.log("Message Recieved : ", message);
+
 
                 switch (res.id) {
                     case "SPIN":
@@ -190,6 +199,8 @@ export default class SlotGame {
                         const sendData = this.settings.gamble.sendInitGambleData(
                             res.data.GAMBLETYPE
                         );
+                        console.log(sendData);
+
                         this.sendMessage("gambleInitData", sendData);
                         break;
 
@@ -302,6 +313,7 @@ export default class SlotGame {
             case specialIcons.FreeSpin:
                 this.settings.freeSpin.symbolID = symbol.Id;
                 this.settings.freeSpin.freeSpinMuiltiplier = symbol.multiplier;
+                this.settings.freeSpin.useFreeSpin = true;
                 break;
 
             case specialIcons.jackpot:
@@ -310,12 +322,14 @@ export default class SlotGame {
                 this.settings.jackpot.symbolsCount = symbol.symbolsCount;
                 this.settings.jackpot.defaultAmount = symbol.defaultAmount;
                 this.settings.jackpot.increaseValue = symbol.increaseValue;
+                this.settings.jackpot.useJackpot = true;
+
                 break;
 
             case specialIcons.wild:
                 this.settings.wildSymbol.SymbolName = symbol.Name;
                 this.settings.wildSymbol.SymbolID = symbol.Id;
-                this.settings.useWild = true;
+                this.settings.wildSymbol.useWild = true;
                 break;
 
             case specialIcons.scatter:
@@ -330,6 +344,7 @@ export default class SlotGame {
                 this.settings.bonus.id = symbol.Id;
                 this.settings.bonus.symbolCount = symbol.symbolCount;
                 this.settings.bonus.pay = symbol.pay;
+                this.settings.bonus.useBonus = true;
                 break;
 
             default:
@@ -421,7 +436,7 @@ export default class SlotGame {
 
             for (let j = 0; j < payTable.length; j++) {
                 payTableFull.push(payTable[j]);
-                if (this.settings.useWild) {
+                if (this.settings.wildSymbol.useWild) {
                     let wildLines = payTable[j].getWildLines();
 
                     wildLines.forEach((wl) => {
@@ -460,11 +475,12 @@ export default class SlotGame {
             }
             if (this.settings.freeSpin.freeSpinStarted && this.settings.freeSpin.freeSpinCount > 0) {
                 this.settings.freeSpin.freeSpinCount--;
+                this.settings.freeSpin.freeSpinsAdded = false;
                 console.log(this.settings.freeSpin.freeSpinCount, 'this.settings.freeSpinCount');
 
                 if (this.settings.freeSpin.freeSpinCount <= 0) {
-                    this.settings.freeSpin.freeSpinStarted = false
-
+                    this.settings.freeSpin.freeSpinStarted = false;
+                    this.settings.freeSpin.freeSpinsAdded = false;
                 }
             }
             this.settings.tempReels = [[]];

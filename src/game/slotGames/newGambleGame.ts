@@ -43,11 +43,11 @@ export class gambleCardGame {
     do {
       randomIndex = Math.floor(Math.random() * this.deck.length);
       randomCard = this.deck[randomIndex];
-    } while (!this.chosenCards.has(`${randomCard.value}-${randomCard.suit}`));
+    } while (this.chosenCards.has(`${randomCard.value}-${randomCard.suit}`));
+
     this.chosenCards.add(`${randomCard.value}-${randomCard.suit}`);
     return randomCard;
   }
-
 
   isCardRed(card: Card): boolean {
     return card.suit === 'Hearts' || card.suit === 'Diamonds';
