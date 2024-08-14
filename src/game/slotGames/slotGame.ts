@@ -567,13 +567,7 @@ export default class SlotGame {
             }
 
             matrix = this.transposeMatrix(transposed);
-            // matrix.pop();
-            // matrix.pop();
-            // matrix.();
 
-            // matrix.push(['1', '2', '3', '4', '5'])
-            // matrix.push(['1', '1', '1', '1', '6'])
-            // matrix.push(['0', '0', '0', '0', '0'])
 
 
             this.settings.resultSymbolMatrix = matrix;

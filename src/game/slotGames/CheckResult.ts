@@ -40,6 +40,7 @@ export class CheckResult {
         this.checkForBonus();
         this.checkForJackpot();
         this.checkForScatter();
+        console.log(this.currentGame.settings.resultSymbolMatrix)
 
         this.currentGame.settings._winData.winningLines =
             this.currentGame.settings._winData.winningLines.filter(
@@ -108,15 +109,18 @@ export class CheckResult {
         try {
             const winningLines = [];
             let totalPayout = 0;
-            console.log(this.currentGame.settings.resultSymbolMatrix)
             this.currentGame.settings.lineData.forEach((line, index) => {
                 const firstSymbolPosition = line[0];
                 let firstSymbol = this.currentGame.settings.resultSymbolMatrix[firstSymbolPosition][0];
 
-                if (this.currentGame.settings.wildSymbol.useWild && firstSymbol === this.currentGame.settings.bonus.id.toString()) {
+                if (this.currentGame.settings.wildSymbol.useWild && firstSymbol === this.currentGame.settings.wildSymbol.SymbolID.toString()) {
                     firstSymbol = this.findFirstNonWildSymbol(line);
                 }
 
+                if (Object.values(specialIcons).includes(this.currentGame.settings.currentGamedata.Symbols[firstSymbol].Name as specialIcons)) {
+                    console.log("Special Icon Matched : ", this.currentGame.settings.currentGamedata.Symbols[firstSymbol].Name)
+                    return;
+                }
 
                 const { isWinningLine, matchCount, matchedIndices } = this.checkLineSymbols(firstSymbol, line);
                 if (isWinningLine && matchCount >= 3) {
@@ -170,10 +174,10 @@ export class CheckResult {
                     return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
                 }
 
-                if (this.currentGame.settings.wildSymbol.useWild && i === 1 && currentSymbol !== wildSymbol) {
+                // if (i === 1 && currentSymbol !== wildSymbol) {
 
-                    break;
-                }
+                //     break;
+                // }
 
                 if (symbol === currentSymbol || symbol === wildSymbol) {
                     matchCount++;

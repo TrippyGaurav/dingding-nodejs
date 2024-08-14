@@ -24,9 +24,9 @@ export class RandomResultGenerator {
         // matrix.pop();
         // matrix.pop();
 
-        // matrix.push(['8', '9', '2', '2', '4'])
-        // matrix.push(['2', '1', '2', '6', '7'])
-        // matrix.push(['1', '9', '9', '1', '1'])
+        // matrix.push(['10', '10', '10', '2', '4'])
+        // matrix.push(['0', '5', '2', '6', '7'])
+        // matrix.push(['1', '8', '1', '5', '1'])
 
 
 
