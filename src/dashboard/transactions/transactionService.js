@@ -51,16 +51,15 @@ class TransactionService {
             return transaction;
         });
     }
-    getTransactions(username, page, limit) {
+    getTransactions(username, page, limit, query) {
         return __awaiter(this, void 0, void 0, function* () {
             const skip = (page - 1) * limit;
-            const user = (yield userModel_1.User.findOne({ username })) || (yield userModel_1.Player.findOne({ username }));
+            const user = (yield userModel_1.User.findOne({ username })) ||
+                (yield userModel_1.Player.findOne({ username }));
             if (!user) {
                 throw new Error("User not found");
             }
-            const totalTransactions = yield transactionModel_1.default.countDocuments({
-                $or: [{ debtor: user.username }, { creditor: user.username }]
-            });
+            const totalTransactions = yield transactionModel_1.default.countDocuments(Object.assign({ $or: [{ debtor: user.username }, { creditor: user.username }] }, query));
             const totalPages = Math.ceil(totalTransactions / limit);
             if (totalTransactions === 0) {
                 return {
@@ -68,20 +67,25 @@ class TransactionService {
                     totalTransactions: 0,
                     totalPages: 0,
                     currentPage: 0,
-                    outOfRange: false
+                    outOfRange: false,
                 };
             }
-            if (page > totalPages) {
+            if (page > totalPages && totalPages !== 0) {
                 return {
                     transactions: [],
                     totalTransactions,
                     totalPages,
                     currentPage: page,
-                    outOfRange: true
+                    outOfRange: true,
                 };
             }
             const transactions = yield transactionModel_1.default.find({
-                $or: [{ debtor: user.username }, { creditor: user.username }]
+                $and: [
+                    {
+                        $or: [{ debtor: user.username }, { creditor: user.username }],
+                    },
+                    query,
+                ],
             })
                 .skip(skip)
                 .limit(limit);
@@ -90,7 +94,7 @@ class TransactionService {
                 totalTransactions,
                 totalPages,
                 currentPage: page,
-                outOfRange: false
+                outOfRange: false,
             };
         });
     }

@@ -23,7 +23,7 @@ exports.removeRecurringIndexSymbols = removeRecurringIndexSymbols;
 exports.combineUniqueSymbols = combineUniqueSymbols;
 const userSocket_1 = require("../../socket/userSocket");
 const middleware_1 = require("../../utils/middleware");
-const Global_1 = require("../Global");
+const TestGlobal_1 = require("../TestGlobal");
 const _global_1 = require("./_global");
 const extraBonusGames_1 = require("./extraBonusGames");
 const slotDataInit_1 = require("./slotDataInit");
@@ -99,7 +99,7 @@ function spinResult(playerSkt, clientID) {
     if (_global_1.slotGameSettings.currentGamedata.bonus.isEnabled &&
         _global_1.slotGameSettings.currentGamedata.bonus.type == slotTypes_1.bonusGameType.tap)
         _global_1.slotGameSettings.bonus.game = new extraBonusGames_1.bonusGame(_global_1.slotGameSettings.currentGamedata.bonus.noOfItem, clientID);
-    Global_1.GData.playerSocket.deductPlayerBalance(_global_1.slotGameSettings.currentBet);
+    TestGlobal_1.GData.playerSocket.deductPlayerBalance(_global_1.slotGameSettings.currentBet);
     // TODO : Middle ware goes here
     (() => __awaiter(this, void 0, void 0, function* () {
         yield (0, middleware_1.middleware)();
@@ -107,6 +107,7 @@ function spinResult(playerSkt, clientID) {
     _global_1.slotGameSettings.tempReels = [[]];
     _global_1.slotGameSettings.bonus.start = false;
     new slotDataInit_1.RandomResultGenerator();
+    // HERE: 
     const result = new slotResults_1.CheckResult(playerSkt);
     result.makeResultJson(playerSkt, slotTypes_1.ResultType.normal);
 }
@@ -294,13 +295,6 @@ function convertSymbols(data) {
             increaseValue: element.increaseValue || {},
             freeSpin: element.freeSpin
         };
-        // if (element.multiplier) {
-        //   const multiplierObject = {};
-        //   element.multiplier.forEach((item, index) => {
-        //     multiplierObject[(5 - index).toString() + "x"] = item[0];
-        //   });
-        //   symbolData.multiplier = multiplierObject;
-        // }
         uiData.symbols.push(symbolData);
     });
     return uiData;

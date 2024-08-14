@@ -23,62 +23,28 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Platform = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const newGameSchema = new mongoose_1.Schema({
-    name: {
+const PayoutsSchema = new mongoose_1.Schema({
+    gameName: {
         type: String,
-        required: true
-    },
-    thumbnail: {
-        type: String,
-        required: true
-    },
-    url: {
-        type: String,
-        required: true
-    },
-    type: {
-        type: String,
-        required: true
-    },
-    category: {
-        type: String,
-        required: true
-    },
-    status: {
-        type: String,
-        required: true
-    },
-    tagName: {
-        type: String,
-        required: true
-    },
-    slug: {
-        type: String,
-        required: true
-    },
-    payout: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
         required: true,
-        ref: 'Payout'
+        unique: true
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-});
-const PlatformSchema = new mongoose_1.Schema({
-    name: {
-        type: String,
-        required: true
-    },
-    games: {
-        type: [newGameSchema],
-    }
-});
-// Create an index on the games.slug field
-PlatformSchema.index({ 'games.slug': 1 });
-PlatformSchema.index({ 'games.category': 1 });
-const Platform = mongoose_1.default.model("Platform", PlatformSchema);
-exports.Platform = Platform;
+    content: [
+        {
+            name: {
+                type: String,
+                required: true,
+            },
+            data: {
+                type: mongoose_1.Schema.Types.Mixed,
+                required: true
+            },
+            version: Number,
+            createdAt: { type: Date, default: Date.now }
+        }
+    ],
+    latestVersion: { type: Number, default: 0 }
+}, { timestamps: true });
+const Payouts = mongoose_1.default.model("Payouts", PayoutsSchema);
+exports.default = Payouts;

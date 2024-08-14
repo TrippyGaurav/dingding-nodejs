@@ -3,9 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifySocketToken = void 0;
+exports.verifyPlayerToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const verifySocketToken = (socket) => {
+const verifyPlayerToken = (socket) => {
     return new Promise((resolve, reject) => {
         const token = socket.handshake.auth.token;
         if (token) {
@@ -24,4 +24,4 @@ const verifySocketToken = (socket) => {
         }
     });
 };
-exports.verifySocketToken = verifySocketToken;
+exports.verifyPlayerToken = verifyPlayerToken;

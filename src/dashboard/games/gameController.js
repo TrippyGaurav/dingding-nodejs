@@ -30,6 +30,9 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const userModel_1 = require("../users/userModel");
 const cloudinary_1 = __importDefault(require("cloudinary"));
 const config_1 = require("../../config/config");
+const socket_1 = require("../../socket");
+const payoutModel_1 = __importDefault(require("../payouts/payoutModel"));
+const path_1 = __importDefault(require("path"));
 cloudinary_1.default.v2.config({
     cloud_name: config_1.config.cloud_name,
     api_key: config_1.config.api_key,
@@ -49,7 +52,7 @@ class GameController {
     // GET : Get Games
     getGames(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
+            var _a;
             try {
                 const _req = req;
                 const { category, platform } = req.query;
@@ -63,39 +66,39 @@ class GameController {
                         if (!player) {
                             throw (0, http_errors_1.default)(404, "Player not found");
                         }
-                        const favoriteGameIds = player.favouriteGames.map(game => new mongoose_1.default.Types.ObjectId(game));
-                        console.log("favoriteGameIds : ", favoriteGameIds);
+                        const favoriteGameIds = player.favouriteGames.map((game) => new mongoose_1.default.Types.ObjectId(game));
                         const favoriteGames = yield gameModel_1.Platform.aggregate([
                             { $match: { name: platform } },
                             { $unwind: "$games" },
-                            { $match: { "games._id": { $in: favoriteGameIds } } },
+                            { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
                             {
                                 $group: {
                                     _id: "$_id",
-                                    games: { $push: "$games" }
-                                }
+                                    games: { $push: "$games" },
+                                },
                             },
-                            { $project: { "games.url": 0 } }
+                            { $project: { "games.url": 0 } },
                         ]);
-                        console.log("favoriteGames : ", (_a = favoriteGames[0]) === null || _a === void 0 ? void 0 : _a.games);
                         if (!favoriteGames.length) {
                             return res.status(200).json({ featured: [], others: [] });
                         }
-                        return res.status(200).json({ featured: [], others: (_b = favoriteGames[0]) === null || _b === void 0 ? void 0 : _b.games });
+                        return res
+                            .status(200)
+                            .json({ featured: [], others: (_a = favoriteGames[0]) === null || _a === void 0 ? void 0 : _a.games });
                     }
                     else {
                         const platformDoc = yield gameModel_1.Platform.aggregate([
                             { $match: { name: platform } },
                             { $unwind: "$games" },
-                            { $match: category !== "all" ? { "games.category": category } : {} },
+                            { $match: Object.assign({ "games.status": { $ne: "inactive" } }, (category !== "all" ? { "games.category": category } : {})) },
                             { $sort: { "games.createdAt": -1 } },
                             {
                                 $group: {
                                     _id: "$_id",
-                                    games: { $push: "$games" }
-                                }
+                                    games: { $push: "$games" },
+                                },
                             },
-                            { $project: { "games.url": 0 } }
+                            { $project: { "games.url": 0 } },
                         ]);
                         if (!platformDoc.length) {
                             return res.status(200).json([]); // Return an empty array if no games are found
@@ -108,14 +111,16 @@ class GameController {
                 }
                 else if (role === "company") {
                     const platformDoc = yield gameModel_1.Platform.aggregate([
-                        { $match: category !== "all" ? { name: category } : {} },
+                        {
+                            $match: category !== "all" ? { name: category } : {},
+                        },
                         { $unwind: "$games" },
                         { $sort: { "games.createdAt": -1 } },
                         {
                             $group: {
                                 _id: "$_id",
-                                games: { $push: "$games" }
-                            }
+                                games: { $push: "$games" },
+                            },
                         },
                     ]);
                     // Flatten the array of games from multiple platforms if category is "all"
@@ -135,20 +140,26 @@ class GameController {
     getGameBySlug(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                const _req = req;
+                const { username, role } = _req.user;
                 const { gameId: slug } = req.params;
                 if (!slug) {
                     throw (0, http_errors_1.default)(400, "Slug parameter is required");
                 }
+                const existingUser = socket_1.users.get(username);
+                if (existingUser && existingUser.gameSocket) {
+                    throw (0, http_errors_1.default)(403, "You already have an active game session.");
+                }
                 const platform = yield gameModel_1.Platform.aggregate([
                     { $unwind: "$games" },
-                    { $match: { "games.slug": slug } },
+                    { $match: { "games.slug": slug, "games.status": { $ne: "inactive" } } },
                     {
                         $project: {
                             _id: 0,
                             url: "$games.url",
-                            status: "$games.status"
-                        }
-                    }
+                            status: "$games.status",
+                        },
+                    },
                 ]);
                 if (!platform || platform.length === 0) {
                     throw (0, http_errors_1.default)(404, "Game not found");
@@ -158,7 +169,9 @@ class GameController {
                     res.status(200).json({ url: game.url });
                 }
                 else {
-                    res.status(200).json({ message: "The game is currently under maintenance." });
+                    res
+                        .status(200)
+                        .json({ message: "The game is currently under maintenance." });
                 }
             }
             catch (error) {
@@ -178,11 +191,17 @@ class GameController {
                 if (role != "company") {
                     throw (0, http_errors_1.default)(401, "Access denied: You don't have permission to add games");
                 }
-                const { name, url, type, category, status, tagName, slug, platform: platformName } = req.body;
-                console.log("Add : ", req.body);
-                console.log("Thumb : ", req.files.thumbnail);
-                console.log("payoutFile : ", req.files.payoutFile);
-                if (!name || !url || !type || !category || !status || !tagName || !slug || !req.files.thumbnail || !req.files.payoutFile || !platformName) {
+                const { name, url, type, category, status, tagName, slug, platform: platformName, } = req.body;
+                if (!name ||
+                    !url ||
+                    !type ||
+                    !category ||
+                    !status ||
+                    !tagName ||
+                    !slug ||
+                    !req.files.thumbnail ||
+                    !req.files.payoutFile ||
+                    !platformName) {
                     throw (0, http_errors_1.default)(400, "All required fields must be provided, including the payout file and platform");
                 }
                 const platform = yield gameModel_1.Platform.findOne({ name: platformName });
@@ -191,9 +210,9 @@ class GameController {
                 }
                 const existingGame = yield gameModel_1.Platform.aggregate([
                     { $match: { _id: platform._id } },
-                    { $unwind: '$games' }, // Deconstruct the games array
-                    { $match: { $or: [{ 'games.name': name }, { 'games.slug': slug }] } },
-                    { $limit: 1 } // Limit the result to 1 document for performance
+                    { $unwind: "$games" }, // Deconstruct the games array
+                    { $match: { $or: [{ "games.name": name }, { "games.slug": slug }] } },
+                    { $limit: 1 }, // Limit the result to 1 document for performance
                 ]);
                 if (existingGame.length > 0) {
                     throw (0, http_errors_1.default)(400, "Game already exists in the platform");
@@ -202,32 +221,53 @@ class GameController {
                 const thumbnailBuffer = req.files.thumbnail[0].buffer;
                 try {
                     thumbnailUploadResult = yield new Promise((resolve, reject) => {
-                        cloudinary_1.default.v2.uploader.upload_stream({ resource_type: 'image', folder: platformName }, (error, result) => {
+                        cloudinary_1.default.v2.uploader
+                            .upload_stream({ resource_type: "image", folder: platformName }, (error, result) => {
                             if (error) {
                                 return reject(error);
                             }
                             resolve(result);
-                        }).end(thumbnailBuffer);
+                        })
+                            .end(thumbnailBuffer);
                     });
                 }
                 catch (uploadError) {
                     throw (0, http_errors_1.default)(500, "Failed to upload thumbnail");
                 }
                 // Handle file for payout
-                const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString('utf-8'));
-                // Check if a Payout with the same gameName already exists
-                let payoutId;
-                let existingPayout = yield gameModel_1.Payouts.findOne({ gameName: tagName });
-                if (existingPayout) {
-                    payoutId = existingPayout._id;
+                const payoutFile = req.files.payoutFile[0];
+                const payoutJSONData = JSON.parse(payoutFile.buffer.toString("utf-8"));
+                let payoutFileName = path_1.default.parse(payoutFile.originalname).name;
+                let payout = yield payoutModel_1.default.findOne({ gameName: tagName });
+                let contentId;
+                if (!payout) {
+                    payout = new payoutModel_1.default({
+                        gameName: tagName,
+                        content: [
+                            {
+                                _id: new mongoose_1.default.Types.ObjectId(),
+                                name: `${payoutFileName}-1`,
+                                data: payoutJSONData,
+                                version: 1
+                            }
+                        ],
+                        latestVersion: 1
+                    });
+                    yield payout.save({ session });
+                    contentId = payout.content[0]._id;
                 }
                 else {
-                    const newPayout = new gameModel_1.Payouts({
-                        gameName: tagName,
-                        data: jsonData,
-                    });
-                    yield newPayout.save({ session });
-                    payoutId = newPayout._id;
+                    payout.latestVersion += 1;
+                    const newVersion = payout.latestVersion;
+                    contentId = new mongoose_1.default.Types.ObjectId();
+                    const newContent = {
+                        _id: contentId,
+                        name: `${payoutFileName}-${newVersion}`,
+                        data: payoutJSONData,
+                        version: newVersion,
+                        createdAt: new Date()
+                    };
+                    yield payoutModel_1.default.updateOne({ gameName: tagName }, { $push: { content: newContent }, $set: { latestVersion: newVersion } }, { session });
                 }
                 const newGame = {
                     name,
@@ -238,7 +278,7 @@ class GameController {
                     status,
                     tagName,
                     slug,
-                    payout: payoutId,
+                    payout: contentId
                 };
                 platform.games.push(newGame);
                 yield platform.save({ session });
@@ -253,10 +293,8 @@ class GameController {
                 if (thumbnailUploadResult && thumbnailUploadResult.public_id) {
                     cloudinary_1.default.v2.uploader.destroy(thumbnailUploadResult.public_id, (destroyError, result) => {
                         if (destroyError) {
-                            console.log("Failed to delete thumbnail from Cloudinary:", destroyError);
                         }
                         else {
-                            console.log("Thumbnail deleted from Cloudinary:", result);
                         }
                     });
                 }
@@ -312,7 +350,7 @@ class GameController {
     // PUT : Update a Game
     updateGame(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d;
+            var _a, _b;
             const session = yield mongoose_1.default.startSession();
             session.startTransaction();
             let thumbnailUploadResult;
@@ -320,8 +358,7 @@ class GameController {
                 const _req = req;
                 const { username, role } = _req.user;
                 const { gameId } = req.params;
-                const _e = req.body, { status, slug, platformName } = _e, updateFields = __rest(_e, ["status", "slug", "platformName"]);
-                console.log("Update Game : ", req.body);
+                const _c = req.body, { status, slug, platformName } = _c, updateFields = __rest(_c, ["status", "slug", "platformName"]);
                 if (!gameId) {
                     throw (0, http_errors_1.default)(400, "Game ID is required");
                 }
@@ -333,9 +370,9 @@ class GameController {
                 }
                 const existingGame = yield gameModel_1.Platform.aggregate([
                     { $match: { name: platformName } },
-                    { $unwind: '$games' },
-                    { $match: { 'games._id': new mongoose_1.default.Types.ObjectId(gameId) } },
-                    { $limit: 1 }
+                    { $unwind: "$games" },
+                    { $match: { "games._id": new mongoose_1.default.Types.ObjectId(gameId) } },
+                    { $limit: 1 },
                 ]);
                 if (!existingGame || existingGame.length === 0) {
                     throw (0, http_errors_1.default)(404, "Game not found");
@@ -347,7 +384,9 @@ class GameController {
                 }
                 // Ensure slug is unique if it is being updated
                 if (slug && slug !== game.slug) {
-                    const existingGameWithSlug = yield gameModel_1.Platform.findOne({ "games.slug": slug });
+                    const existingGameWithSlug = yield gameModel_1.Platform.findOne({
+                        "games.slug": slug,
+                    });
                     if (existingGameWithSlug) {
                         throw (0, http_errors_1.default)(400, "Slug must be unique");
                     }
@@ -368,14 +407,13 @@ class GameController {
                 }
                 // Handle file for payout update
                 if ((_a = req.files) === null || _a === void 0 ? void 0 : _a.payoutFile) {
-                    console.log("Payout FIle : ", (_b = req.files) === null || _b === void 0 ? void 0 : _b.payoutFile);
                     // Delete the old payout
                     if (game.payout) {
-                        yield gameModel_1.Payouts.findByIdAndDelete(game.payout);
+                        yield payoutModel_1.default.findByIdAndDelete(game.payout);
                     }
                     // Add the new payout
                     const jsonData = JSON.parse(req.files.payoutFile[0].buffer.toString("utf-8"));
-                    const newPayout = new gameModel_1.Payouts({
+                    const newPayout = new payoutModel_1.default({
                         gameName: game.tagName,
                         data: jsonData,
                     });
@@ -383,16 +421,17 @@ class GameController {
                     fieldsToUpdate.payout = newPayout._id;
                 }
                 // Handle file for thumbnail update
-                if ((_c = req.files) === null || _c === void 0 ? void 0 : _c.thumbnail) {
-                    console.log("Thumb : ", (_d = req.files) === null || _d === void 0 ? void 0 : _d.thumbnail);
+                if ((_b = req.files) === null || _b === void 0 ? void 0 : _b.thumbnail) {
                     const thumbnailBuffer = req.files.thumbnail[0].buffer;
                     thumbnailUploadResult = yield new Promise((resolve, reject) => {
-                        cloudinary_1.default.v2.uploader.upload_stream({ resource_type: 'image', folder: platformName }, (error, result) => {
+                        cloudinary_1.default.v2.uploader
+                            .upload_stream({ resource_type: "image", folder: platformName }, (error, result) => {
                             if (error) {
                                 return reject(error);
                             }
                             resolve(result);
-                        }).end(thumbnailBuffer);
+                        })
+                            .end(thumbnailBuffer);
                     });
                     fieldsToUpdate.thumbnail = thumbnailUploadResult.secure_url; // Save the Cloudinary URL
                 }
@@ -400,10 +439,13 @@ class GameController {
                 if (Object.keys(fieldsToUpdate).length === 0) {
                     throw (0, http_errors_1.default)(400, "No valid fields to update");
                 }
-                const updatedPlatform = yield gameModel_1.Platform.findOneAndUpdate({ name: platformName, 'games._id': new mongoose_1.default.Types.ObjectId(gameId) }, {
+                const updatedPlatform = yield gameModel_1.Platform.findOneAndUpdate({
+                    name: platformName,
+                    "games._id": new mongoose_1.default.Types.ObjectId(gameId),
+                }, {
                     $set: {
-                        'games.$': Object.assign(Object.assign({}, game), fieldsToUpdate)
-                    }
+                        "games.$": Object.assign(Object.assign({}, game), fieldsToUpdate),
+                    },
                 }, { new: true, session });
                 if (!updatedPlatform) {
                     throw (0, http_errors_1.default)(404, "Platform not found");
@@ -416,10 +458,8 @@ class GameController {
                 if (thumbnailUploadResult && thumbnailUploadResult.public_id) {
                     cloudinary_1.default.v2.uploader.destroy(thumbnailUploadResult.public_id, (destroyError, result) => {
                         if (destroyError) {
-                            console.log("Failed to delete thumbnail from Cloudinary:", destroyError);
                         }
                         else {
-                            console.log("Thumbnail deleted from Cloudinary:", result);
                         }
                     });
                 }
@@ -538,6 +578,5 @@ class GameController {
             }
         });
     }
-    ;
 }
 exports.GameController = GameController;

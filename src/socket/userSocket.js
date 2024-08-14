@@ -8,6 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.betMultiplier = exports.SocketUser = exports.users = void 0;
 exports.initializeUser = initializeUser;
@@ -18,13 +21,13 @@ const playerAuth_1 = require("../utils/playerAuth");
 const userModel_1 = require("../dashboard/users/userModel");
 exports.users = new Map();
 const testData_1 = require("../game/slotBackend/testData");
-const gameModel_1 = require("../dashboard/games/gameModel");
-const Global_1 = require("../game/Global");
 const globalTypes_1 = require("../game/Utils/globalTypes");
 const slotMessages_1 = require("../game/slotBackend/slotMessages");
 const _global_1 = require("../game/slotBackend/_global");
 const kenoMessages_1 = require("../game/kenoBackend/kenoMessages");
-const gameModel_2 = require("../dashboard/games/gameModel");
+const gameModel_1 = require("../dashboard/games/gameModel");
+const payoutModel_1 = __importDefault(require("../dashboard/payouts/payoutModel"));
+const TestGlobal_1 = require("../game/TestGlobal");
 class SocketUser {
     constructor(socket, GameData) {
         var _a, _b;
@@ -34,7 +37,7 @@ class SocketUser {
             try {
                 const messageData = JSON.parse(message);
                 const tagName = messageData.Data.GameID;
-                const platform = yield gameModel_2.Platform.aggregate([
+                const platform = yield gameModel_1.Platform.aggregate([
                     { $unwind: "$games" },
                     { $match: { "games.tagName": tagName } },
                     {
@@ -51,12 +54,20 @@ class SocketUser {
                     _global_1.slotGameSettings.initiate(this.socket, testData_1.gameData[0], this.socket.id);
                     return;
                 }
-                const payoutData = yield gameModel_1.Payouts.find({ _id: { $in: game.payout } });
+                const payout = yield payoutModel_1.default.findById(game.payout);
+                if (!payout) {
+                    throw new Error(`Payout not found for game ${game.name}`);
+                }
+                // Assuming you need the first element's data from the content array
+                if (payout.content.length === 0) {
+                    throw new Error(`No payout content found for game ${game.name}`);
+                }
+                const firstPayoutContent = payout.content[0];
                 const gameType = tagName.split('-');
                 this.gameTag = gameType[0];
                 if (gameType == globalTypes_1.GAMETYPE.SLOT)
                     console.log('SLOT INITITATED');
-                _global_1.slotGameSettings.initiate(this.socket, payoutData[0].data, this.socket.id);
+                _global_1.slotGameSettings.initiate(this.socket, firstPayoutContent.data, this.socket.id);
                 if (gameType == globalTypes_1.GAMETYPE.KENO) {
                     console.log("KENO  GAME INITITATED");
                 }
@@ -92,8 +103,8 @@ class SocketUser {
                     username: this.username,
                 }).exec();
                 if (CurrentUser) {
-                    Global_1.PlayerData.Balance = CurrentUser.credits;
-                    console.log("BALANCE " + Global_1.PlayerData.Balance);
+                    TestGlobal_1.PlayerData.Balance = CurrentUser.credits;
+                    console.log("BALANCE " + TestGlobal_1.PlayerData.Balance);
                     // console.log(this.username);
                     // console.log("Player Balance users", CurrentUser.credits);
                     sendMessage(this.socket, utils_1.MESSAGEID.AUTH, CurrentUser.credits);
@@ -129,30 +140,30 @@ class SocketUser {
     }
     deductPlayerBalance(credit) {
         this.checkBalance();
-        Global_1.PlayerData.Balance -= credit;
+        TestGlobal_1.PlayerData.Balance -= credit;
         this.updateCreditsInDb();
     }
     updatePlayerBalance(credit) {
-        Global_1.PlayerData.Balance += credit;
-        Global_1.PlayerData.haveWon += credit;
-        Global_1.PlayerData.currentWining = credit;
+        TestGlobal_1.PlayerData.Balance += credit;
+        TestGlobal_1.PlayerData.haveWon += credit;
+        TestGlobal_1.PlayerData.currentWining = credit;
         this.updateCreditsInDb();
     }
     //Update player credits case win ,bet,and lose;
     updateCreditsInDb() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(Global_1.PlayerData.Balance, "finalbalance");
+            console.log(TestGlobal_1.PlayerData.Balance, "finalbalance");
             yield userModel_1.Player.findOneAndUpdate({ username: this.username }, {
-                credits: Global_1.PlayerData.Balance,
+                credits: TestGlobal_1.PlayerData.Balance,
             });
         });
     }
     checkBalance() {
         // if(playerData.Balance < gameWining.currentBet)
-        if (Global_1.PlayerData.Balance < _global_1.slotGameSettings.currentBet) {
+        if (TestGlobal_1.PlayerData.Balance < _global_1.slotGameSettings.currentBet) {
             // Alerts(clientID, "Low Balance");
             sendMessage(this.socket, "low-balance", true);
-            console.log(Global_1.PlayerData.Balance, "player balance");
+            console.log(TestGlobal_1.PlayerData.Balance, "player balance");
             console.log(_global_1.slotGameSettings.currentBet, "currentbet");
             console.warn("LOW BALANCE ALErt");
             console.error("Low Balance ALErt");
@@ -164,11 +175,11 @@ exports.SocketUser = SocketUser;
 function initializeUser(socket) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const decoded = yield (0, playerAuth_1.verifySocketToken)(socket);
+            const decoded = yield (0, playerAuth_1.verifyPlayerToken)(socket);
             socket.data.username = decoded.username;
             socket.data.designation = decoded.role;
-            Global_1.GData.playerSocket = new SocketUser(socket, socket);
-            exports.users.set(Global_1.GData.playerSocket.socket.id, Global_1.GData.playerSocket);
+            TestGlobal_1.GData.playerSocket = new SocketUser(socket, socket);
+            exports.users.set(TestGlobal_1.GData.playerSocket.socket.id, TestGlobal_1.GData.playerSocket);
             // Send the game and payout data to the client
             // socket.emit("initialize", { game, payoutData });
         }

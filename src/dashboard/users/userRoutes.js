@@ -10,6 +10,8 @@ const userController = new userController_1.UserController();
 const userRoutes = express_1.default.Router();
 // LOGIN
 userRoutes.post("/login", userController.loginUser);
+// LOGOUT
+userRoutes.post("/logout", checkUser_1.checkUser, userController.logoutUser);
 // ADD User
 userRoutes.post("/", checkUser_1.checkUser, userController.createUser);
 userRoutes.get("/generatePassword", checkUser_1.checkUser, userController.generatePassword);

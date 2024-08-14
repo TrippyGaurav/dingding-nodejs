@@ -15,22 +15,22 @@ const transactionController = new transactionController_1.TransactionController(
 class UserService {
     findUserByUsername(username, session) {
         return __awaiter(this, void 0, void 0, function* () {
-            return userModel_1.User.findOne({ username }).session(session || null);
+            return yield userModel_1.User.findOne({ username }).session(session || null);
         });
     }
     findPlayerByUsername(username, session) {
         return __awaiter(this, void 0, void 0, function* () {
-            return userModel_1.Player.findOne({ username }).session(session || null);
+            return yield userModel_1.Player.findOne({ username }).session(session || null);
         });
     }
     findUserById(id, session) {
         return __awaiter(this, void 0, void 0, function* () {
-            return userModel_1.User.findById(id).session(session || null);
+            return yield userModel_1.User.findById(id).session(session || null);
         });
     }
     findPlayerById(id, session) {
         return __awaiter(this, void 0, void 0, function* () {
-            return userModel_1.Player.findById(id).session(session || null);
+            return yield userModel_1.Player.findById(id).session(session || null);
         });
     }
     createUser(userData, credits, hashedPassword, session) {

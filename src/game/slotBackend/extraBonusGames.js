@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GambleGame = exports.bonusGame = void 0;
-const Global_1 = require("../Global");
+const TestGlobal_1 = require("../TestGlobal");
 const _global_1 = require("./_global");
 // import { sendMessageToClient } from "./App";
 const slotTypes_1 = require("./slotTypes");
-const Global_2 = require("../Global");
+const TestGlobal_2 = require("../TestGlobal");
 const userSocket_1 = require("../../socket/userSocket");
 class bonusGame {
     constructor(nosOfItem, clientId) {
@@ -196,14 +196,14 @@ class GambleGame {
                 currentWining: this.currentWining,
                 totalWinningAmount: this.totalWining,
             },
-            PlayerData: Global_2.PlayerData,
+            PlayerData: TestGlobal_2.PlayerData,
         };
         //TODO : ADD MESSAGE FOR CLIENT
         (0, userSocket_1.sendMessage)(this.playerSkt, "GambleResult", ResultData);
         // sendMessageToClient(clientId, "GambleResult", ResultData);
     }
     updateplayerBalance() {
-        Global_1.GData.playerSocket.updatePlayerBalance(this.totalWining);
+        TestGlobal_1.GData.playerSocket.updatePlayerBalance(this.totalWining);
         this.makeResultJson(this.clientId);
     }
     reset() {
