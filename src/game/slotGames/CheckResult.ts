@@ -105,6 +105,7 @@ export class CheckResult {
 
     //check for win function
     private checkForWin() {
+
         try {
             const winningLines = [];
             let totalPayout = 0;
@@ -113,7 +114,7 @@ export class CheckResult {
                 const firstSymbolPosition = line[0];
                 let firstSymbol = this.currentGame.settings.resultSymbolMatrix[firstSymbolPosition][0];
 
-                if (this.currentGame.settings.wildSymbol.useWild && firstSymbol === this.currentGame.settings.bonus.id.toString()) {
+                if (this.currentGame.settings.wildSymbol.useWild && firstSymbol === this.currentGame.settings.wildSymbol.SymbolID.toString()) {
                     firstSymbol = this.findFirstNonWildSymbol(line);
                 }
 
@@ -170,10 +171,10 @@ export class CheckResult {
                     return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
                 }
 
-                if (this.currentGame.settings.wildSymbol.useWild && i === 1 && currentSymbol !== wildSymbol) {
+                // if (i === 1 && currentSymbol !== wildSymbol) {
 
-                    break;
-                }
+                //     break;
+                // }
 
                 if (symbol === currentSymbol || symbol === wildSymbol) {
                     matchCount++;
