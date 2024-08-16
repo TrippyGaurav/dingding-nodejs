@@ -207,7 +207,9 @@ export default class SlotGame {
                     case "GambleResultData":
                         this.settings.gamble.getResult(res.data.GAMBLETYPE);
                         break;
-
+                    case "GAMBLECOLLECT":
+                        this.settings.gamble.updateCredits();
+                        break;
                     default:
                         console.warn(`Unhandled message ID: ${res.id}`);
                         this.sendError(`Unhandled message ID: ${res.id}`);
