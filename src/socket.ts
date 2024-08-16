@@ -61,6 +61,7 @@ const socketController = (io: Server) => {
 
     io.on("connection", async (socket) => {
         const decoded = (socket as any).decoded;
+        const gameTag = socket.handshake.auth.gameId
 
         if (!decoded || !decoded.username || !decoded.role) {
             console.error("Connection rejected: missing required fields in token");
@@ -89,15 +90,15 @@ const socketController = (io: Server) => {
 
             await existingUser.updateGameSocket(socket);
             existingUser.sendAlert(`Game socket created for ${username}`);
-            
+
             return;
         }
 
         // This is a new user connecting
-        const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket);
+        const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket, gameTag);
         users.set(username, newUser);
         newUser.sendAlert(`Welcome, ${newUser.username}!`);
-        
+
 
         // 
 

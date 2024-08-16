@@ -104,8 +104,6 @@ export class gambleCardGame {
 
   getResult(data: any): void {
     const gambleData = data;
-    
-
     let resultData = {
       playerWon: this.shouldWin,
       currentWining: 0,

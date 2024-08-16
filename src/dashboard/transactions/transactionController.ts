@@ -8,9 +8,9 @@ import { IPlayer, IUser } from "../users/userType";
 import { ITransaction } from "./transactionType";
 import TransactionService from "./transactionService";
 import { QueryParams } from "../../game/Utils/globalTypes";
-
 export class TransactionController {
   private transactionService: TransactionService;
+ 
 
   constructor() {
     this.transactionService = new TransactionService();
@@ -38,6 +38,7 @@ export class TransactionController {
         amount,
         session
       );
+
       return transaction;
     } catch (error) {
       console.error(`Error creating transaction: ${error.message}`);

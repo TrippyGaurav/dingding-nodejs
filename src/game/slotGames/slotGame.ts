@@ -17,7 +17,7 @@ import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
 import { gambleCardGame } from "./newGambleGame";
-
+import mongoose from "mongoose";
 export default class SlotGame {
     public settings: GameSettings;
 
@@ -223,18 +223,32 @@ export default class SlotGame {
     }
 
     public async updateDatabase() {
+        const session = await mongoose.startSession();
         try {
+            session.startTransaction();
+    
             const finalBalance = this.player.credits;
-            const result = await Player.findOneAndUpdate(
+    
+            await Player.findOneAndUpdate(
                 { username: this.player.username },
                 { credits: finalBalance.toFixed(2) },
-                { new: true }
+                { new: true, session } 
             );
+    
+            await session.commitTransaction();
         } catch (error) {
+            await session.abortTransaction();
             console.error("Failed to update database:", error);
+                if (error.message.includes("Write conflict")) {
+                // Retry logic could be added here
+            }
+    
             this.sendError("Database error");
+        } finally {
+            session.endSession(); 
         }
     }
+    
 
     private checkPlayerBalance() {
         if (this.player.credits < this.settings.currentBet) {
