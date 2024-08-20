@@ -23,7 +23,6 @@ const userModel_1 = require("./userModel");
 const userService_1 = __importDefault(require("./userService"));
 const transactionModel_1 = __importDefault(require("../transactions/transactionModel"));
 const socket_1 = require("../../socket");
-const Player_1 = __importDefault(require("../../Player"));
 class UserController {
     constructor() {
         this.userService = new userService_1.default();
@@ -536,8 +535,8 @@ class UserController {
                 if (client instanceof userModel_1.User) {
                     yield this.userService.deleteUserById(clientObjectId);
                 }
-                else if (client instanceof Player_1.default) {
-                    yield this.userService.deletePlayerById(clientObjectId);
+                else if (client instanceof userModel_1.Player) {
+                    yield yield this.userService.deletePlayerById(clientObjectId);
                 }
                 admin.subordinates = admin.subordinates.filter((id) => !id.equals(clientObjectId));
                 yield admin.save();
