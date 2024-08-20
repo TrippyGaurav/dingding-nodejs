@@ -6,6 +6,7 @@ import Transaction from "./transactionModel";
 import { Player, User } from "../users/userModel";
 import { QueryParams } from "../../game/Utils/globalTypes";
 import { users } from "../../socket";
+import { messageType } from "../../game/slotGames/gameUtils";
 
 export class TransactionService {
 
@@ -52,6 +53,7 @@ export class TransactionService {
 
     if (socketUser?.currentGame) {
       socketUser.currentGame.player.credits = client.credits;
+      socketUser.currentGame.sendMessage(messageType.CREDITSUPDATE, socketUser.currentGame.player.credits)
     }
     await transaction.save({ session });
 
