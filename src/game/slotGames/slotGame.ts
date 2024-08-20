@@ -122,6 +122,7 @@ export default class SlotGame {
 
         this.initialize(GameData);
         this.messageHandler();
+
     }
 
     private initialize(GameData: GameData) {
@@ -226,29 +227,29 @@ export default class SlotGame {
         const session = await mongoose.startSession();
         try {
             session.startTransaction();
-    
+
             const finalBalance = this.player.credits;
-    
+
             await Player.findOneAndUpdate(
                 { username: this.player.username },
                 { credits: finalBalance.toFixed(2) },
-                { new: true, session } 
+                { new: true, session }
             );
-    
+
             await session.commitTransaction();
         } catch (error) {
             await session.abortTransaction();
             console.error("Failed to update database:", error);
-                if (error.message.includes("Write conflict")) {
+            if (error.message.includes("Write conflict")) {
                 // Retry logic could be added here
             }
-    
+
             this.sendError("Database error");
         } finally {
-            session.endSession(); 
+            session.endSession();
         }
     }
-    
+
 
     private checkPlayerBalance() {
         if (this.player.credits < this.settings.currentBet) {
@@ -368,7 +369,7 @@ export default class SlotGame {
         }
     }
 
-    private sendInitdata() {
+    public sendInitdata() {
         this.gameDataInit();
         this.settings.reels = this.generateInitialreel();
 
