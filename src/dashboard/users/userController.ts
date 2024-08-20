@@ -10,12 +10,11 @@ import jwt from "jsonwebtoken";
 import { config } from "../../config/config";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
-import { User, Player as PlayerModel } from "./userModel";
+import { User, Player as PlayerModel, Player } from "./userModel";
 import UserService from "./userService";
 import Transaction from "../transactions/transactionModel";
 import { QueryParams } from "../../game/Utils/globalTypes";
 import { users } from "../../socket";
-import Player from "../../Player";
 import { IPlayer, IUser } from "./userType";
 
 
@@ -621,6 +620,7 @@ export class UserController {
 
   async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
+
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
       const { clientId } = req.params;
@@ -660,16 +660,22 @@ export class UserController {
       }
 
       if (client instanceof User) {
+
+
         await this.userService.deleteUserById(clientObjectId);
       } else if (client instanceof Player) {
-        await this.userService.deletePlayerById(clientObjectId);
+
+        await
+          await this.userService.deletePlayerById(clientObjectId);
       }
+
+
 
       admin.subordinates = admin.subordinates.filter(
         (id) => !id.equals(clientObjectId)
       );
-      await admin.save();
 
+      await admin.save();
       res.status(200).json({ message: "Client deleted successfully" });
     } catch (error) {
       next(error);

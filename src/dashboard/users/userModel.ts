@@ -52,6 +52,6 @@ const PlayerSchema = new Schema<IPlayer>(
 );
 
 const User: Model<IUser> = mongoose.model<IUser>("User", UserSchema);
-const Player = mongoose.model<IPlayer>("Player", PlayerSchema);
+const Player: Model<IPlayer> = mongoose.model<IPlayer>("Player", PlayerSchema);
 
 export { User, Player };

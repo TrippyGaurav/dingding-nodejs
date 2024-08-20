@@ -54,11 +54,11 @@ export default class UserService {
     return Player.find({ _id: { $in: ids } }).session(session || null);
   }
 
-  async deleteUserById(id: mongoose.Types.ObjectId, session?: mongoose.ClientSession) {
+  public async deleteUserById(id: mongoose.Types.ObjectId, session?: mongoose.ClientSession) {
     return User.findByIdAndDelete(id).session(session || null);
   }
 
-  async deletePlayerById(id: mongoose.Types.ObjectId, session?: mongoose.ClientSession) {
+  public async deletePlayerById(id: mongoose.Types.ObjectId, session?: mongoose.ClientSession) {
     return Player.findByIdAndDelete(id).session(session || null);
   }
 

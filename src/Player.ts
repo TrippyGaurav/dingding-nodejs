@@ -9,7 +9,7 @@ import payoutController from "./dashboard/payouts/payoutController";
 import SlotGame from "./game/slotGames/slotGame";
 import { messageType } from "./game/slotGames/gameUtils";
 import { gameData } from "./game/slotGames/testData";
-export default class Player {
+export default class PlayerSocket {
     username: string;
     role: string;
     credits: number;
