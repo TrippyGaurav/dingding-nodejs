@@ -52,6 +52,7 @@ class TransactionService {
             const socketUser = socket_1.users.get(client.username);
             if (socketUser === null || socketUser === void 0 ? void 0 : socketUser.currentGame) {
                 socketUser.currentGame.player.credits = client.credits;
+                socketUser.currentGame.sendMessage("creditsUpdate" /* messageType.CREDITSUPDATE */, socketUser.currentGame.player.credits);
             }
             yield transaction.save({ session });
             return transaction;
