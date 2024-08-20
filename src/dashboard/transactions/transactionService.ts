@@ -17,12 +17,21 @@ export class TransactionService {
     amount: number,
     session: mongoose.ClientSession
   ): Promise<ITransaction> {
+
+    // Check if the client is currently in a game via socket connection
+    const socketUser = users.get(client.username);
+    if (socketUser?.currentGame?.player?.socket) {
+      throw createHttpError(403, "Please tell the user to exit from your current game before performing transactions");
+    }
+
     if (!rolesHierarchy[manager.role]?.includes(client.role)) {
       throw createHttpError(
         403,
         `${manager.role} cannot perform transactions with ${client.role}`
       );
     }
+
+
 
     if (type === "recharge") {
       if (manager.credits < amount) {
@@ -49,12 +58,12 @@ export class TransactionService {
     });
 
     // Update SlotGame instance if the client is currently in a game
-    const socketUser = users.get(client.username);
+    // const socketUser = users.get(client.username);
 
-    if (socketUser?.currentGame) {
-      socketUser.currentGame.player.credits = client.credits;
-      socketUser.currentGame.sendMessage(messageType.CREDITSUPDATE, socketUser.currentGame.player.credits)
-    }
+    // if (socketUser?.currentGame) {
+    //   socketUser.currentGame.player.credits = client.credits;
+    //   socketUser.currentGame.sendMessage(messageType.CREDITSUPDATE, socketUser.currentGame.player.credits)
+    // }
     await transaction.save({ session });
 
     return transaction;
