@@ -19,7 +19,7 @@ const socket_1 = require("./socket");
 const payoutController_1 = __importDefault(require("./dashboard/payouts/payoutController"));
 const slotGame_1 = __importDefault(require("./game/slotGames/slotGame"));
 const testData_1 = require("./game/slotGames/testData");
-class Player {
+class PlayerSocket {
     constructor(username, role, credits, userAgent, gameSocket, gameId) {
         this.gameId = gameId;
         this.currentGame = null;
@@ -147,4 +147,4 @@ class Player {
         });
     }
 }
-exports.default = Player;
+exports.default = PlayerSocket;
