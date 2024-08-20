@@ -21,8 +21,13 @@ const socket_1 = require("../../socket");
 class TransactionService {
     createTransaction(type, manager, client, amount, session) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            if (!((_a = utils_1.rolesHierarchy[manager.role]) === null || _a === void 0 ? void 0 : _a.includes(client.role))) {
+            var _a, _b, _c;
+            // Check if the client is currently in a game via socket connection
+            const socketUser = socket_1.users.get(client.username);
+            if ((_b = (_a = socketUser === null || socketUser === void 0 ? void 0 : socketUser.currentGame) === null || _a === void 0 ? void 0 : _a.player) === null || _b === void 0 ? void 0 : _b.socket) {
+                throw (0, http_errors_1.default)(403, "Please tell the user to exit from your current game before performing transactions");
+            }
+            if (!((_c = utils_1.rolesHierarchy[manager.role]) === null || _c === void 0 ? void 0 : _c.includes(client.role))) {
                 throw (0, http_errors_1.default)(403, `${manager.role} cannot perform transactions with ${client.role}`);
             }
             if (type === "recharge") {
@@ -49,11 +54,11 @@ class TransactionService {
                 createdAt: new Date(),
             });
             // Update SlotGame instance if the client is currently in a game
-            const socketUser = socket_1.users.get(client.username);
-            if (socketUser === null || socketUser === void 0 ? void 0 : socketUser.currentGame) {
-                socketUser.currentGame.player.credits = client.credits;
-                socketUser.currentGame.sendMessage("creditsUpdate" /* messageType.CREDITSUPDATE */, socketUser.currentGame.player.credits);
-            }
+            // const socketUser = users.get(client.username);
+            // if (socketUser?.currentGame) {
+            //   socketUser.currentGame.player.credits = client.credits;
+            //   socketUser.currentGame.sendMessage(messageType.CREDITSUPDATE, socketUser.currentGame.player.credits)
+            // }
             yield transaction.save({ session });
             return transaction;
         });
