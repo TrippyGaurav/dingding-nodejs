@@ -110,7 +110,6 @@ class SlotGame {
         };
         this.initialize(GameData);
         this.messageHandler();
-        console.log(this.settings.currentGamedata.matrix, 'MTRIX');
     }
     initialize(GameData) {
         this.settings.Symbols = [];
@@ -139,10 +138,6 @@ class SlotGame {
                 console.log("Message Recieved : ", message);
                 switch (res.id) {
                     case "SPIN":
-                        // if (this.settings.currentBet > this.player.credits) {
-                        //     this.sendError("Low Balance");
-                        //     break;
-                        // }
                         if (this.settings.startGame) {
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = gameUtils_1.betMultiplier[res.data.currentBet];
@@ -151,10 +146,6 @@ class SlotGame {
                         }
                         break;
                     case "GENRTP":
-                        // if (this.settings.currentBet > this.player.credits) {
-                        //     this.sendError("Low Balance");
-                        //     break;
-                        // }
                         this.settings.currentLines = res.data.currentLines;
                         this.settings.BetPerLines = gameUtils_1.betMultiplier[res.data.currentBet];
                         this.settings.currentBet =
