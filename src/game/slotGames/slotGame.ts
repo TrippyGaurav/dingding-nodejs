@@ -29,9 +29,10 @@ export default class SlotGame {
         totalbet: number,
         rtpSpinCount: number
         totalSpin: number
+      
     }
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
-        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0, totalSpin: 0 };
+        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0, totalSpin: 0};
         this.settings = {
             currentGamedata: {
                 id: "",
@@ -121,7 +122,7 @@ export default class SlotGame {
 
         this.initialize(GameData);
         this.messageHandler();
-        
+
     }
 
     private initialize(GameData: GameData) {
@@ -160,7 +161,7 @@ export default class SlotGame {
 
                 switch (res.id) {
                     case "SPIN":
-                       
+
                         if (this.settings.startGame) {
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = betMultiplier[res.data.currentBet];
@@ -172,7 +173,7 @@ export default class SlotGame {
                         break;
 
                     case "GENRTP":
-                      
+
 
                         this.settings.currentLines = res.data.currentLines;
                         this.settings.BetPerLines = betMultiplier[res.data.currentBet];
