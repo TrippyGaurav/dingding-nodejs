@@ -47,6 +47,7 @@ export interface GameData {
   Symbols: Symbol[];
   bonus: Bonus;
   bets: number[]; // Add this line to include bets property
+  matrix: { x: number; y: number };
   linesCount: number; // Add this line to include linesCount property
 }
 
@@ -54,7 +55,6 @@ export interface GameData {
 export interface GameSettings {
   currentGamedata: GameData;
   tempReels: any[][];
-  matrix: { x: number; y: number };
   payLine: any[];
   useScatter: boolean;
   wildSymbol: WildSymbol;

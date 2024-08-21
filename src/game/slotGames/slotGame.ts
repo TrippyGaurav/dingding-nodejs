@@ -29,12 +29,14 @@ export default class SlotGame {
         totalbet: number,
         rtpSpinCount: number
         totalSpin: number
+      
     }
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
-        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0, totalSpin: 0 };
+        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0, totalSpin: 0};
         this.settings = {
             currentGamedata: {
                 id: "",
+                matrix: { x: 0, y: 0 },
                 linesApiData: [],
                 Symbols: [
                     {
@@ -61,7 +63,7 @@ export default class SlotGame {
                 linesCount: 0, // Ensure linesCount is initialized
             },
             tempReels: [[]],
-            matrix: { x: 5, y: 3 },
+
             payLine: [],
             useScatter: false,
             wildSymbol: {
@@ -75,7 +77,6 @@ export default class SlotGame {
             lineData: [],
             fullPayTable: [],
             _winData: undefined,
-
             resultReelIndex: [],
             noOfBonus: 0,
             totalBonuWinAmount: [],
@@ -160,10 +161,7 @@ export default class SlotGame {
 
                 switch (res.id) {
                     case "SPIN":
-                        // if (this.settings.currentBet > this.player.credits) {
-                        //     this.sendError("Low Balance");
-                        //     break;
-                        // }
+
                         if (this.settings.startGame) {
                             this.settings.currentLines = res.data.currentLines;
                             this.settings.BetPerLines = betMultiplier[res.data.currentBet];
@@ -175,10 +173,7 @@ export default class SlotGame {
                         break;
 
                     case "GENRTP":
-                        // if (this.settings.currentBet > this.player.credits) {
-                        //     this.sendError("Low Balance");
-                        //     break;
-                        // }
+
 
                         this.settings.currentLines = res.data.currentLines;
                         this.settings.BetPerLines = betMultiplier[res.data.currentBet];
@@ -314,8 +309,8 @@ export default class SlotGame {
     ) {
         const line: string[] = Array(repetition).fill(symbol); // Create an array with 'repetition' number of 'symbol'
 
-        if (line.length != this.settings.matrix.x) {
-            let lengthToAdd = this.settings.matrix.x - line.length;
+        if (line.length != this.settings.currentGamedata.matrix.x) {
+            let lengthToAdd = this.settings.currentGamedata.matrix.x - line.length;
             for (let i = 0; i < lengthToAdd; i++) line.push("any");
         }
 
@@ -418,7 +413,7 @@ export default class SlotGame {
     private generateInitialreel(): string[][] {
         let matrix: string[][] = [];
 
-        for (let i = 0; i < this.settings.matrix.x; i++) {
+        for (let i = 0; i < this.settings.currentGamedata.matrix.x; i++) {
             let reel: string[] = [];
 
             this.settings.currentGamedata.Symbols.forEach((element) => {
