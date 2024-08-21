@@ -264,6 +264,7 @@ class CheckResult {
             },
             PlayerData: {
                 Balance: this.currentGame.player.credits,
+                totalbet: this.currentGame.player.totalbet,
                 haveWon: this.currentGame.player.haveWon,
                 currentWining: this.currentGame.player.currentWining
             }
