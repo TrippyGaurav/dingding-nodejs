@@ -1,7 +1,5 @@
 import SlotGame from "./slotGame";
-import { RandomResultGenerator } from "./RandomResultGenerator";
 import { ScatterPayEntry, BonusPayEntry, ResultType } from "./gameUtils";
-import PayLines from "./PayLines";
 import { WinData } from "./WinData";
 import { bonusGameType, specialIcons } from "./gameUtils";
 import { log } from "console";
@@ -10,7 +8,6 @@ export class CheckResult {
     useScatter: boolean;
     jackpot: any;
     useJackpot: boolean;
-    payTable: PayLines[];
     scatterPayTable: ScatterPayEntry[];
     bonusPaytable: BonusPayEntry[];
     reels: string[][];
@@ -56,10 +53,10 @@ export class CheckResult {
         console.log(
             `Total Spend : ${this.currentGame.player.totalbet}  Total Won : ${this.currentGame.player.haveWon
             } 
-        Current RTP : ${winRate.toFixed(2)}% `
+        Current RTP for ${this.currentGame.player.username}: ${winRate.toFixed(2)}% `
         );
-        console.log(this.currentGame.player.rtpSpinCount, 'this.currentGame.player.rtpSpinCount');
-        console.log("Free spin Count", this.currentGame.player.totalSpin)
+        // console.log(this.currentGame.player.rtpSpinCount, 'this.currentGame.player.rtpSpinCount');
+        // console.log("Free spin Count", this.currentGame.player.totalSpin)
         console.log("_____________RESULT_END________________");
     }
 
@@ -198,11 +195,6 @@ export class CheckResult {
         }
     }
 
-    // [
-    //     ['0,0', '0,1', '0,2', '0,3', '0,4'],
-    //     ['0,1', '1,1', '1,2', '1,3', '1,4'],
-    //     ['0,2', '2,1', '2,2', '2,3', '2,4'],
-    // ]
 
     //checking first non wild symbol in lines which start with wild symbol
     private findFirstNonWildSymbol(line) {

@@ -5,8 +5,11 @@ import createHttpError from "http-errors";
 import Transaction from "./transactionModel";
 import { Player, User } from "../users/userModel";
 import { QueryParams } from "../../game/Utils/globalTypes";
+import { users } from "../../socket";
+import { messageType } from "../../game/slotGames/gameUtils";
 
 export class TransactionService {
+
   async createTransaction(
     type: string,
     manager: any,
@@ -14,6 +17,13 @@ export class TransactionService {
     amount: number,
     session: mongoose.ClientSession
   ): Promise<ITransaction> {
+
+    // Check if the client is currently in a game via socket connection
+    const socketUser = users.get(client.username);
+    if (socketUser?.currentGame?.player?.socket) {
+      throw createHttpError(403, "Please tell the user to exit from your current game before performing transactions");
+    }
+
     if (!rolesHierarchy[manager.role]?.includes(client.role)) {
       throw createHttpError(
         403,
@@ -21,11 +31,12 @@ export class TransactionService {
       );
     }
 
+
+
     if (type === "recharge") {
       if (manager.credits < amount) {
         throw createHttpError(400, "Insufficient credits to recharge");
       }
-
       client.credits += amount;
       client.totalRecharged += amount;
       manager.credits -= amount;
@@ -46,6 +57,13 @@ export class TransactionService {
       createdAt: new Date(),
     });
 
+    // Update SlotGame instance if the client is currently in a game
+    // const socketUser = users.get(client.username);
+
+    // if (socketUser?.currentGame) {
+    //   socketUser.currentGame.player.credits = client.credits;
+    //   socketUser.currentGame.sendMessage(messageType.CREDITSUPDATE, socketUser.currentGame.player.credits)
+    // }
     await transaction.save({ session });
 
     return transaction;
@@ -83,7 +101,7 @@ export class TransactionService {
       };
     }
 
-    if (page > totalPages && totalPages!== 0) {
+    if (page > totalPages && totalPages !== 0) {
       return {
         transactions: [],
         totalTransactions,
@@ -104,8 +122,8 @@ export class TransactionService {
       .skip(skip)
       .limit(limit);
 
-    
-    
+
+
     return {
       transactions,
       totalTransactions,

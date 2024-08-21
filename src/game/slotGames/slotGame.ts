@@ -13,11 +13,10 @@ import {
 import { BonusGame } from "./BonusGame";
 import { WinData } from "./WinData";
 import { Player } from "../../dashboard/users/userModel";
-import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
 import { gambleCardGame } from "./newGambleGame";
-
+import mongoose from "mongoose";
 export default class SlotGame {
     public settings: GameSettings;
 
@@ -122,6 +121,7 @@ export default class SlotGame {
 
         this.initialize(GameData);
         this.messageHandler();
+
     }
 
     private initialize(GameData: GameData) {
@@ -207,7 +207,9 @@ export default class SlotGame {
                     case "GambleResultData":
                         this.settings.gamble.getResult(res.data.GAMBLETYPE);
                         break;
-
+                    case "GAMBLECOLLECT":
+                        this.settings.gamble.updateCredits();
+                        break;
                     default:
                         console.warn(`Unhandled message ID: ${res.id}`);
                         this.sendError(`Unhandled message ID: ${res.id}`);
@@ -221,18 +223,32 @@ export default class SlotGame {
     }
 
     public async updateDatabase() {
+        const session = await mongoose.startSession();
         try {
+            session.startTransaction();
+
             const finalBalance = this.player.credits;
-            const result = await Player.findOneAndUpdate(
+
+            await Player.findOneAndUpdate(
                 { username: this.player.username },
                 { credits: finalBalance.toFixed(2) },
-                { new: true }
+                { new: true, session }
             );
+
+            await session.commitTransaction();
         } catch (error) {
+            await session.abortTransaction();
             console.error("Failed to update database:", error);
+            if (error.message.includes("Write conflict")) {
+                // Retry logic could be added here
+            }
+
             this.sendError("Database error");
+        } finally {
+            session.endSession();
         }
     }
+
 
     private checkPlayerBalance() {
         if (this.player.credits < this.settings.currentBet) {
@@ -352,8 +368,8 @@ export default class SlotGame {
         }
     }
 
-    private sendInitdata() {
-        this.gameDataInit();
+    public sendInitdata() {
+        this.settings.lineData = this.settings.currentGamedata.linesApiData;
         this.settings.reels = this.generateInitialreel();
 
         if (
@@ -418,43 +434,6 @@ export default class SlotGame {
         return matrix;
     }
 
-    private gameDataInit() {
-        this.settings.lineData = this.settings.currentGamedata.linesApiData;
-        this.makeWildPayTable();
-    }
-
-    private makeWildPayTable() {
-        try {
-            let payTable: PayLines[] = [];
-            let payTableFull = [];
-            this.settings.payLine.forEach((pLine) => {
-                payTable.push(
-                    new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID.toString(), this)
-                )
-            });
-
-
-            for (let j = 0; j < payTable.length; j++) {
-                payTableFull.push(payTable[j]);
-                if (this.settings.wildSymbol.useWild) {
-                    let wildLines = payTable[j].getWildLines();
-
-                    wildLines.forEach((wl) => {
-                        payTableFull.push(wl);
-                    });
-                }
-            }
-            // 
-
-            this.settings.fullPayTable = payTableFull;
-
-        } catch (error) {
-
-
-        }
-
-
-    }
 
     private async spinResult() {
         try {
