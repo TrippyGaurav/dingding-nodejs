@@ -53,10 +53,10 @@ export class CheckResult {
         console.log(
             `Total Spend : ${this.currentGame.player.totalbet}  Total Won : ${this.currentGame.player.haveWon
             } 
-        Current RTP : ${winRate.toFixed(2)}% `
+        Current RTP for ${this.currentGame.player.username}: ${winRate.toFixed(2)}% `
         );
-        console.log(this.currentGame.player.rtpSpinCount, 'this.currentGame.player.rtpSpinCount');
-        console.log("Free spin Count", this.currentGame.player.totalSpin)
+        // console.log(this.currentGame.player.rtpSpinCount, 'this.currentGame.player.rtpSpinCount');
+        // console.log("Free spin Count", this.currentGame.player.totalSpin)
         console.log("_____________RESULT_END________________");
     }
 
@@ -195,7 +195,7 @@ export class CheckResult {
         }
     }
 
- 
+
     //checking first non wild symbol in lines which start with wild symbol
     private findFirstNonWildSymbol(line) {
         try {
