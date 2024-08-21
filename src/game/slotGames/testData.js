@@ -132,7 +132,7 @@ exports.gameData = [
             [
                 0,
                 0,
-                1,
+                2,
                 0,
                 0
             ],
@@ -157,7 +157,13 @@ exports.gameData = [
             15,
             20
         ],
-        "bets": [0.1, 0.25, 0.5, 0.75, 1],
+        "bets": [
+            0.1,
+            0.25,
+            0.5,
+            0.75,
+            1
+        ],
         "bonus": {
             "type": "spin",
             "isEnabled": true,
@@ -183,15 +189,15 @@ exports.gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        100,
+                        200,
                         0
                     ],
                     [
-                        50,
+                        120,
                         0
                     ],
                     [
-                        20,
+                        60,
                         0
                     ]
                 ]
@@ -209,15 +215,15 @@ exports.gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        100,
+                        200,
                         0
                     ],
                     [
-                        50,
+                        120,
                         0
                     ],
                     [
-                        20,
+                        60,
                         0
                     ]
                 ]
@@ -235,15 +241,15 @@ exports.gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        100,
+                        200,
                         0
                     ],
                     [
-                        50,
+                        120,
                         0
                     ],
                     [
-                        20,
+                        60,
                         0
                     ]
                 ]
@@ -261,15 +267,15 @@ exports.gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        100,
+                        200,
                         0
                     ],
                     [
-                        50,
+                        120,
                         0
                     ],
                     [
-                        20,
+                        60,
                         0
                     ]
                 ]
@@ -287,15 +293,15 @@ exports.gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
-                        100,
+                        200,
                         0
                     ],
                     [
-                        50,
+                        120,
                         0
                     ],
                     [
-                        20,
+                        60,
                         0
                     ]
                 ]
@@ -313,15 +319,15 @@ exports.gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
+                        400,
+                        0
+                    ],
+                    [
                         200,
                         0
                     ],
                     [
                         80,
-                        0
-                    ],
-                    [
-                        35,
                         0
                     ]
                 ]
@@ -339,15 +345,15 @@ exports.gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
+                        400,
+                        0
+                    ],
+                    [
                         200,
                         0
                     ],
                     [
                         80,
-                        0
-                    ],
-                    [
-                        35,
                         0
                     ]
                 ]
@@ -365,15 +371,15 @@ exports.gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
+                        400,
+                        0
+                    ],
+                    [
                         200,
                         0
                     ],
                     [
                         80,
-                        0
-                    ],
-                    [
-                        35,
                         0
                     ]
                 ]
@@ -391,15 +397,15 @@ exports.gameData = [
                 "useWildSub": true,
                 "multiplier": [
                     [
+                        400,
+                        0
+                    ],
+                    [
                         200,
                         0
                     ],
                     [
                         80,
-                        0
-                    ],
-                    [
-                        35,
                         0
                     ]
                 ]
@@ -408,14 +414,18 @@ exports.gameData = [
                 "Name": "FreeSpin",
                 "Id": 9,
                 "reelInstance": {
-                    "0": 3,
-                    "1": 3,
-                    "2": 3,
-                    "3": 3,
-                    "4": 3
+                    "0": 4,
+                    "1": 4,
+                    "2": 4,
+                    "3": 4,
+                    "4": 4
                 },
                 "useWildSub": false,
                 "multiplier": [
+                    [
+                        0,
+                        15
+                    ],
                     [
                         0,
                         10
@@ -423,10 +433,6 @@ exports.gameData = [
                     [
                         0,
                         5
-                    ],
-                    [
-                        0,
-                        3
                     ]
                 ]
             },
@@ -457,14 +463,9 @@ exports.gameData = [
                 "multiplier": [
                     [
                         1000,
-                        10
                     ],
                     [
                         700,
-                        0
-                    ],
-                    [
-                        500,
                         0
                     ]
                 ],
@@ -483,7 +484,7 @@ exports.gameData = [
                 },
                 "useWildSub": false,
                 "multiplier": [],
-                "defaultAmount": 5000,
+                "defaultAmount": 12000,
                 "symbolsCount": 5,
                 "increaseValue": 5
             },
@@ -491,11 +492,11 @@ exports.gameData = [
                 "Name": "Bonus",
                 "Id": 13,
                 "reelInstance": {
-                    "0": 3,
-                    "1": 3,
-                    "2": 3,
-                    "3": 3,
-                    "4": 3
+                    "0": 2,
+                    "1": 2,
+                    "2": 2,
+                    "3": 2,
+                    "4": 2
                 },
                 "useWildSub": false,
                 "symbolCount": 3,

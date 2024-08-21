@@ -26,6 +26,7 @@ class SlotGame {
         this.settings = {
             currentGamedata: {
                 id: "",
+                matrix: { x: 0, y: 0 },
                 linesApiData: [],
                 Symbols: [
                     {
@@ -52,7 +53,6 @@ class SlotGame {
                 linesCount: 0, // Ensure linesCount is initialized
             },
             tempReels: [[]],
-            matrix: { x: 5, y: 3 },
             payLine: [],
             useScatter: false,
             wildSymbol: {
@@ -110,6 +110,7 @@ class SlotGame {
         };
         this.initialize(GameData);
         this.messageHandler();
+        console.log(this.settings.currentGamedata.matrix, 'MTRIX');
     }
     initialize(GameData) {
         this.settings.Symbols = [];
@@ -259,8 +260,8 @@ class SlotGame {
     }
     addPayLineSymbols(symbol, repetition, pay, freeSpins) {
         const line = Array(repetition).fill(symbol); // Create an array with 'repetition' number of 'symbol'
-        if (line.length != this.settings.matrix.x) {
-            let lengthToAdd = this.settings.matrix.x - line.length;
+        if (line.length != this.settings.currentGamedata.matrix.x) {
+            let lengthToAdd = this.settings.currentGamedata.matrix.x - line.length;
             for (let i = 0; i < lengthToAdd; i++)
                 line.push("any");
         }
@@ -335,7 +336,7 @@ class SlotGame {
     }
     generateInitialreel() {
         let matrix = [];
-        for (let i = 0; i < this.settings.matrix.x; i++) {
+        for (let i = 0; i < this.settings.currentGamedata.matrix.x; i++) {
             let reel = [];
             this.settings.currentGamedata.Symbols.forEach((element) => {
                 for (let j = 0; j < element.reelInstance[i]; j++) {
