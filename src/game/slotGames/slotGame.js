@@ -16,7 +16,6 @@ const gameUtils_1 = require("./gameUtils");
 const BonusGame_1 = require("./BonusGame");
 const WinData_1 = require("./WinData");
 const userModel_1 = require("../../dashboard/users/userModel");
-const PayLines_1 = __importDefault(require("./PayLines"));
 const RandomResultGenerator_1 = require("./RandomResultGenerator");
 const CheckResult_1 = require("./CheckResult");
 const newGambleGame_1 = require("./newGambleGame");
@@ -303,7 +302,7 @@ class SlotGame {
         }
     }
     sendInitdata() {
-        this.gameDataInit();
+        this.settings.lineData = this.settings.currentGamedata.linesApiData;
         this.settings.reels = this.generateInitialreel();
         if (this.settings.currentGamedata.bonus.isEnabled &&
             this.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.spin) {
@@ -347,32 +346,6 @@ class SlotGame {
             matrix.push(reel);
         }
         return matrix;
-    }
-    gameDataInit() {
-        this.settings.lineData = this.settings.currentGamedata.linesApiData;
-        this.makeWildPayTable();
-    }
-    makeWildPayTable() {
-        try {
-            let payTable = [];
-            let payTableFull = [];
-            this.settings.payLine.forEach((pLine) => {
-                payTable.push(new PayLines_1.default(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID.toString(), this));
-            });
-            for (let j = 0; j < payTable.length; j++) {
-                payTableFull.push(payTable[j]);
-                if (this.settings.wildSymbol.useWild) {
-                    let wildLines = payTable[j].getWildLines();
-                    wildLines.forEach((wl) => {
-                        payTableFull.push(wl);
-                    });
-                }
-            }
-            // 
-            this.settings.fullPayTable = payTableFull;
-        }
-        catch (error) {
-        }
     }
     spinResult() {
         return __awaiter(this, void 0, void 0, function* () {

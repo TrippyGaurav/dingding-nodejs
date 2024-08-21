@@ -34,9 +34,9 @@ class CheckResult {
             this.startFreeSpin();
         const winRate = (this.currentGame.player.haveWon / this.currentGame.player.totalbet) * 100;
         console.log(`Total Spend : ${this.currentGame.player.totalbet}  Total Won : ${this.currentGame.player.haveWon} 
-        Current RTP : ${winRate.toFixed(2)}% `);
-        console.log(this.currentGame.player.rtpSpinCount, 'this.currentGame.player.rtpSpinCount');
-        console.log("Free spin Count", this.currentGame.player.totalSpin);
+        Current RTP for ${this.currentGame.player.username}: ${winRate.toFixed(2)}% `);
+        // console.log(this.currentGame.player.rtpSpinCount, 'this.currentGame.player.rtpSpinCount');
+        // console.log("Free spin Count", this.currentGame.player.totalSpin)
         console.log("_____________RESULT_END________________");
     }
     checkForBonus() {
