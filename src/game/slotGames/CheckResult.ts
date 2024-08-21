@@ -1,7 +1,5 @@
 import SlotGame from "./slotGame";
-import { RandomResultGenerator } from "./RandomResultGenerator";
 import { ScatterPayEntry, BonusPayEntry, ResultType } from "./gameUtils";
-import PayLines from "./PayLines";
 import { WinData } from "./WinData";
 import { bonusGameType, specialIcons } from "./gameUtils";
 import { log } from "console";
@@ -10,7 +8,6 @@ export class CheckResult {
     useScatter: boolean;
     jackpot: any;
     useJackpot: boolean;
-    payTable: PayLines[];
     scatterPayTable: ScatterPayEntry[];
     bonusPaytable: BonusPayEntry[];
     reels: string[][];

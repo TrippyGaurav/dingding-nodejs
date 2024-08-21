@@ -13,7 +13,6 @@ import {
 import { BonusGame } from "./BonusGame";
 import { WinData } from "./WinData";
 import { Player } from "../../dashboard/users/userModel";
-import PayLines from "./PayLines";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
 import { gambleCardGame } from "./newGambleGame";
@@ -370,7 +369,7 @@ export default class SlotGame {
     }
 
     public sendInitdata() {
-        this.gameDataInit();
+        this.settings.lineData = this.settings.currentGamedata.linesApiData;
         this.settings.reels = this.generateInitialreel();
 
         if (
@@ -435,43 +434,6 @@ export default class SlotGame {
         return matrix;
     }
 
-    private gameDataInit() {
-        this.settings.lineData = this.settings.currentGamedata.linesApiData;
-        this.makeWildPayTable();
-    }
-
-    private makeWildPayTable() {
-        try {
-            let payTable: PayLines[] = [];
-            let payTableFull = [];
-            this.settings.payLine.forEach((pLine) => {
-                payTable.push(
-                    new PayLines(pLine.line, pLine.pay, pLine.freeSpins, this.settings.wildSymbol.SymbolID.toString(), this)
-                )
-            });
-
-
-            for (let j = 0; j < payTable.length; j++) {
-                payTableFull.push(payTable[j]);
-                if (this.settings.wildSymbol.useWild) {
-                    let wildLines = payTable[j].getWildLines();
-
-                    wildLines.forEach((wl) => {
-                        payTableFull.push(wl);
-                    });
-                }
-            }
-            // 
-
-            this.settings.fullPayTable = payTableFull;
-
-        } catch (error) {
-
-
-        }
-
-
-    }
 
     private async spinResult() {
         try {
