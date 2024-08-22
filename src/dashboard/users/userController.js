@@ -793,16 +793,10 @@ class UserController {
                             $match: {
                                 $and: [
                                     {
-                                        createdAt: {
-                                            $gte: start,
-                                            $lte: end,
-                                        },
-                                    },
-                                    {
                                         type: "recharge",
                                     },
                                     {
-                                        creditor: targetUser.username,
+                                        debtor: targetUser.username,
                                     },
                                 ],
                             },
@@ -830,7 +824,7 @@ class UserController {
                                         type: "redeem",
                                     },
                                     {
-                                        debtor: targetUser.username,
+                                        creditor: targetUser.username,
                                     },
                                 ],
                             },
