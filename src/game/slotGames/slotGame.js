@@ -360,6 +360,7 @@ class SlotGame {
                 if (this.settings.freeSpin.freeSpinStarted && this.settings.freeSpin.freeSpinCount > 0) {
                     this.settings.freeSpin.freeSpinCount--;
                     this.settings.freeSpin.freeSpinsAdded = false;
+                    this.settings.currentBet = 0;
                     console.log(this.settings.freeSpin.freeSpinCount, 'this.settings.freeSpinCount');
                     if (this.settings.freeSpin.freeSpinCount <= 0) {
                         this.settings.freeSpin.freeSpinStarted = false;
