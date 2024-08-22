@@ -29,10 +29,10 @@ export default class SlotGame {
         totalbet: number,
         rtpSpinCount: number
         totalSpin: number
-      
+
     }
     constructor(player: { username: string, credits: number, socket: Socket }, GameData: any) {
-        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0, totalSpin: 0};
+        this.player = { ...player, haveWon: 0, currentWining: 0, totalbet: 0, rtpSpinCount: 0, totalSpin: 0 };
         this.settings = {
             currentGamedata: {
                 id: "",
@@ -450,6 +450,7 @@ export default class SlotGame {
             if (this.settings.freeSpin.freeSpinStarted && this.settings.freeSpin.freeSpinCount > 0) {
                 this.settings.freeSpin.freeSpinCount--;
                 this.settings.freeSpin.freeSpinsAdded = false;
+                this.settings.currentBet = 0
                 console.log(this.settings.freeSpin.freeSpinCount, 'this.settings.freeSpinCount');
 
                 if (this.settings.freeSpin.freeSpinCount <= 0) {
