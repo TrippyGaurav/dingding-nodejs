@@ -25,6 +25,7 @@ export const enum messageType {
     ALERT = "alert",
     MESSAGE = "message",
     ERROR = "internalError",
+    CREDITSUPDATE = 'creditsUpdate'
 }
 
 export const getCurrentRTP = {
@@ -81,6 +82,7 @@ export function convertSymbols(data) {
         return uiData;
     }
     data.forEach((element) => {
+
         let symbolData = {
             ID: element.Id,
             Name: element.Name || {},
@@ -88,7 +90,8 @@ export function convertSymbols(data) {
             defaultAmount: element.defaultAmount || {},
             symbolsCount: element.symbolsCount || element.symbolCount || {},
             increaseValue: element.increaseValue || {},
-            freeSpin: element.freeSpin
+            freeSpin: element.freeSpin,
+            description: element.description || {}
         };
         // if (element.multiplier) {
         //   const multiplierObject = {};

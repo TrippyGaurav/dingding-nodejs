@@ -1,44 +1,31 @@
-import { start } from "repl";
 import SlotGame from "./slotGame";
 
 export class RandomResultGenerator {
+
     currentGame: SlotGame;
-
     constructor(current) {
+        console.log('hello')
         let matrix: string[][] = [];
-        for (let x = 0; x < current.settings.matrix.x; x++) {
-
+        for (let x = 0; x < current.settings.currentGamedata.matrix.x; x++) {
             const startPosition = this.getRandomIndex((current.settings.reels[x].length - 1));
-            // console.log("StartIndex : ", startPosition);
-            for (let y = 0; y < current.settings.matrix.y; y++) {
+
+            for (let y = 0; y < current.settings.currentGamedata.matrix.y; y++) {
                 if (!matrix[y]) matrix[y] = [];
                 matrix[y][x] = current.settings.reels[x][(startPosition + y) % current.settings.reels[x].length];
-                // console.log("X Index ", x, " Yindex ", y, " ", current.settings.reels[x][(startPosition + y) % current.settings.reels[x].length]);
             }
         }
-
-        // console.log("Matrix  :   ", matrix);
         current.settings.resultReelIndex = matrix;
-        // console.log("gameSettings._winData.resultReelIndex", current.settings.resultReelIndex);
-        // matrix.pop();
-        // matrix.pop();
-        // matrix.pop();
-
-        // matrix.push(['10', '10', '10', '2', '4'])
-        // matrix.push(['0', '5', '2', '6', '7'])
-        // matrix.push(['1', '8', '1', '5', '1'])
-
-
-
-
         current.settings.resultSymbolMatrix = matrix;
-        // console.log("MATRIX " + matrix);
-
+        // matrix.pop();
+        // matrix.pop();
+        // matrix.pop();
+        // matrix.push(['9', '9', '9', '0', '4'])
+        // matrix.push(['5', '11', '2', '12', '4'])
+        // matrix.push(['2', '13', '5', '7', '2'])
     }
     getRandomIndex(maxValue: number): number {
         return Math.floor(Math.random() * (maxValue + 1));
     }
-
 
 }
 
