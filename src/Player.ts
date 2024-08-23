@@ -2,8 +2,6 @@ import { Socket } from "socket.io";
 import { verifyPlayerToken } from "./utils/playerAuth";
 import { getPlayerCredits } from "./game/slotGames/gameUtils";
 import { Platform } from "./dashboard/games/gameModel";
-// import { Payouts } from "./dashboard/games/gameModel";
-
 import { users } from "./socket";
 import payoutController from "./dashboard/payouts/payoutController";
 import SlotGame from "./game/slotGames/slotGame";
@@ -22,9 +20,7 @@ export default class PlayerSocket {
     maxReconnectionAttempts: number = 1;
     reconnectionTimeout: number = 3000; // 5 seconds
     cleanedUp: boolean = false;
-
     constructor(username: string, role: string, credits: number, userAgent: string, gameSocket: Socket, public gameId: string) {
-
         this.username = username;
         this.role = role;
         this.credits = credits;
@@ -41,8 +37,6 @@ export default class PlayerSocket {
         this.startHeartbeat();
         this.onExit();
         socket.emit("socketState", true);
-
-
     }
 
     handleGameDisconnection() {
@@ -141,44 +135,41 @@ export default class PlayerSocket {
     private async initGameData() {
         if (!this.gameSocket) return;
 
-
         try {
-
-            const tagName = this.gameId;
 
             const platform = await Platform.aggregate([
                 { $unwind: "$games" },
-                { $match: { "games.tagName": tagName, "games.status": 'active' } },
+                { $match: { "games.tagName": this.gameId, "games.status": "active" } },
                 { $project: { _id: 0, game: "$games" } },
             ]);
 
-            // For Development only
-            if (platform.length == 0) {
-                this.gameSettings = { ...gameData[0] }
-                this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
-                return
+            let payout = gameData[0];
+            if (platform.length != 0) {
+                const game = platform[0].game;
+                // console.log("Payout 1 : ", game);
+
+                payout = await payoutController.getPayoutVersionData(
+                    game.tagName,
+                    game.payout
+                );
+                // console.log("Payout : ",payout);
             }
 
-            const game = platform[0].game;
-
-
-            const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout)
-
-            if (!payout) {
-                this.gameSettings = { ...gameData[0] }
-                this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
-                return
-            }
-
-            this.gameSettings = { ...payout }
-            this.currentGame = new SlotGame({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
-
+            this.gameSettings = { ...payout };
+            this.currentGame = new SlotGame(
+                {
+                    username: this.username,
+                    credits: this.credits,
+                    socket: this.gameSocket,
+                },
+                this.gameSettings
+            );
         } catch (error) {
-            console.error(`Error initializing game data for user ${this.username}:`, error);
+            console.error(`Error initializing game data for user ${this.username}`,error);
         }
-
     }
 }
+
 
 
 

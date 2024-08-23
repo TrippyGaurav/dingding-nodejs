@@ -17,6 +17,9 @@ import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
 import { gambleCardGame } from "./newGambleGame";
 import mongoose from "mongoose";
+import { users } from "../../socket";
+
+
 export default class SlotGame {
     public settings: GameSettings;
 
@@ -122,10 +125,9 @@ export default class SlotGame {
 
         this.initialize(GameData);
         this.messageHandler();
-
     }
 
-    private initialize(GameData: GameData) {
+    public initialize(GameData: GameData) {
         this.settings.Symbols = [];
         this.settings.Weights = [];
         this.settings._winData = new WinData(this);

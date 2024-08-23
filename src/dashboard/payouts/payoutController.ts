@@ -5,6 +5,7 @@ import Payouts from "./payoutModel";
 import path from "path";
 import { Platform } from "../games/gameModel";
 import { ObjectId } from "mongodb";
+import { users } from "../../socket";
 
 interface GameRequest extends Request {
   files?: {
@@ -13,6 +14,7 @@ interface GameRequest extends Request {
 }
 
 class PayoutsController {
+
   async uploadNewVersion(req: GameRequest, res: Response, next: NextFunction) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -20,7 +22,6 @@ class PayoutsController {
     try {
       const { tagName, platform: platformName } = req.body;
       const files = req.files.payoutFile;
-
       if (!files || files.length === 0) {
         throw createHttpError(400, "No files uploaded");
       }
@@ -64,6 +65,20 @@ class PayoutsController {
       if (!platform) {
         throw createHttpError(404, "Platform or game not found");
       }
+
+      for (const [username, playerSocket] of users) {
+        const gameId = payoutFileName.split('_')[0];
+        if (playerSocket.gameSettings.id === gameId) {
+          const socketUser = users.get(username);
+          if (socketUser?.currentGame && socketUser.currentGame.settings) {
+            socketUser.currentGame.initialize(payoutJSONData)
+            // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGame.settings.currentGamedata);
+          } else {
+            console.warn(`User ${username} does not have a current game or settings.`);
+          }
+        }
+      }
+
       await session.commitTransaction();
       session.endSession();
 
@@ -181,7 +196,6 @@ class PayoutsController {
     try {
       const { tagName } = req.params;
       const { version, platform: platformName } = req.body;
-
       // Validate input presence
       if (!version) {
         return next(createHttpError(400, "Missing version"));
@@ -229,7 +243,41 @@ class PayoutsController {
         { $set: { "games.$.payout": payout._id } }
       );
 
+      const targetPayoutId = payout._id.toString();
+
+      const currentUpdatedPayout = await Payouts.aggregate([
+        { $match: { gameName: tagName } },
+        { $unwind: "$content" },
+        { $unwind: "$content.data" },
+        {
+          $project: {
+            gameName: 1,
+            "content.name": 1,
+            "content.data": 1,
+            "content._id": 1,
+          }
+        },
+        { $sort: { "content.createdAt": -1 } }
+      ]);
+
+
+
+      const matchingPayout = currentUpdatedPayout.find(payout => payout.content._id.toString() === targetPayoutId);
+      for (const [username, playerSocket] of users) {
+        const gameId = tagName;
+        if (playerSocket.gameSettings.id === gameId) {
+          const socketUser = users.get(username);
+          if (socketUser?.currentGame && socketUser.currentGame.settings) {
+            socketUser.currentGame.initialize(matchingPayout.content.data)
+            // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGame.settings.currentGamedata);
+          } else {
+            console.warn(`User ${username} does not have a current game or settings.`);
+          }
+        }
+      }
+
       res.status(200).json({ message: "Game payout version updated" });
+
     } catch (error) {
       console.error(error);
       next(error);
