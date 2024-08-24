@@ -348,7 +348,8 @@ export default class SlotGame {
             case specialIcons.scatter:
 
                 this.settings.scatter.symbolID = symbol.Id,
-                    this.settings.scatter.multiplier = symbol.multiplier;
+
+                this.settings.scatter.multiplier = symbol.multiplier;
                 this.settings.scatter.useScatter = true;
 
                 break;

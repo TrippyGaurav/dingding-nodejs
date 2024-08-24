@@ -82,12 +82,6 @@ const socketController = (io: Server) => {
                 return;
             }
 
-            // if (existingUser.gameSocket) {
-            //     socket.emit("alert", "You are already connected from another tab.");
-            //     socket.disconnect(true);
-            //     return;
-            // }
-
             await existingUser.updateGameSocket(socket);
             existingUser.sendAlert(`Game socket created for ${username}`);
 

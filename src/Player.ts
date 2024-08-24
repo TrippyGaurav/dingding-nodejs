@@ -144,6 +144,7 @@ export default class PlayerSocket {
             ]);
 
             let payout = gameData[0];
+
             if (platform.length != 0) {
                 const game = platform[0].game;
                 // console.log("Payout 1 : ", game);
@@ -154,7 +155,7 @@ export default class PlayerSocket {
                 );
                 // console.log("Payout : ",payout);
             }
-
+          
             this.gameSettings = { ...payout };
             this.currentGame = new SlotGame(
                 {
@@ -165,7 +166,7 @@ export default class PlayerSocket {
                 this.gameSettings
             );
         } catch (error) {
-            console.error(`Error initializing game data for user ${this.username}`,error);
+            console.error(`Error initializing game data for user ${this.username}`, error);
         }
     }
 }

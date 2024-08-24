@@ -244,7 +244,9 @@ export class CheckResult {
     private checkForScatter() {
         this.scatterWinSymbols = [];
         if (this.currentGame.settings.scatter.useScatter) {
+            console.log("SCATTER2")
             let temp = this.findSymbol(specialIcons.scatter);
+
             if (temp.length > (5 - this.currentGame.settings.scatter.multiplier.length)) {
                 const winningAmount = this.accessData(this.currentGame.settings.scatter.symbolID, temp.length);
                 this.currentGame.settings._winData.totalWinningAmount += winningAmount * this.currentGame.settings.BetPerLines;

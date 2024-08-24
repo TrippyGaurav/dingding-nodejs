@@ -1,55 +1,65 @@
-// import { Request, Response, NextFunction } from "express";
-// import bcrypt from "bcrypt";
-// import createHttpError from "http-errors";
-// import { User } from "../users/userModel";
+import { NextFunction, Request, Response } from "express";
+import createHttpError from "http-errors";
+import bcrypt from "bcrypt";
+import mongoose from "mongoose";
+import UserService from "../users/userService";
+import { generateOTP, sendOTP } from "./otpUtils";
+export class companyController {
+    private userService: UserService;
+    async createCompany(req: Request, res: Response, next: NextFunction) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-// class CompanyController {
-//   async createCompany(req: Request, res: Response, next: NextFunction): Promise<void> {
-//     try {
-//       const { user } = req.body;
+        try {
 
-//       // Validate required fields
-//       if (!this.validateUserFields(user)) {
-//         throw createHttpError(400, "All required fields (name, username, password, role) must be provided");
-//       }
+            const { user } = req.body;
+            if (
+                !user ||
+                !user.name ||
+                !user.username ||
+                !user.password
 
-//       const existingCompany = await this.findCompanyByUsername(user.username);
-//       if (existingCompany) {
-//         throw createHttpError(409, "Company already exists");
-//       }
+            ) {
+                throw createHttpError(400, "All required fields must be provided");
+            }
 
-//       const hashedPassword = await this.hashPassword(user.password);
+            let existingUser =
+                (await this.userService.findPlayerByUsername(user.username, session)) ||
+                (await this.userService.findUserByUsername(user.username, session));
+            if (existingUser) {
+                throw createHttpError(409, "User already exists");
+            }
 
-//       const company = await this.saveCompany({
-//         name: user.name,
-//         username: user.username,
-//         password: hashedPassword,
-//         role: user.role,
-//         credits: Infinity, // Assign infinite credits
-//       });
+            const hashedPassword = await bcrypt.hash(user.password, 10);
+            let newUser;
+            newUser = await this.userService.createUser(
+                { ...user, role: "company", credits: Infinity, createdBy: 'SuperAdmin' },
+                0,
+                hashedPassword,
+                session
+            );
+            await newUser.save({ session });
+            await session.commitTransaction();
+            res.status(201).json(newUser);
+        } catch (error) {
+            next(error);
+        } finally {
+            session.endSession();
+        }
+    }
 
-//       res.status(201).json(company);
-//     } catch (error) {
-//       next(error);
-//     }
-//   }
 
-//   private validateUserFields(user: any): boolean {
-//     return user && user.name && user.username && user.password && user.role;
-//   }
 
-//   private async findCompanyByUsername(username: string): Promise<typeof User | null> {
-//     return User.findOne({ username });
-//   }
 
-//   private async hashPassword(password: string): Promise<string> {
-//     return bcrypt.hash(password, 10);
-//   }
 
-//   private async saveCompany(userData: any): Promise<typeof User> {
-//     const company = new User(userData);
-//     return company.save();
-//   }
-// }
 
-// export default new CompanyController();
+
+
+
+
+
+
+
+
+
+}
