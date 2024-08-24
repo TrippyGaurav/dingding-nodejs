@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const gameUtils_1 = require("./game/slotGames/gameUtils");
 const gameModel_1 = require("./dashboard/games/gameModel");
-// import { Payouts } from "./dashboard/games/gameModel";
 const socket_1 = require("./socket");
 const payoutController_1 = __importDefault(require("./dashboard/payouts/payoutController"));
 const slotGame_1 = __importDefault(require("./game/slotGames/slotGame"));
@@ -119,30 +118,27 @@ class PlayerSocket {
             if (!this.gameSocket)
                 return;
             try {
-                const tagName = this.gameId;
                 const platform = yield gameModel_1.Platform.aggregate([
                     { $unwind: "$games" },
-                    { $match: { "games.tagName": tagName, "games.status": 'active' } },
+                    { $match: { "games.tagName": this.gameId, "games.status": "active" } },
                     { $project: { _id: 0, game: "$games" } },
                 ]);
-                // For Development only
-                if (platform.length == 0) {
-                    this.gameSettings = Object.assign({}, testData_1.gameData[0]);
-                    this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
-                    return;
-                }
-                const game = platform[0].game;
-                const payout = yield payoutController_1.default.getPayoutVersionData(game.tagName, game.payout);
-                if (!payout) {
-                    this.gameSettings = Object.assign({}, testData_1.gameData[0]);
-                    this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
-                    return;
+                let payout = testData_1.gameData[0];
+                if (platform.length != 0) {
+                    const game = platform[0].game;
+                    // console.log("Payout 1 : ", game);
+                    payout = yield payoutController_1.default.getPayoutVersionData(game.tagName, game.payout);
+                    // console.log("Payout : ",payout);
                 }
                 this.gameSettings = Object.assign({}, payout);
-                this.currentGame = new slotGame_1.default({ username: this.username, credits: this.credits, socket: this.gameSocket }, this.gameSettings);
+                this.currentGame = new slotGame_1.default({
+                    username: this.username,
+                    credits: this.credits,
+                    socket: this.gameSocket,
+                }, this.gameSettings);
             }
             catch (error) {
-                console.error(`Error initializing game data for user ${this.username}:`, error);
+                console.error(`Error initializing game data for user ${this.username}`, error);
             }
         });
     }
