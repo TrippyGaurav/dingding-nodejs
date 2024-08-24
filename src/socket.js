@@ -92,6 +92,7 @@ const socketController = (io) => {
         // This is a new user connecting
         const newUser = new Player_1.default(username, decoded.role, decoded.credits, userAgent, socket, gameTag);
         exports.users.set(username, newUser);
+        console.log(`Welcome, ${newUser.username}!`);
         newUser.sendAlert(`Welcome, ${newUser.username}!`);
         // 
     }));
