@@ -970,21 +970,18 @@ export class UserController {
           transactions: transactions,
         });
       } else {
+  
+
+
         const userRechargeAmt = await Transaction.aggregate([
           {
             $match: {
               $and: [
                 {
-                  createdAt: {
-                    $gte: start,
-                    $lte: end,
-                  },
-                },
-                {
                   type: "recharge",
                 },
                 {
-                  creditor: targetUser.username,
+                  debtor: targetUser.username,
                 },
               ],
             },
@@ -1013,7 +1010,7 @@ export class UserController {
                   type: "redeem",
                 },
                 {
-                  debtor: targetUser.username,
+                  creditor: targetUser.username,
                 },
               ],
             },
