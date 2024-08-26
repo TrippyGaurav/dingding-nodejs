@@ -16,8 +16,8 @@ import { checkAdmin } from "./dashboard/middleware/checkAdmin";
 import payoutController from "./dashboard/payouts/payoutController";
 import payoutRoutes from "./dashboard/payouts/payoutRoutes";
 import { checkUser } from "./dashboard/middleware/checkUser";
-
-
+import { Platform } from "./dashboard/games/gameModel";
+import { GamesUrl } from "./dashboard/games/gameService";
 declare module "express-session" {
   interface Session {
     captcha?: string;
@@ -55,13 +55,37 @@ app.use((req, res, next) => {
   next();
 });
 
+
+
+
+
 // CORS config
+const staticAllowedOrigins = [
+  'https://www.milkyway-casino.com',
+  'https://crm.milkyway-casino.com',
+  'https://dev.casinoparadize.com',
+  'http://localhost:5000',
+  'http://localhost:3000',
+  'https://7p68wzhv-5000.inc1.devtunnels.ms/'
+];
+
 app.use(
   cors({
-    origin: (origin, callback) => {
-      callback(null, true); // Allow all origins
+    origin: async (origin, callback) => {
+      console.log(origin)
+      try {
+        const gameUrls = await GamesUrl();
+        const allowedOrigins = [...staticAllowedOrigins, ...gameUrls];
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      } catch (error) {
+        callback(new Error('Error in CORS validation'));
+      }
     },
-    credentials: true,
+    credentials: false,
     optionsSuccessStatus: 200,
   })
 );
