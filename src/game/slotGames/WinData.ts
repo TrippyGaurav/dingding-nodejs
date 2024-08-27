@@ -19,6 +19,8 @@ export class WinData {
 
     async updateBalance() {
         this.slotGame.updatePlayerBalance(this.totalWinningAmount);
+        this.slotGame.playerData.haveWon += this.totalWinningAmount;
+    this.slotGame.playerData.currentWining = this.totalWinningAmount;
         // TODO: Need to work here
 
     }

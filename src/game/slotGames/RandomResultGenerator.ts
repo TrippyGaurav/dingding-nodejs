@@ -4,7 +4,6 @@ export class RandomResultGenerator {
 
     currentGame: SlotGame;
     constructor(current) {
-        console.log('hello')
         let matrix: string[][] = [];
         for (let x = 0; x < current.settings.currentGamedata.matrix.x; x++) {
             const startPosition = this.getRandomIndex((current.settings.reels[x].length - 1));

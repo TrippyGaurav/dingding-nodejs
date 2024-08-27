@@ -107,7 +107,7 @@ export class gambleCardGame {
     let resultData = {
       playerWon: this.shouldWin,
       currentWining: 0,
-      Balance: this.sltGame.player.credits
+      Balance: this.sltGame.getPlayerData().credits
     };
 
     if (this.shouldWin) {
@@ -134,10 +134,13 @@ export class gambleCardGame {
     this.initialUpdate = false;
     this.sltGame.deductPlayerBalance(this.sltGame.settings._winData.totalWinningAmount)
     this.sltGame.updatePlayerBalance(this.winningCredit);
+    
+    this.sltGame.playerData.haveWon += this.winningCredit;
+    this.sltGame.playerData.currentWining = this.winningCredit;
     let resultData = {
       playerWon: this.shouldWin,
       currentWining: this.winningCredit,
-      Balance: this.sltGame.player.credits
+      Balance: this.sltGame.getPlayerData().credits
     };
     this.sltGame.sendMessage("GambleResult", resultData);
 
