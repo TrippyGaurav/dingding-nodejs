@@ -3,6 +3,7 @@ export const gameData = [
 
     {
         "id": "SL-VIK",
+        "isSpecial" : false,
         "matrix": {
             "x": 5,
             "y": 3

@@ -1,4 +1,6 @@
-import SlotGame from "./slotGame";
+import SlotGame from "../slotGame";
+import BaseSlotGame from "./BaseSlotGame";
+
 export class WinData {
     freeSpins: number;
     winningSymbols: any[];
@@ -6,9 +8,9 @@ export class WinData {
     totalWinningAmount: number;
     jackpotwin: number;
     resultReelIndex: number[] = [];
-    slotGame: SlotGame;
+    slotGame: BaseSlotGame;
 
-    constructor(slotGame: SlotGame) {
+    constructor(slotGame: BaseSlotGame) {
         this.freeSpins = 0;
         this.winningLines = [];
         this.winningSymbols = [];

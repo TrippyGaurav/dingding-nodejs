@@ -74,7 +74,7 @@ class PayoutsController {
         if (playerSocket.gameId === gameId) {
           const socketUser = users.get(username);
           if (socketUser?.currentGameData && socketUser.currentGameData.gameSettings) {
-            socketUser.currentGameData.currentGame.initialize(payoutJSONData)
+            socketUser.currentGameData.currentGameManager.currentGameType.currentGame.initialize(payoutJSONData)
             // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGameData.gameSettings);
           } else {
             console.warn(`User ${username} does not have a current game or settings.`);
@@ -271,7 +271,7 @@ class PayoutsController {
         if (playerSocket.gameId === gameId) {
           const socketUser = users.get(username);
           if (socketUser?.currentGameData && socketUser.currentGameData.gameSettings) {
-            socketUser.currentGameData.currentGame.initialize(matchingPayout.content.data)
+            socketUser.currentGameData.currentGameManager.currentGameType.currentGame.initialize(matchingPayout.content.data)
             // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGameData.gameSettings);
           } else {
             console.warn(`User ${username} does not have a current game or settings.`);

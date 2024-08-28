@@ -1,6 +1,8 @@
-import mongoose, { Document, Types } from "mongoose";
-import { Card, gambleCardGame } from "../../game/slotGames/newGambleGame";
-import { WinData } from "../../game/slotGames/WinData";
+import { Types } from "mongoose";
+import { gambleCardGame } from "../../game/slotGames/BaseSlotGame/newGambleGame";
+import { WinData } from "../../game/slotGames/BaseSlotGame/WinData";
+
+
 
 export interface IGame extends Document {
   name: string;
