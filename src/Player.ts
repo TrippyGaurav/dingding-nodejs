@@ -1,175 +1,287 @@
+
 import { Socket } from "socket.io";
-import { verifyPlayerToken } from "./utils/playerAuth";
-import { getPlayerCredits } from "./game/slotGames/gameUtils";
+import mongoose from "mongoose";
+import { Player } from "./dashboard/users/userModel";
 import { Platform } from "./dashboard/games/gameModel";
-import { users } from "./socket";
 import payoutController from "./dashboard/payouts/payoutController";
 import SlotGame from "./game/slotGames/slotGame";
-import { messageType } from "./game/slotGames/gameUtils";
+import { getPlayerCredits, messageType } from "./game/slotGames/gameUtils";
 import { gameData } from "./game/slotGames/testData";
-export default class PlayerSocket {
-    username: string;
-    role: string;
-    credits: number;
-    userAgent: string;
-    gameSocket: Socket | null;
+import { users } from "./socket";
+
+export interface currentGamedata {
+    username : string,
+    currentGame: SlotGame;
     gameSettings: any;
-    currentGame: SlotGame | null = null;
-    heartbeatInterval: NodeJS.Timeout;
-    reconnectionAttempts: number = 0;
-    maxReconnectionAttempts: number = 1;
-    reconnectionTimeout: number = 3000; // 5 seconds
-    cleanedUp: boolean = false;
-    constructor(username: string, role: string, credits: number, userAgent: string, gameSocket: Socket, public gameId: string) {
-        this.username = username;
-        this.role = role;
-        this.credits = credits;
-        this.userAgent = userAgent;
-        this.gameSocket = gameSocket;
-        this.initializeGameSocket(gameSocket)
-    }
+    sendMessage: (action: string, message: any) => void;
+    sendError: (message: string) => void;
+    sendAlert: (message: string) => void;
+    updatePlayerBalance: (message: number) => void;
+    deductPlayerBalance: (message: number) => void;
+    getPlayerData: () => playerData;
+}
+  
+export interface socketData {
+  gameSocket : Socket | null;
+  heartbeatInterval: NodeJS.Timeout;
+  reconnectionAttempts: number;
+  maxReconnectionAttempts: number;
+  reconnectionTimeout: number;
+  cleanedUp: boolean;
+}
 
-    initializeGameSocket(socket: Socket) {
-        this.gameSocket = socket;
-        this.cleanedUp = false;  // Reset the cleanup flag
-        this.gameSocket.on("disconnect", () => this.handleGameDisconnection());
-        this.initGameData();
-        this.startHeartbeat();
-        this.onExit();
-        socket.emit("socketState", true);
-    }
-
-    handleGameDisconnection() {
-
-        this.attemptReconnection();
-    }
-
-    async attemptReconnection() {
-        try {
-            while (this.reconnectionAttempts < this.maxReconnectionAttempts) {
-                await new Promise(resolve => setTimeout(resolve, this.reconnectionTimeout));
-                this.reconnectionAttempts++;
-
-                if (this.cleanedUp) {
-
-                    return;
-                }
-
-                if (this.gameSocket && this.gameSocket.connected) {
-
-                    this.reconnectionAttempts = 0;
-                    return;
-                }
-
-
-            }
-
-
-            users.delete(this.username);
-            this.cleanup();
-
-
-        } catch (error) {
-
-        }
-    }
-
-    startHeartbeat() {
-        this.heartbeatInterval = setInterval(() => {
-            if (this.gameSocket) {
-                this.sendAlert(`I'm Alive ${this.username}`);
-            }
-        }, 20000); // 20 seconds
-    }
-
-    sendAlert(message: string) {
-        if (this.gameSocket) {
-            this.gameSocket.emit("alert", message);
-        }
-    }
-
-    cleanup() {
-        if (this.gameSocket) {
-            this.gameSocket.disconnect(true);
-            this.gameSocket = null;
-        }
-        clearInterval(this.heartbeatInterval);
-
-        this.username = "";
-        this.role = "";
-        this.credits = 0;
-        this.userAgent = "";
-        this.gameSettings = null;
-        this.currentGame = null;
-        this.reconnectionAttempts = 0;
-
-        this.cleanedUp = true; // Set the cleanup flag
-
-    }
-
-    onExit() {
-        if (this.gameSocket) {
-            this.gameSocket.on("EXIT", () => {
-                users.delete(this.username);
-                this.cleanup();
-
-
-            });
-        }
-
-
-    }
-
-
-    async updateGameSocket(socket: Socket) {
-        if (socket.request.headers['user-agent'] !== this.userAgent) {
-            socket.emit("alert", { id: "AnotherDevice", message: "You are already playing on another browser" });
-            socket.disconnect(true);
-            return;
-        }
-        this.initializeGameSocket(socket);
-        const credits = await getPlayerCredits(this.username);
-        this.credits = typeof credits === "number" ? credits : 0;
-    }
-
-    private async initGameData() {
-        if (!this.gameSocket) return;
-
-        try {
-
-            const platform = await Platform.aggregate([
-                { $unwind: "$games" },
-                { $match: { "games.tagName": this.gameId, "games.status": "active" } },
-                { $project: { _id: 0, game: "$games" } },
-            ]);
-
-            let payout = gameData[0];
-            if (platform.length != 0) {
-                const game = platform[0].game;
-                // console.log("Payout 1 : ", game);
-
-                payout = await payoutController.getPayoutVersionData(
-                    game.tagName,
-                    game.payout
-                );
-                // console.log("Payout : ",payout);
-            }
-
-            this.gameSettings = { ...payout };
-            this.currentGame = new SlotGame(
-                {
-                    username: this.username,
-                    credits: this.credits,
-                    socket: this.gameSocket,
-                },
-                this.gameSettings
-            );
-        } catch (error) {
-            console.error(`Error initializing game data for user ${this.username}`,error);
-        }
-    }
+export interface playerData {
+  username: string;
+  role: string;
+  credits: number;
+  userAgent: string;
 }
 
 
+export default class PlayerSocket {
+  socketData: socketData;
+  currentGameData: currentGamedata;
+  playerData: playerData;
 
+  constructor(
+    username: string,
+    role: string,
+    credits: number,
+    userAgent: string,
+    gameSocket: Socket,
+    public gameId: string
+  ) {
+    
+    this.socketData = {
+      gameSocket : null,
+      heartbeatInterval: setInterval(() => {}, 0),
+      reconnectionAttempts: 0,
+      maxReconnectionAttempts: 5,
+      reconnectionTimeout: 5000,
+      cleanedUp: false,
+    };
 
+    this.playerData = {
+      username,
+      role,
+      credits,
+      userAgent
+    };
+
+    this.currentGameData = {
+      currentGame: null, // Will be initialized later
+      gameSettings: null,
+      sendMessage: this.sendMessage.bind(this),
+      sendError: this.sendError.bind(this),
+      sendAlert: this.sendAlert.bind(this),
+      updatePlayerBalance: this.updatePlayerBalance.bind(this),
+      deductPlayerBalance: this.deductPlayerBalance.bind(this),
+      getPlayerData: () => this.playerData,
+      username : this.playerData.username
+    };
+    console.log("Welcome : ", this.playerData.username);
+    this.initializeGameSocket(gameSocket);
+  }
+
+  private initializeGameSocket(socket: Socket) {
+    this.socketData.gameSocket = socket;
+    this.socketData.gameSocket.on("disconnect", () => this.handleGameDisconnection());
+    this.initGameData();
+    this.startHeartbeat();
+    this.onExit();
+    this.messageHandler();
+    socket.emit("socketState", true);
+  }
+
+  private handleGameDisconnection() {
+    this.attemptReconnection();
+  }
+
+  public sendMessage(action: string, message: any) {
+    this.socketData.gameSocket.emit(
+      messageType.MESSAGE,
+      JSON.stringify({
+        id: action,
+        message,
+        username: this.playerData.username,
+      })
+    );
+  }
+
+  public sendError(message: string) {
+    this.socketData.gameSocket.emit(messageType.ERROR, message);
+  }
+
+  public sendAlert(message: string) {
+    this.socketData.gameSocket.emit("alert", message);
+  }
+
+  private messageHandler()
+  {
+    this.socketData.gameSocket.on("message", (message) => {
+      try {
+          const response = JSON.parse(message);
+          console.log(`Message Recieved for ${this.playerData.username} : `, message);
+          this.currentGameData.currentGame.messageHandler(response);
+      } catch (error) {
+          console.error("Failed to parse message:", error);
+          this.sendError("Failed to parse message");
+      }
+  });
+}
+  
+
+  private async updateDatabase() {
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+      const finalBalance = this.playerData.credits;
+      await Player.findOneAndUpdate(
+        { username: this.playerData.username },
+        { credits: finalBalance.toFixed(2) },
+        { new: true, session }
+      );
+      await session.commitTransaction();
+    } catch (error) {
+      await session.abortTransaction();
+      console.error("Failed to update database:", error);
+      this.sendError("Database error");
+    } finally {
+      session.endSession();
+    }
+  }
+
+  private checkPlayerBalance(bet: number) {
+    if (this.playerData.credits < bet) {
+      this.sendMessage("low-balance", true);
+      console.error("LOW BALANCE");
+    }
+  }
+
+  public async updatePlayerBalance(credit: number) {
+    try {
+      this.playerData.credits += credit;
+      await this.updateDatabase();
+    } catch (error) {
+      console.error("Error updating credits in database:", error);
+    }
+  }
+
+  public async deductPlayerBalance(currentBet: number) {
+    this.checkPlayerBalance(currentBet);
+    this.playerData.credits -= currentBet;
+    // await this.updateDatabase();
+  }
+
+  private async attemptReconnection() {
+    try {
+      while (this.socketData.reconnectionAttempts < this.socketData.maxReconnectionAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, this.socketData.reconnectionTimeout));
+        this.socketData.reconnectionAttempts++;
+        if (this.socketData.cleanedUp) return;
+        if (this.socketData.gameSocket && this.socketData.gameSocket.connected) {
+          this.socketData.reconnectionAttempts = 0;
+          return;
+        }
+      }
+      users.delete(this.playerData.username);
+      this.cleanup();
+    } catch (error) {
+      console.error("Reconnection attempt failed:", error);
+    }
+  }
+
+  private startHeartbeat() {
+    this.socketData.heartbeatInterval = setInterval(() => {
+      if (this.socketData.gameSocket) {
+        this.sendAlert(`I'm Alive ${this.playerData.username}`);
+      }
+    }, 20000); // 20 seconds
+  }
+
+  private cleanup() {
+    if (this.socketData.gameSocket) {
+      this.socketData.gameSocket.disconnect(true);
+      this.socketData.gameSocket = null;
+    }
+    clearInterval(this.socketData.heartbeatInterval);
+
+    this.playerData = {
+      username: "",
+      role: "",
+      credits: 0,
+      userAgent: ""
+    };
+    this.currentGameData = {
+      currentGame: null,
+      gameSettings: null,
+      sendMessage: this.sendMessage.bind(this),
+      sendError: this.sendError.bind(this),
+      sendAlert: this.sendAlert.bind(this),
+      updatePlayerBalance: this.updatePlayerBalance.bind(this),
+      deductPlayerBalance: this.deductPlayerBalance.bind(this),
+      getPlayerData: () => this.playerData,
+      username : this.playerData.username,
+    };
+
+    this.socketData = {
+      ...this.socketData,
+      reconnectionAttempts: 0,
+      cleanedUp: true,
+    };
+  }
+
+  private onExit() {
+    this.socketData.gameSocket?.on("EXIT", () => {
+      users.delete(this.playerData.username);
+      this.cleanup();
+    });
+  }
+
+  public async updateGameSocket(socket: Socket) {
+    if (socket.request.headers["user-agent"] !== this.playerData.userAgent) {
+      socket.emit("alert", {
+        id: "AnotherDevice",
+        message: "You are already playing on another browser",
+      });
+      socket.disconnect(true);
+      return;
+    }
+    this.initializeGameSocket(socket);
+    const credits = await getPlayerCredits(this.playerData.username);
+    this.playerData.credits = typeof credits === "number" ? credits : 0;
+  }
+
+  private async initGameData() {
+    if (!this.socketData.gameSocket) return;
+
+    try {
+      const tagName = this.gameId;
+      const platform = await Platform.aggregate([
+        { $unwind: "$games" },
+        { $match: { "games.tagName": tagName, "games.status": "active" } },
+        { $project: { _id: 0, game: "$games" } },
+      ]);
+
+      if (platform.length === 0) {
+        this.currentGameData.gameSettings = { ...gameData[0] };
+        this.currentGameData.currentGame = new SlotGame(this.currentGameData);
+        return;
+      }
+
+      const game = platform[0].game;
+      const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout);
+
+      if (!payout) {
+        this.currentGameData.gameSettings = { ...gameData[0] };
+        this.currentGameData.currentGame = new SlotGame(this.currentGameData);
+        return;
+      }
+
+      this.currentGameData.gameSettings = { ...payout };
+      this.currentGameData.currentGame = new SlotGame(this.currentGameData);
+    } catch (error) {
+      console.error(`Error initializing game data for user ${this.playerData.username}:`, error);
+    }
+  }
+}
