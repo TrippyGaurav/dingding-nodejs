@@ -32,11 +32,11 @@ class CheckResult {
         this.currentGame.settings._winData.updateBalance();
         if (!this.currentGame.settings.freeSpin.freeSpinStarted && this.currentGame.settings.freeSpin.freeSpinCount != 0)
             this.startFreeSpin();
-        const winRate = (this.currentGame.player.haveWon / this.currentGame.player.totalbet) * 100;
-        console.log(`Total Spend : ${this.currentGame.player.totalbet}  Total Won : ${this.currentGame.player.haveWon} 
-        Current RTP for ${this.currentGame.player.username}: ${winRate.toFixed(2)}% `);
-        // console.log(this.currentGame.player.rtpSpinCount, 'this.currentGame.player.rtpSpinCount');
-        // console.log("Free spin Count", this.currentGame.player.totalSpin)
+        const winRate = (this.currentGame.playerData.haveWon / this.currentGame.playerData.totalbet) * 100;
+        console.log(`Total Spend : ${this.currentGame.playerData.totalbet}  Total Won : ${this.currentGame.playerData.haveWon} 
+        Current RTP for ${this.currentGame.currentGameData.username}: ${winRate.toFixed(2)}% `);
+        // console.log(this.currentGame.player.playerData.rtpSpinCount, 'this.currentGame.player.playerData.rtpSpinCount');
+        // console.log("Free spin Count", this.currentGame.player.playerData.totalSpin)
         console.log("_____________RESULT_END________________");
     }
     checkForBonus() {
@@ -66,8 +66,8 @@ class CheckResult {
             this.currentGame.settings.freeSpin.freeSpinStarted = true;
             this.currentGame.settings.freeSpin.freeSpinsAdded = true;
             this.currentGame.settings.freeSpin.freeSpinCount += freeSpins;
-            this.currentGame.player.totalSpin += freeSpins;
-            this.currentGame.player.rtpSpinCount += freeSpins;
+            this.currentGame.playerData.totalSpin += freeSpins;
+            this.currentGame.playerData.rtpSpinCount += freeSpins;
             this.currentGame.settings._winData.winningSymbols.push(temp);
         }
     }
@@ -202,6 +202,7 @@ class CheckResult {
     checkForScatter() {
         this.scatterWinSymbols = [];
         if (this.currentGame.settings.scatter.useScatter) {
+            console.log("SCATTER2");
             let temp = this.findSymbol(gameUtils_2.specialIcons.scatter);
             if (temp.length > (5 - this.currentGame.settings.scatter.multiplier.length)) {
                 const winningAmount = this.accessData(this.currentGame.settings.scatter.symbolID, temp.length);
@@ -263,10 +264,10 @@ class CheckResult {
                 BonusResult: this.bonusResult,
             },
             PlayerData: {
-                Balance: this.currentGame.player.credits,
-                totalbet: this.currentGame.player.totalbet,
-                haveWon: this.currentGame.player.haveWon,
-                currentWining: this.currentGame.player.currentWining
+                Balance: this.currentGame.getPlayerData().credits,
+                totalbet: this.currentGame.playerData.totalbet,
+                haveWon: this.currentGame.playerData.haveWon,
+                currentWining: this.currentGame.playerData.currentWining
             }
         };
         // this.currentGame.updateDatabase()

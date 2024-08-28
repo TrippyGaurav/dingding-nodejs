@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RandomResultGenerator = void 0;
 class RandomResultGenerator {
     constructor(current) {
-        console.log('hello');
         let matrix = [];
         for (let x = 0; x < current.settings.currentGamedata.matrix.x; x++) {
             const startPosition = this.getRandomIndex((current.settings.reels[x].length - 1));
@@ -18,9 +17,9 @@ class RandomResultGenerator {
         // matrix.pop();
         // matrix.pop();
         // matrix.pop();
-        // matrix.push(['9', '9', '9', '0', '4'])
-        // matrix.push(['5', '11', '2', '12', '4'])
-        // matrix.push(['2', '13', '5', '7', '2'])
+        // matrix.push(['12', '12', '12', '12', '4'])
+        // matrix.push(['5', '1', '1', '1', '4'])
+        // matrix.push(['2', '1', '5', '7', '1'])
     }
     getRandomIndex(maxValue) {
         return Math.floor(Math.random() * (maxValue + 1));

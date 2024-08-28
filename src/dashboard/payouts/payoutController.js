@@ -54,11 +54,11 @@ class PayoutsController {
                 }
                 for (const [username, playerSocket] of socket_1.users) {
                     const gameId = payoutFileName.split('_')[0];
-                    if (playerSocket.gameSettings.id === gameId) {
+                    if (playerSocket.gameId === gameId) {
                         const socketUser = socket_1.users.get(username);
-                        if ((socketUser === null || socketUser === void 0 ? void 0 : socketUser.currentGame) && socketUser.currentGame.settings) {
-                            socketUser.currentGame.initialize(payoutJSONData);
-                            // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGame.settings.currentGamedata);
+                        if ((socketUser === null || socketUser === void 0 ? void 0 : socketUser.currentGameData) && socketUser.currentGameData.gameSettings) {
+                            socketUser.currentGameData.currentGame.initialize(payoutJSONData);
+                            // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGameData.gameSettings);
                         }
                         else {
                             console.warn(`User ${username} does not have a current game or settings.`);
@@ -211,11 +211,11 @@ class PayoutsController {
                 const matchingPayout = currentUpdatedPayout.find(payout => payout.content._id.toString() === targetPayoutId);
                 for (const [username, playerSocket] of socket_1.users) {
                     const gameId = tagName;
-                    if (playerSocket.gameSettings.id === gameId) {
+                    if (playerSocket.gameId === gameId) {
                         const socketUser = socket_1.users.get(username);
-                        if ((socketUser === null || socketUser === void 0 ? void 0 : socketUser.currentGame) && socketUser.currentGame.settings) {
-                            socketUser.currentGame.initialize(matchingPayout.content.data);
-                            // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGame.settings.currentGamedata);
+                        if ((socketUser === null || socketUser === void 0 ? void 0 : socketUser.currentGameData) && socketUser.currentGameData.gameSettings) {
+                            socketUser.currentGameData.currentGame.initialize(matchingPayout.content.data);
+                            // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGameData.gameSettings);
                         }
                         else {
                             console.warn(`User ${username} does not have a current game or settings.`);

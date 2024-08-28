@@ -75,16 +75,11 @@ const socketController = (io) => {
         const username = decoded.username;
         const existingUser = exports.users.get(username);
         if (existingUser) {
-            if (existingUser.userAgent !== userAgent) {
+            if (existingUser.playerData.userAgent !== userAgent) {
                 socket.emit("AnotherDevice", "You are already playing on another browser.");
                 socket.disconnect(true);
                 return;
             }
-            // if (existingUser.gameSocket) {
-            //     socket.emit("alert", "You are already connected from another tab.");
-            //     socket.disconnect(true);
-            //     return;
-            // }
             yield existingUser.updateGameSocket(socket);
             existingUser.sendAlert(`Game socket created for ${username}`);
             return;
@@ -92,9 +87,7 @@ const socketController = (io) => {
         // This is a new user connecting
         const newUser = new Player_1.default(username, decoded.role, decoded.credits, userAgent, socket, gameTag);
         exports.users.set(username, newUser);
-        console.log(`Welcome, ${newUser.username}!`);
-        newUser.sendAlert(`Welcome, ${newUser.username}!`);
-        // 
+        newUser.sendAlert(`Welcome, ${newUser.playerData.username}!`);
     }));
     // Error handling middleware
     io.use((socket, next) => {
