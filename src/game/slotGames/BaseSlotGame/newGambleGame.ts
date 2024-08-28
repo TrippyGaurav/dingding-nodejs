@@ -1,4 +1,5 @@
-import SlotGame from "./slotGame";
+import SlotGame from "../slotGame";
+import BaseSlotGame from "./BaseGlobal";
 
 type Suit = 'Hearts' | 'Diamonds' | 'Clubs' | 'Spades';
 type Value = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A';
@@ -23,7 +24,7 @@ export class gambleCardGame {
   shouldWin: boolean = false;
   winningCredit: number = 0;
 
-  constructor(public sltGame: SlotGame) {
+  constructor(public sltGame: BaseSlotGame) {
     this.resetGamble();
   }
 

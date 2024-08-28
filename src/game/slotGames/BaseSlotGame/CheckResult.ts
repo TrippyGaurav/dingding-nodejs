@@ -1,8 +1,7 @@
-import SlotGame from "./slotGame";
-import { ScatterPayEntry, BonusPayEntry, ResultType } from "./gameUtils";
+import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "../../Utils/gameUtils";
+import BaseSlotGame from "./BaseGlobal";
 import { WinData } from "./WinData";
-import { bonusGameType, specialIcons } from "./gameUtils";
-import { log } from "console";
+
 export class CheckResult {
     scatter: string;
     useScatter: boolean;
@@ -15,7 +14,7 @@ export class CheckResult {
     jackpotWinSymbols: any[];
     winSeq: any;
     bonusResult: string[];
-    currentGame: SlotGame;
+    currentGame: BaseSlotGame;
     constructor(current) {
         current.settings._winData = new WinData(current);
         this.currentGame = current;
