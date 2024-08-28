@@ -27,18 +27,6 @@ declare module "express-session" {
 
 const app = express();
 
-app.use(
-  session({
-    secret: config.jwtSecret,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      secure: false,
-      httpOnly: config.env === "development" ? false : true,
-      maxAge: 86400000,
-    },
-  })
-);
 
 //Cloudinary configs
 app.use(express.json({ limit: "25mb" }));
@@ -55,28 +43,23 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
-
-
 // CORS config
 const staticAllowedOrigins = [
   'https://www.milkyway-casino.com',
   'https://crm.milkyway-casino.com',
   'https://dev.casinoparadize.com',
   'http://localhost:5000',
-  'http://localhost:3000',
+  'http://localhost:3001',
   'https://7p68wzhv-5000.inc1.devtunnels.ms/'
 ];
 
-app.use(
+app.use((req, res, next) => {
   cors({
     origin: async (origin, callback) => {
-      console.log(origin)
       try {
         const gameUrls = await GamesUrl();
         const allowedOrigins = [...staticAllowedOrigins, ...gameUrls];
-        if (allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes(req.headers.host!)) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));
@@ -85,10 +68,11 @@ app.use(
         callback(new Error('Error in CORS validation'));
       }
     },
-    credentials: false,
+    credentials: true,
     optionsSuccessStatus: 200,
-  })
-);
+  })(req, res, next);
+});
+
 
 
 const server = createServer(app);

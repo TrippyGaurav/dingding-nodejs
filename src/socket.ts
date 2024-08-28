@@ -76,7 +76,7 @@ const socketController = (io: Server) => {
         const existingUser = users.get(username);
 
         if (existingUser) {
-            if (existingUser.userAgent !== userAgent) {
+            if (existingUser.playerData.userAgent !== userAgent) {
                 socket.emit("AnotherDevice", "You are already playing on another browser.");
                 socket.disconnect(true);
                 return;
@@ -91,13 +91,7 @@ const socketController = (io: Server) => {
         // This is a new user connecting
         const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket, gameTag);
         users.set(username, newUser);
-        console.log(`Welcome, ${newUser.username}!`)
-
-        newUser.sendAlert(`Welcome, ${newUser.username}!`);
-
-
-        // 
-
+        newUser.sendAlert(`Welcome, ${newUser.playerData.username}!`);
     });
 
     // Error handling middleware

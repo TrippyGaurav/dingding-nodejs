@@ -154,7 +154,7 @@ export class GameController {
       }
 
       const existingUser = users.get(username);
-      if (existingUser && existingUser.gameSocket) {
+      if (existingUser && existingUser.socketData.gameSocket) {
         throw createHttpError(403, "You already have an active game session.")
       }
 
