@@ -147,7 +147,7 @@ class GameController {
                     throw (0, http_errors_1.default)(400, "Slug parameter is required");
                 }
                 const existingUser = socket_1.users.get(username);
-                if (existingUser && existingUser.gameSocket) {
+                if (existingUser && existingUser.socketData.gameSocket) {
                     throw (0, http_errors_1.default)(403, "You already have an active game session.");
                 }
                 const platform = yield gameModel_1.Platform.aggregate([

@@ -78,13 +78,6 @@ function convertSymbols(data) {
             freeSpin: element.freeSpin,
             description: element.description || {}
         };
-        // if (element.multiplier) {
-        //   const multiplierObject = {};
-        //   element.multiplier.forEach((item, index) => {
-        //     multiplierObject[(5 - index).toString() + "x"] = item[0];
-        //   });
-        //   symbolData.multiplier = multiplierObject;
-        // }
         uiData.symbols.push(symbolData);
     });
     return uiData;
