@@ -4,7 +4,6 @@ export class RandomResultGenerator {
 
     currentGame: SlotGame;
     constructor(current) {
-        console.log('hello')
         let matrix: string[][] = [];
         for (let x = 0; x < current.settings.currentGamedata.matrix.x; x++) {
             const startPosition = this.getRandomIndex((current.settings.reels[x].length - 1));
@@ -19,9 +18,9 @@ export class RandomResultGenerator {
         // matrix.pop();
         // matrix.pop();
         // matrix.pop();
-        // matrix.push(['9', '9', '9', '0', '4'])
-        // matrix.push(['5', '11', '2', '12', '4'])
-        // matrix.push(['2', '13', '5', '7', '2'])
+        // matrix.push(['12', '12', '12', '12', '4'])
+        // matrix.push(['5', '1', '1', '1', '4'])
+        // matrix.push(['2', '1', '5', '7', '1'])
     }
     getRandomIndex(maxValue: number): number {
         return Math.floor(Math.random() * (maxValue + 1));

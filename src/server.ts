@@ -16,8 +16,8 @@ import { checkAdmin } from "./dashboard/middleware/checkAdmin";
 import payoutController from "./dashboard/payouts/payoutController";
 import payoutRoutes from "./dashboard/payouts/payoutRoutes";
 import { checkUser } from "./dashboard/middleware/checkUser";
-
-
+import { Platform } from "./dashboard/games/gameModel";
+import { GamesUrl } from "./dashboard/games/gameService";
 declare module "express-session" {
   interface Session {
     captcha?: string;
@@ -27,18 +27,6 @@ declare module "express-session" {
 
 const app = express();
 
-app.use(
-  session({
-    secret: config.jwtSecret,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      secure: false,
-      httpOnly: config.env === "development" ? false : true,
-      maxAge: 86400000,
-    },
-  })
-);
 
 //Cloudinary configs
 app.use(express.json({ limit: "25mb" }));
@@ -56,15 +44,35 @@ app.use((req, res, next) => {
 });
 
 // CORS config
-app.use(
+const staticAllowedOrigins = [
+  'https://www.milkyway-casino.com',
+  'https://crm.milkyway-casino.com',
+  'https://dev.casinoparadize.com',
+  'http://localhost:5000',
+  'http://localhost:3001',
+  'https://7p68wzhv-5000.inc1.devtunnels.ms/'
+];
+
+app.use((req, res, next) => {
   cors({
-    origin: (origin, callback) => {
-      callback(null, true); // Allow all origins
+    origin: async (origin, callback) => {
+      try {
+        const gameUrls = await GamesUrl();
+        const allowedOrigins = [...staticAllowedOrigins, ...gameUrls];
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes(req.headers.host!)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      } catch (error) {
+        callback(new Error('Error in CORS validation'));
+      }
     },
     credentials: true,
     optionsSuccessStatus: 200,
-  })
-);
+  })(req, res, next);
+});
+
 
 
 const server = createServer(app);
