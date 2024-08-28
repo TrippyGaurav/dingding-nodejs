@@ -1,10 +1,11 @@
-import { GameSettings } from "../../../dashboard/games/gameType";
+
 import { currentGamedata } from "../../../Player";
 import { betMultiplier, UiInitData, convertSymbols, specialIcons, bonusGameType, shuffleArray, ResultType, RequiredSocketMethods } from "../../Utils/gameUtils";
 import { combineUniqueSymbols, removeRecurringIndexSymbols, cascadeMoveTowardsNull, transposeMatrix } from "../../Utils/SlotUtils";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { BonusGame } from "./BonusGame";
 import { CheckResult } from "./CheckResult";
+import { GameSettings } from "./gameType";
 import { gambleCardGame } from "./newGambleGame";
 import { WinData } from "./WinData";
 

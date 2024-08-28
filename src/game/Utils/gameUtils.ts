@@ -1,5 +1,6 @@
-import { UserData } from "../../dashboard/games/gameType";
+
 import { Player } from "../../dashboard/users/userModel";
+import { UserData } from "../../utils/globalTypes";
 export enum specialIcons {
     bonus = "Bonus",
     scatter = "Scatter",
@@ -92,12 +93,6 @@ export function convertSymbols(data) {
         let symbolData = {
             ID: element.Id,
             Name: element.Name || {},
-            multiplier: element.multiplier || {},
-            defaultAmount: element.defaultAmount || {},
-            symbolsCount: element.symbolsCount || element.symbolCount || {},
-            increaseValue: element.increaseValue || {},
-            freeSpin: element.freeSpin,
-            description: element.description || {}
         };
         uiData.symbols.push(symbolData);
     });

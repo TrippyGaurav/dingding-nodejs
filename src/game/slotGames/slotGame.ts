@@ -1,17 +1,13 @@
 import { currentGamedata } from "../../Player";
 import BaseSlotGame from "./BaseSlotGame/BaseSlotGame";
-
-interface RequiredSocketMethods {
-  sendMessage(action: string, message: any): void;
-  sendError(error: string): void;
-  sendAlert(alert: string): void;
-  messageHandler(data: any): void;
-  updatePlayerBalance(amount: number): void;
-  deductPlayerBalance(amount: number): void;
-}
+import { SLCM } from "./SL-CM/cashMachineBase";
 
 export default class SlotGameManager  {
  public currentGame : any;
+
+  gameClassMapping: { [key: string]: any } = {
+  "SL-CM": SLCM,
+};
 
   constructor(public currentGameData: currentGamedata) {
     console.log(currentGameData.gameSettings.id);
@@ -22,7 +18,15 @@ export default class SlotGameManager  {
     }
     else{
       console.log("Special Game Slot ");
-      
+      const slotGameClass = this.gameClassMapping[currentGameData.gameSettings.id];
+    
+      if (slotGameClass) {
+        this.currentGame = new slotGameClass(currentGameData);
+      } else {
+        throw new Error(`No game class found for id: ${currentGameData.gameSettings.id}`);
+      }
     }
-  }
+    }
+  
+
 }

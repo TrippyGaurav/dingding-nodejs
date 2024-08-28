@@ -5,7 +5,6 @@ import SlotGameManager from "./slotGames/slotGame";
 
 export default class GameManager  {
     public currentGameType : SlotGameManager|KenoGameManager;
-   
      constructor(public currentGameData: currentGamedata) {
         const currentGameType = currentGameData.gameSettings.id.substring(0, 2);
         console.log("Current Game Type : ",currentGameType);

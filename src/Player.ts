@@ -5,7 +5,7 @@ import { Player } from "./dashboard/users/userModel";
 import { Platform } from "./dashboard/games/gameModel";
 import payoutController from "./dashboard/payouts/payoutController";
 import { getPlayerCredits, messageType } from "./game/Utils/gameUtils";
-import { gameData } from "./game/slotGames/testData";
+import { gameData } from "./game/testData";
 import { users } from "./socket";
 import SlotGame from "./game/slotGames/slotGame";
 import GameManager from "./game/GameManager";
@@ -266,6 +266,7 @@ export default class PlayerSocket {
 
       if (platform.length === 0) {
         this.currentGameData.gameSettings = { ...gameData[0] };
+        
         this.currentGameData.currentGameManager = new GameManager(this.currentGameData);
         return;
       }

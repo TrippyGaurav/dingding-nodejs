@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import { gambleCardGame } from "../../game/slotGames/BaseSlotGame/newGambleGame";
-import { WinData } from "../../game/slotGames/BaseSlotGame/WinData";
+import { gambleCardGame } from "./newGambleGame";
+import { WinData } from "./WinData";
 
 
 

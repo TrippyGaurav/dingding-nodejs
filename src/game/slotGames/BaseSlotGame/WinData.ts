@@ -10,7 +10,7 @@ export class WinData {
     resultReelIndex: number[] = [];
     slotGame: BaseSlotGame;
 
-    constructor(slotGame: BaseSlotGame) {
+    constructor(slotGame: any) {
         this.freeSpins = 0;
         this.winningLines = [];
         this.winningSymbols = [];
