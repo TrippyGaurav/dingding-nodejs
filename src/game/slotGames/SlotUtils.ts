@@ -69,3 +69,18 @@ export function removeRecurringIndexSymbols(symbolsToEmit: string[][]): string[]
     return transposed;
   }
 
+export function combineUniqueSymbols(symbolsToEmit: string[][]): string[] {
+    const seen = new Set<string>();
+    const result: string[] = [];
+
+    symbolsToEmit.forEach((subArray) => {
+      subArray.forEach((symbol) => {
+        if (!seen.has(symbol)) {
+          seen.add(symbol);
+          result.push(symbol);
+        }
+      });
+    });
+
+    return result;
+  }

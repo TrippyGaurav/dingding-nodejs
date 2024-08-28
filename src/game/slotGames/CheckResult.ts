@@ -290,7 +290,6 @@ export class CheckResult {
 
     makeResultJson(isResult: ResultType, iconsToFill: number[][] = []) {
         //TODO : Try to send the jackpot win data without initializie a variable;
-        const playerData = this.currentGame.getPlayerData();
         this.currentGame.settings._winData.totalWinningAmount =
             Math.round(this.currentGame.settings._winData.totalWinningAmount * 100) / 100;
         const ResultData = {

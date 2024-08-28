@@ -1,8 +1,5 @@
 import { Socket } from "socket.io";
-import {
-  GameData,
-  GameSettings,
-} from "../../dashboard/games/gameType";
+import { GameData, GameSettings } from "../../dashboard/games/gameType";
 import {
   bonusGameType,
   convertSymbols,
@@ -18,113 +15,195 @@ import { WinData } from "./WinData";
 import { RandomResultGenerator } from "./RandomResultGenerator";
 import { CheckResult } from "./CheckResult";
 import { gambleCardGame } from "./newGambleGame";
-import PlayerSocket, { currentGamedata,playerData } from "../../Player";
+import PlayerSocket, { currentGamedata, playerData } from "../../Player";
 import { baseSettings } from "./BaseSlotGame/BaseGlobal";
-import { cascadeMoveTowardsNull, removeRecurringIndexSymbols, transposeMatrix } from "./SlotUtils";
+import {
+  cascadeMoveTowardsNull,
+  combineUniqueSymbols,
+  removeRecurringIndexSymbols,
+  transposeMatrix,
+} from "./SlotUtils";
 
+interface RequiredSocketMethods {
+  sendMessage(action: string, message: any): void;
+  sendError(error: string): void;
+  sendAlert(alert: string): void;
+  messageHandler(data: any): void;
+  updatePlayerBalance(amount: number): void;
+  deductPlayerBalance(amount: number): void;
+}
 
-export default class SlotGame {
-    public settings: GameSettings;
-    playerData =  {
-        haveWon: 0,
-        currentWining: 0,
-        totalbet: 0,
-        rtpSpinCount: 0,
-        totalSpin: 0,
+export default class SlotGame implements RequiredSocketMethods {
+  public settings: GameSettings;
+  playerData = {
+    haveWon: 0,
+    currentWining: 0,
+    totalbet: 0,
+    rtpSpinCount: 0,
+    totalSpin: 0,
+  };
 
-    }
-  constructor(public currentGameData : currentGamedata ) {
-    this.settings =  {
-        currentGamedata: {
-            id: "",
-            matrix: { x: 0, y: 0 },
-            linesApiData: [],
-            Symbols: [
-                {
-                    Name: "",
-                    Id: null,
-                    weightedRandomness: 0,
-                    useWildSub: false,
-                    multiplier: [],
-                    defaultAmount: [],
-                    symbolsCount: [],
-                    increaseValue: [],
-                    reelInstance: [], // Ensure reelInstance is initialized
-                },
-            ],
-            bonus: {
-                isEnabled: false,
-                type: "",
-                noOfItem: 0,
-                payOut: [], // Ensure payOut is initialized
-                payOutProb: [], // Ensure payOutProb is initialized
-                payTable: [], // Ensure payTable is initialized
-            },
-            bets: [], // Ensure bets is initialized
-            linesCount: 0, // Ensure linesCount is initialized
-        },
-        tempReels: [[]],
-
-        payLine: [],
-        useScatter: false,
-        wildSymbol: {
-            SymbolName: "-1",
-            SymbolID: -1,
-            useWild: false
-        },
-        Symbols: [],
-        Weights: [],
-        resultSymbolMatrix: [],
-        lineData: [],
-        fullPayTable: [],
-        _winData: undefined,
-        resultReelIndex: [],
-        noOfBonus: 0,
-        totalBonuWinAmount: [],
-        jackpot: {
-            symbolName: "",
-            symbolsCount: 0,
-            symbolId: 0,
-            defaultAmount: 0,
-            increaseValue: 0,
-            useJackpot: false,
-        },
-        bonus: {
-            start: false,
-            stopIndex: -1,
-            game: null,
-            id: -1,
-            symbolCount: -1,
-            pay: -1,
-            useBonus: false,
-        },
-        freeSpin: {
-            symbolID: "-1",
-            freeSpinMuiltiplier: [],
-            freeSpinStarted: false,
-            freeSpinsAdded: false,
-            freeSpinCount: 0,
-            noOfFreeSpins: 0,
-            useFreeSpin: false,
-        },
-        scatter: {
-            symbolID: "-1",
+  constructor(public currentGameData: currentGamedata) {
+    this.settings = {
+      currentGamedata: {
+        id: "",
+        matrix: { x: 0, y: 0 },
+        linesApiData: [],
+        Symbols: [
+          {
+            Name: "",
+            Id: null,
+            weightedRandomness: 0,
+            useWildSub: false,
             multiplier: [],
-            useScatter: false
+            defaultAmount: [],
+            symbolsCount: [],
+            increaseValue: [],
+            reelInstance: [], // Ensure reelInstance is initialized
+          },
+        ],
+        bonus: {
+          isEnabled: false,
+          type: "",
+          noOfItem: 0,
+          payOut: [], // Ensure payOut is initialized
+          payOutProb: [], // Ensure payOutProb is initialized
+          payTable: [], // Ensure payTable is initialized
         },
-        currentBet: 0,
-        currentLines: 0,
-        BetPerLines: 0,
-        startGame: false,
-        gamble: new gambleCardGame(this),
-        reels: [[]],
-        currentMoolahCount: 0,
+        bets: [], // Ensure bets is initialized
+        linesCount: 0, // Ensure linesCount is initialized
+      },
+      tempReels: [[]],
+
+      payLine: [],
+      useScatter: false,
+      wildSymbol: {
+        SymbolName: "-1",
+        SymbolID: -1,
+        useWild: false,
+      },
+      Symbols: [],
+      Weights: [],
+      resultSymbolMatrix: [],
+      lineData: [],
+      fullPayTable: [],
+      _winData: undefined,
+      resultReelIndex: [],
+      noOfBonus: 0,
+      totalBonuWinAmount: [],
+      jackpot: {
+        symbolName: "",
+        symbolsCount: 0,
+        symbolId: 0,
+        defaultAmount: 0,
+        increaseValue: 0,
+        useJackpot: false,
+      },
+      bonus: {
+        start: false,
+        stopIndex: -1,
+        game: null,
+        id: -1,
+        symbolCount: -1,
+        pay: -1,
+        useBonus: false,
+      },
+      freeSpin: {
+        symbolID: "-1",
+        freeSpinMuiltiplier: [],
+        freeSpinStarted: false,
+        freeSpinsAdded: false,
+        freeSpinCount: 0,
+        noOfFreeSpins: 0,
+        useFreeSpin: false,
+      },
+      scatter: {
+        symbolID: "-1",
+        multiplier: [],
+        useScatter: false,
+      },
+      currentBet: 0,
+      currentLines: 0,
+      BetPerLines: 0,
+      startGame: false,
+      gamble: new gambleCardGame(this),
+      reels: [[]],
+      currentMoolahCount: 0,
     };
 
     this.initialize(currentGameData.gameSettings);
-    this.messageHandler();
+    // this.messageHandler((data: any));
   }
 
+  sendMessage(action: string, message: any) {
+    this.currentGameData.sendMessage(action, message);
+  }
+  sendError(message: string) {
+    this.currentGameData.sendError(message);
+  }
+  sendAlert(message: string) {
+    this.currentGameData.sendAlert(message);
+  }
+  updatePlayerBalance(message: number) {
+    this.currentGameData.updatePlayerBalance(message);
+  }
+  deductPlayerBalance(message: number) {
+    this.currentGameData.deductPlayerBalance(message);
+  }
+  getPlayerData() {
+    return this.currentGameData.getPlayerData();
+  }
+
+  messageHandler(response: any) {
+    switch (response.id) {
+      case "SPIN":
+        if (this.settings.startGame) {
+          this.settings.currentLines = response.data.currentLines;
+          this.settings.BetPerLines = betMultiplier[response.data.currentBet];
+          this.settings.currentBet =
+            betMultiplier[response.data.currentBet] *
+            this.settings.currentLines;
+
+          this.spinResult();
+        }
+        break;
+
+      case "GENRTP":
+        this.settings.currentLines = response.data.currentLines;
+        this.settings.BetPerLines = betMultiplier[response.data.currentBet];
+        this.settings.currentBet =
+          betMultiplier[response.data.currentBet] * this.settings.currentLines;
+
+        this.getRTP(response.data.spins);
+        break;
+
+      case "checkMoolah":
+        this.checkforMoolah();
+        break;
+
+      case "GambleInit":
+        this.settings.gamble.resetGamble();
+
+        const sendData = this.settings.gamble.sendInitGambleData(
+          response.data.GAMBLETYPE
+        );
+        console.log(sendData);
+
+        this.sendMessage("gambleInitData", sendData);
+        break;
+
+      case "GambleResultData":
+        this.settings.gamble.getResult(response.data.GAMBLETYPE);
+        break;
+      case "GAMBLECOLLECT":
+        this.settings.gamble.updateCredits();
+        break;
+      default:
+        console.warn(`Unhandled message ID: ${response.id}`);
+        this.sendError(`Unhandled message ID: ${response.id}`);
+        break;
+    }
+  }
 
   private initialize(GameData: GameData) {
     this.settings.Symbols = [];
@@ -137,90 +216,6 @@ export default class SlotGame {
     this.makePayLines();
     this.sendInitdata();
   }
-  
-  sendMessage (action: string, message: any){
-    this.currentGameData.sendMessage(action,message)
-}
-  sendError (message: string){
-    this.currentGameData.sendError(message);
-  };
-  sendAlert (message: string){
-    this.currentGameData.sendAlert(message);
-  };
-  updatePlayerBalance (message: number){
-    this.currentGameData.updatePlayerBalance(message);
-  };
-  deductPlayerBalance (message: number){
-    this.currentGameData.deductPlayerBalance(message);
-  };
-  getPlayerData (){
-    return  this.currentGameData.getPlayerData();
-  }
- 
-  private messageHandler() {
-    this.currentGameData.gameSocket.on("message", (message) => {
-        try {
-            const res = JSON.parse(message);
-            console.log("Message Recieved : ", message);
-
-
-            switch (res.id) {
-                case "SPIN":
-
-                    if (this.settings.startGame) {
-                        this.settings.currentLines = res.data.currentLines;
-                        this.settings.BetPerLines = betMultiplier[res.data.currentBet];
-
-                        this.settings.currentBet = betMultiplier[res.data.currentBet] * this.settings.currentLines;
-
-                        this.spinResult();
-                    }
-                    break;
-
-                case "GENRTP":
-
-
-                    this.settings.currentLines = res.data.currentLines;
-                    this.settings.BetPerLines = betMultiplier[res.data.currentBet];
-                    this.settings.currentBet =
-                        betMultiplier[res.data.currentBet] * this.settings.currentLines;
-
-
-                    this.getRTP(res.data.spins);
-                    break;
-
-                case "checkMoolah":
-                    this.checkforMoolah();
-                    break;
-
-                case "GambleInit":
-                    this.settings.gamble.resetGamble();
-
-                    const sendData = this.settings.gamble.sendInitGambleData(
-                        res.data.GAMBLETYPE
-                    );
-                    console.log(sendData);
-
-                    this.sendMessage("gambleInitData", sendData);
-                    break;
-
-                case "GambleResultData":
-                    this.settings.gamble.getResult(res.data.GAMBLETYPE);
-                    break;
-                case "GAMBLECOLLECT":
-                    this.settings.gamble.updateCredits();
-                    break;
-                default:
-                    console.warn(`Unhandled message ID: ${res.id}`);
-                    this.sendError(`Unhandled message ID: ${res.id}`);
-                    break;
-            }
-        } catch (error) {
-            console.error("Failed to parse message:", error);
-            this.sendError("Failed to parse message");
-        }
-    });
-}
 
   private initSymbols() {
     for (let i = 0; i < this.settings.currentGamedata.Symbols.length; i++) {
@@ -241,7 +236,6 @@ export default class SlotGame {
       }
     });
   }
-
 
   private handleSpecialSymbols(symbol: any) {
     switch (symbol.Name) {
@@ -303,7 +297,6 @@ export default class SlotGame {
     // let specialSymbols = this.settings.currentGamedata.Symbols.filter(
     //   (element) => !element.useWildSub
     // );
-    const playerData = this.getPlayerData();
     const dataToSend = {
       GameData: {
         Reel: this.settings.reels,
@@ -352,7 +345,7 @@ export default class SlotGame {
 
   private async spinResult() {
     try {
-        const playerData = this.getPlayerData();
+      const playerData = this.getPlayerData();
       if (this.settings.currentBet > playerData.credits) {
         console.log("Low Balance : ", playerData.credits);
         console.log("Current Bet : ", this.settings.currentBet);
@@ -434,7 +427,8 @@ export default class SlotGame {
 
       const lastWinData = this.settings._winData;
 
-      lastWinData.winningSymbols = this.combineUniqueSymbols(removeRecurringIndexSymbols(lastWinData.winningSymbols)
+      lastWinData.winningSymbols = combineUniqueSymbols(
+        removeRecurringIndexSymbols(lastWinData.winningSymbols)
       );
 
       const index = lastWinData.winningSymbols.map((str) => {
@@ -449,7 +443,7 @@ export default class SlotGame {
         matrix[element[1]][element[0]] = null;
       });
 
-      const movedArray =cascadeMoveTowardsNull(matrix);
+      const movedArray = cascadeMoveTowardsNull(matrix);
 
       let transposed = transposeMatrix(movedArray);
       let iconsToFill: number[][] = [];
@@ -484,19 +478,5 @@ export default class SlotGame {
     }
   }
 
-  private combineUniqueSymbols(symbolsToEmit: string[][]): string[] {
-    const seen = new Set<string>();
-    const result: string[] = [];
 
-    symbolsToEmit.forEach((subArray) => {
-      subArray.forEach((symbol) => {
-        if (!seen.has(symbol)) {
-          seen.add(symbol);
-          result.push(symbol);
-        }
-      });
-    });
-
-    return result;
-  }
 }
