@@ -14,9 +14,10 @@ const _config = {
   phonenumber: process.env.PHONENUMBER,
   accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  region: process.env.AWS_REGION  ||'',
+  region: process.env.AWS_REGION || '',
   emailSource: process.env.EMAILSOURCE,
   platformName: process.env.PLATFORM_NAME,
-  sentToemail: process.env.SENT_TO_EMAIL
+  sentToemail: process.env.SENT_TO_EMAIL,
+  hosted_url_cors: process.env.HOSTED_URL_CORS
 };
 export const config = Object.freeze(_config);
