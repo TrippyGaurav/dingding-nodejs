@@ -52,7 +52,7 @@ export default class PlayerSocket {
     gameSocket: Socket,
     public gameId: string
   ) {
-    
+      
     this.socketData = {
       gameSocket : null,
       heartbeatInterval: setInterval(() => {}, 0),
@@ -68,7 +68,7 @@ export default class PlayerSocket {
       credits,
       userAgent
     };
-
+    
     this.currentGameData = {
       currentGameManager: null, // Will be initialized later
       gameSettings: null,
@@ -86,6 +86,7 @@ export default class PlayerSocket {
 
   private initializeGameSocket(socket: Socket) {
     this.socketData.gameSocket = socket;
+    this.gameId = socket.handshake.auth.gameId
     this.socketData.gameSocket.on("disconnect", () => this.handleGameDisconnection());
     this.initGameData();
     this.startHeartbeat();
@@ -94,7 +95,7 @@ export default class PlayerSocket {
     socket.emit("socketState", true);
   }
 
-  private handleGameDisconnection() {
+  private handleGameDisconnection() {    
     this.attemptReconnection();
   }
 
@@ -201,7 +202,9 @@ export default class PlayerSocket {
   }
 
   private cleanup() {
+    console.log("CAlled",this.socketData.gameSocket);
     if (this.socketData.gameSocket) {
+      
       this.socketData.gameSocket.disconnect(true);
       this.socketData.gameSocket = null;
     }
@@ -213,18 +216,18 @@ export default class PlayerSocket {
       credits: 0,
       userAgent: ""
     };
+    this.gameId = null
     this.currentGameData = {
       currentGameManager: null,
       gameSettings: null,
-      sendMessage: this.sendMessage.bind(this),
-      sendError: this.sendError.bind(this),
-      sendAlert: this.sendAlert.bind(this),
-      updatePlayerBalance: this.updatePlayerBalance.bind(this),
-      deductPlayerBalance: this.deductPlayerBalance.bind(this),
-      getPlayerData: () => this.playerData,
-      username : this.playerData.username,
+      sendMessage: ()=>{},
+      sendError: ()=>{},
+      sendAlert: ()=>{},
+      updatePlayerBalance: ()=>{},
+      deductPlayerBalance: ()=>{},
+      getPlayerData: () => null,
+      username : null,
     };
-
     this.socketData = {
       ...this.socketData,
       reconnectionAttempts: 0,
@@ -264,13 +267,13 @@ export default class PlayerSocket {
         { $project: { _id: 0, game: "$games" } },
       ]);
 
+        
       if (platform.length === 0) {
         this.currentGameData.gameSettings = { ...gameData[0] };
-        
         this.currentGameData.currentGameManager = new GameManager(this.currentGameData);
         return;
       }
-
+      
       const game = platform[0].game;
       const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout);
 

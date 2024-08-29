@@ -69,7 +69,7 @@ class PayoutsController {
         throw createHttpError(404, "Platform or game not found");
       }
       for (const [username, playerSocket] of users) {
-
+        
         const gameId = payoutFileName.split('_')[0];
         if (playerSocket.gameId === gameId) {
           const socketUser = users.get(username);
@@ -270,7 +270,7 @@ class PayoutsController {
         const gameId = tagName;
         if (playerSocket.gameId === gameId) {
           const socketUser = users.get(username);
-          if (socketUser?.currentGameData && socketUser.currentGameData.gameSettings) {
+          if (socketUser.currentGameData.currentGameManager && socketUser.currentGameData.gameSettings) {
             socketUser.currentGameData.currentGameManager.currentGameType.currentGame.initialize(matchingPayout.content.data)
             // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGameData.gameSettings);
           } else {

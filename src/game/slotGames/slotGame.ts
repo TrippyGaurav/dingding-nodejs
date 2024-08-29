@@ -10,23 +10,19 @@ export default class SlotGameManager  {
 };
 
   constructor(public currentGameData: currentGamedata) {
-    console.log(currentGameData.gameSettings.id);
     
-    if(!currentGameData.gameSettings.isSpecial)
-    {
-      this.currentGame = new BaseSlotGame(currentGameData);
-    }
-    else{
-      console.log("Special Game Slot ");
+      console.log("Requesting Game : ",currentGameData.gameSettings.id);
+      
       const slotGameClass = this.gameClassMapping[currentGameData.gameSettings.id];
     
       if (slotGameClass) {
         this.currentGame = new slotGameClass(currentGameData);
       } else {
-        throw new Error(`No game class found for id: ${currentGameData.gameSettings.id}`);
+        this.currentGame = new BaseSlotGame(currentGameData);
+        // throw new Error(`No game class found for id: ${currentGameData.gameSettings.id}`);
       }
     }
     }
   
 
-}
+
