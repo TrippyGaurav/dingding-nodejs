@@ -18,6 +18,7 @@ const _config = {
     region: process.env.AWS_REGION || '',
     emailSource: process.env.EMAILSOURCE,
     platformName: process.env.PLATFORM_NAME,
-    sentToemail: process.env.SENT_TO_EMAIL
+    sentToemail: process.env.SENT_TO_EMAIL,
+    hosted_url_cors: process.env.HOSTED_URL_CORS
 };
 exports.config = Object.freeze(_config);
