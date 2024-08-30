@@ -90,12 +90,27 @@ export function convertSymbols(data) {
         return uiData;
     }
     data.forEach((element) => {
+
         let symbolData = {
             ID: element.Id,
-            Name: element.Name || {},
+            Name: element.Name ||  {},
+            "multiplier": element.multiplier ||  {},
+            "defaultAmount": element.defaultAmount ||  {},
+            "symbolsCount": element.symbolsCount || {},
+            "increaseValue": element.increaseValue||   {},
+            "freeSpin": element.freeSpin,
+            "description": element.description || {}
         };
+        // if (element.multiplier) {
+        //   const multiplierObject = {};
+        //   element.multiplier.forEach((item, index) => {
+        //     multiplierObject[(5 - index).toString() + "x"] = item[0];
+        //   });
+        //   symbolData.multiplier = multiplierObject;
+        // }
         uiData.symbols.push(symbolData);
     });
+
     return uiData;
 }
 

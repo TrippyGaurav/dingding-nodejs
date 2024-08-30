@@ -21,9 +21,9 @@ export const gameData = [
                 "canCallRedSpin" : false,
                 "canCallRespin" : false,
                 "reelInstance": {
-                    "0": 9,
-                    "1": 9,
-                    "2": 9,
+                    "0": 60,
+                    "1": 62,
+                    "2": 55,
                 }
             },
             {
@@ -33,9 +33,9 @@ export const gameData = [
                 "canCallRedSpin" : true,
                 "canCallRespin" : false,
                 "reelInstance": {
-                    "0": 9,
-                    "1": 9,
-                    "2": 9,
+                    "0": 5,
+                    "1": 0,
+                    "2": 0,
                 }
             },
             {
@@ -45,9 +45,9 @@ export const gameData = [
                 "canCallRedSpin" : true,
                 "canCallRespin" : false,
                 "reelInstance": {
-                    "0": 9,
-                    "1": 9,
-                    "2": 9,
+                    "0": 4,
+                    "1": 0,
+                    "2": 0,
                 }
             },
             {
@@ -57,9 +57,9 @@ export const gameData = [
                 "canCallRedSpin" : true,
                 "canCallRespin" : false,
                 "reelInstance": {
-                    "0": 9,
-                    "1": 9,
-                    "2": 9,
+                    "0": 2,
+                    "1": 5,
+                    "2": 8,
                 }
             },
             {
@@ -69,9 +69,9 @@ export const gameData = [
                 "canCallRedSpin" : false,
                 "canCallRespin" : false,
                 "reelInstance": {
-                    "0": 9,
-                    "1": 9,
-                    "2": 9,
+                    "0": 1,
+                    "1": 0,
+                    "2": 0,
                 }
             },
             {
@@ -81,9 +81,9 @@ export const gameData = [
                 "canCallRedSpin" : false,
                 "canCallRespin" : true,
                 "reelInstance": {
-                    "0": 9,
-                    "1": 9,
-                    "2": 9,
+                    "0": 0,
+                    "1": 4,
+                    "2": 5,
                 }
             },
             {
@@ -93,9 +93,9 @@ export const gameData = [
                 "canCallRedSpin" : false,
                 "canCallRespin" : true,
                 "reelInstance": {
-                    "0": 9,
-                    "1": 9,
-                    "2": 9,
+                    "0": 0,
+                    "1": 0,
+                    "2": 4,
                 }
             },
         ]

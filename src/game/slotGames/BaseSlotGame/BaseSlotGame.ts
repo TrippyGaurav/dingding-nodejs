@@ -203,6 +203,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
         this.settings.currentGamedata.Symbols[i]?.weightedRandomness
       );
     }
+    
   }
 
   private makePayLines() {
@@ -296,6 +297,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
       },
       maxGambleBet: 300,
     };
+console.log("UiInitData",UiInitData)
 
     this.sendMessage("InitData", dataToSend);
   }
