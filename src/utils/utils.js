@@ -19,6 +19,7 @@ const transactionController_1 = require("../dashboard/transactions/transactionCo
 const cloudinary_1 = require("cloudinary");
 const config_1 = require("../config/config");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const socket_1 = require("../socket");
 const transactionController = new transactionController_1.TransactionController();
 exports.clients = new Map();
 exports.rolesHierarchy = {
@@ -41,11 +42,25 @@ var MESSAGEID;
     MESSAGEID["GENRTP"] = "GENRTP";
 })(MESSAGEID || (exports.MESSAGEID = MESSAGEID = {}));
 const updateStatus = (client, status) => {
+    // Destroy SlotGame instance if we update user to inactive && the client is currently in a game
     const validStatuses = ["active", "inactive"];
     if (!validStatuses.includes(status)) {
         throw (0, http_errors_1.default)(400, "Invalid status value");
     }
     client.status = status;
+    for (const [username, playerSocket] of socket_1.users) {
+        if (playerSocket) {
+            const socketUser = socket_1.users.get(client.username);
+            if (socketUser) {
+                if (status === 'inactive') {
+                    socketUser.forceExit();
+                }
+            }
+            else {
+                console.warn(`User ${client.username} does not have a current game or settings.`);
+            }
+        }
+    }
 };
 exports.updateStatus = updateStatus;
 const updatePassword = (client, password, existingPassword) => __awaiter(void 0, void 0, void 0, function* () {

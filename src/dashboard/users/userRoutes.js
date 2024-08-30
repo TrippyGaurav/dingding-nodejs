@@ -19,6 +19,8 @@ userRoutes.get("/generatePassword", checkUser_1.checkUser, userController.genera
 userRoutes.get("/", checkUser_1.checkUser, userController.getCurrentUser);
 // // GET all subordinates
 userRoutes.get("/all", checkUser_1.checkUser, userController.getAllSubordinates);
+// // GET all Players
+userRoutes.get('/allPlayer', checkUser_1.checkUser, userController.getAllPlayers);
 // GET Current User subordinate
 userRoutes.get("/subordinates", checkUser_1.checkUser, userController.getCurrentUserSubordinates);
 // GET Report

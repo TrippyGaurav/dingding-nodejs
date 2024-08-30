@@ -16,10 +16,10 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const userModel_1 = require("./dashboard/users/userModel");
 const gameModel_1 = require("./dashboard/games/gameModel");
 const payoutController_1 = __importDefault(require("./dashboard/payouts/payoutController"));
-const slotGame_1 = __importDefault(require("./game/slotGames/slotGame"));
-const gameUtils_1 = require("./game/slotGames/gameUtils");
-const testData_1 = require("./game/slotGames/testData");
+const gameUtils_1 = require("./game/Utils/gameUtils");
+const testData_1 = require("./game/testData");
 const socket_1 = require("./socket");
+const GameManager_1 = __importDefault(require("./game/GameManager"));
 class PlayerSocket {
     constructor(username, role, credits, userAgent, gameSocket, gameId) {
         this.gameId = gameId;
@@ -38,7 +38,7 @@ class PlayerSocket {
             userAgent
         };
         this.currentGameData = {
-            currentGame: null, // Will be initialized later
+            currentGameManager: null, // Will be initialized later
             gameSettings: null,
             sendMessage: this.sendMessage.bind(this),
             sendError: this.sendError.bind(this),
@@ -53,6 +53,7 @@ class PlayerSocket {
     }
     initializeGameSocket(socket) {
         this.socketData.gameSocket = socket;
+        this.gameId = socket.handshake.auth.gameId;
         this.socketData.gameSocket.on("disconnect", () => this.handleGameDisconnection());
         this.initGameData();
         this.startHeartbeat();
@@ -81,7 +82,7 @@ class PlayerSocket {
             try {
                 const response = JSON.parse(message);
                 console.log(`Message Recieved for ${this.playerData.username} : `, message);
-                this.currentGameData.currentGame.messageHandler(response);
+                this.currentGameData.currentGameManager.currentGameType.currentGame.messageHandler(response);
             }
             catch (error) {
                 console.error("Failed to parse message:", error);
@@ -172,8 +173,9 @@ class PlayerSocket {
             credits: 0,
             userAgent: ""
         };
+        this.gameId = null;
         this.currentGameData = {
-            currentGame: null,
+            currentGameManager: null,
             gameSettings: null,
             sendMessage: this.sendMessage.bind(this),
             sendError: this.sendError.bind(this),
@@ -191,6 +193,11 @@ class PlayerSocket {
             socket_1.users.delete(this.playerData.username);
             this.cleanup();
         });
+    }
+    forceExit() {
+        this.sendAlert("ForcedExit");
+        socket_1.users.delete(this.playerData.username);
+        this.cleanup();
     }
     updateGameSocket(socket) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -213,6 +220,7 @@ class PlayerSocket {
                 return;
             try {
                 const tagName = this.gameId;
+                console.log(tagName);
                 const platform = yield gameModel_1.Platform.aggregate([
                     { $unwind: "$games" },
                     { $match: { "games.tagName": tagName, "games.status": "active" } },
@@ -220,18 +228,18 @@ class PlayerSocket {
                 ]);
                 if (platform.length === 0) {
                     this.currentGameData.gameSettings = Object.assign({}, testData_1.gameData[0]);
-                    this.currentGameData.currentGame = new slotGame_1.default(this.currentGameData);
+                    this.currentGameData.currentGameManager = new GameManager_1.default(this.currentGameData);
                     return;
                 }
                 const game = platform[0].game;
                 const payout = yield payoutController_1.default.getPayoutVersionData(game.tagName, game.payout);
                 if (!payout) {
                     this.currentGameData.gameSettings = Object.assign({}, testData_1.gameData[0]);
-                    this.currentGameData.currentGame = new slotGame_1.default(this.currentGameData);
+                    this.currentGameData.currentGameManager = new GameManager_1.default(this.currentGameData);
                     return;
                 }
                 this.currentGameData.gameSettings = Object.assign({}, payout);
-                this.currentGameData.currentGame = new slotGame_1.default(this.currentGameData);
+                this.currentGameData.currentGameManager = new GameManager_1.default(this.currentGameData);
             }
             catch (error) {
                 console.error(`Error initializing game data for user ${this.playerData.username}:`, error);
