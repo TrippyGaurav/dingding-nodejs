@@ -4,9 +4,9 @@ import { rolesHierarchy } from "../../utils/utils";
 import createHttpError from "http-errors";
 import Transaction from "./transactionModel";
 import { Player, User } from "../users/userModel";
-import { QueryParams } from "../../game/Utils/globalTypes";
+import { QueryParams } from "../../utils/globalTypes";
 import { users } from "../../socket";
-import { messageType } from "../../game/slotGames/gameUtils";
+import { messageType } from "../../game/Utils/gameUtils";
 
 export class TransactionService {
 

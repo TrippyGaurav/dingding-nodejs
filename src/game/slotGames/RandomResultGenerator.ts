@@ -1,8 +1,5 @@
-import SlotGame from "./slotGame";
 
 export class RandomResultGenerator {
-
-    currentGame: SlotGame;
     constructor(current) {
         let matrix: string[][] = [];
         for (let x = 0; x < current.settings.currentGamedata.matrix.x; x++) {

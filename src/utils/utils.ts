@@ -8,6 +8,7 @@ import { TransactionController } from "../dashboard/transactions/transactionCont
 import { v2 as cloudinary } from "cloudinary";
 import { config } from "../config/config";
 import bcrypt from "bcrypt";
+import { users } from "../socket";
 
 
 const transactionController = new TransactionController()
@@ -64,11 +65,24 @@ export interface CustomJwtPayload extends JwtPayload {
 }
 
 export const updateStatus = (client: IUser | IPlayer, status: string) => {
+  // Destroy SlotGame instance if we update user to inactive && the client is currently in a game
   const validStatuses = ["active", "inactive"];
   if (!validStatuses.includes(status)) {
     throw createHttpError(400, "Invalid status value");
   }
   client.status = status;
+  for (const [username, playerSocket] of users) {
+    if (playerSocket) {
+      const socketUser = users.get(client.username);
+      if (socketUser) {
+        if (status === 'inactive') {
+          socketUser.forceExit();
+        }
+      } else {
+        console.warn(`User ${client.username} does not have a current game or settings.`);
+      }
+    }
+  }
 };
 
 export const updatePassword = async (
