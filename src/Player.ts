@@ -4,14 +4,15 @@ import mongoose from "mongoose";
 import { Player } from "./dashboard/users/userModel";
 import { Platform } from "./dashboard/games/gameModel";
 import payoutController from "./dashboard/payouts/payoutController";
-import SlotGame from "./game/slotGames/slotGame";
-import { getPlayerCredits, messageType } from "./game/slotGames/gameUtils";
-import { gameData } from "./game/slotGames/testData";
+import { getPlayerCredits, messageType } from "./game/Utils/gameUtils";
+import { gameData } from "./game/testData";
 import { users } from "./socket";
+import SlotGame from "./game/slotGames/slotGame";
+import GameManager from "./game/GameManager";
 
 export interface currentGamedata {
   username: string,
-  currentGame: SlotGame;
+  currentGameManager: GameManager;
   gameSettings: any;
   sendMessage: (action: string, message: any) => void;
   sendError: (message: string) => void;
@@ -69,7 +70,7 @@ export default class PlayerSocket {
     };
 
     this.currentGameData = {
-      currentGame: null, // Will be initialized later
+      currentGameManager: null, // Will be initialized later
       gameSettings: null,
       sendMessage: this.sendMessage.bind(this),
       sendError: this.sendError.bind(this),
@@ -85,7 +86,6 @@ export default class PlayerSocket {
 
   private initializeGameSocket(socket: Socket) {
     this.socketData.gameSocket = socket;
-    this.gameId = socket.handshake.auth.gameId;
     this.socketData.gameSocket.on("disconnect", () => this.handleGameDisconnection());
     this.initGameData();
     this.startHeartbeat();
@@ -122,7 +122,7 @@ export default class PlayerSocket {
       try {
         const response = JSON.parse(message);
         console.log(`Message Recieved for ${this.playerData.username} : `, message);
-        this.currentGameData.currentGame.messageHandler(response);
+        this.currentGameData.currentGameManager.currentGameType.currentGame.messageHandler(response);
       } catch (error) {
         console.error("Failed to parse message:", error);
         this.sendError("Failed to parse message");
@@ -201,6 +201,7 @@ export default class PlayerSocket {
 
   private cleanup() {
     if (this.socketData.gameSocket) {
+
       this.socketData.gameSocket.disconnect(true);
       this.socketData.gameSocket = null;
     }
@@ -212,8 +213,9 @@ export default class PlayerSocket {
       credits: 0,
       userAgent: ""
     };
+    this.gameId = null
     this.currentGameData = {
-      currentGame: null,
+      currentGameManager: null,
       gameSettings: null,
       sendMessage: this.sendMessage.bind(this),
       sendError: this.sendError.bind(this),
@@ -223,7 +225,6 @@ export default class PlayerSocket {
       getPlayerData: () => this.playerData,
       username: this.playerData.username,
     };
-
     this.socketData = {
       ...this.socketData,
       reconnectionAttempts: 0,
@@ -270,23 +271,24 @@ export default class PlayerSocket {
         { $project: { _id: 0, game: "$games" } },
       ]);
 
+
       if (platform.length === 0) {
         this.currentGameData.gameSettings = { ...gameData[0] };
-        this.currentGameData.currentGame = new SlotGame(this.currentGameData);
+        this.currentGameData.currentGameManager = new GameManager(this.currentGameData);
         return;
       }
 
       const game = platform[0].game;
       const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout);
-
+     
       if (!payout) {
         this.currentGameData.gameSettings = { ...gameData[0] };
-        this.currentGameData.currentGame = new SlotGame(this.currentGameData);
+        this.currentGameData.currentGameManager = new GameManager(this.currentGameData);
         return;
       }
 
       this.currentGameData.gameSettings = { ...payout };
-      this.currentGameData.currentGame = new SlotGame(this.currentGameData);
+      this.currentGameData.currentGameManager = new GameManager(this.currentGameData);
     } catch (error) {
       console.error(`Error initializing game data for user ${this.playerData.username}:`, error);
     }

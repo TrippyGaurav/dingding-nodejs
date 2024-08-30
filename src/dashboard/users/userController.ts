@@ -13,7 +13,7 @@ import mongoose from "mongoose";
 import { User, Player as PlayerModel, Player } from "./userModel";
 import UserService from "./userService";
 import Transaction from "../transactions/transactionModel";
-import { QueryParams } from "../../game/Utils/globalTypes";
+import { QueryParams } from "../../utils/globalTypes";
 import { users } from "../../socket";
 import { IPlayer, IUser } from "./userType";
 import { playerData } from "../../Player";

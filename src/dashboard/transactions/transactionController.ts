@@ -7,7 +7,7 @@ import { AuthRequest } from "../../utils/utils";
 import { IPlayer, IUser } from "../users/userType";
 import { ITransaction } from "./transactionType";
 import TransactionService from "./transactionService";
-import { QueryParams } from "../../game/Utils/globalTypes";
+import { QueryParams } from "../../utils/globalTypes";
 export class TransactionController {
   private transactionService: TransactionService;
  
