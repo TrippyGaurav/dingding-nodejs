@@ -56,7 +56,7 @@ export class GameController {
               createHttpError(
                 404,
                 "Player not found or player is inactive"
-              ) )
+              ))
           }
 
           const favoriteGameIds = player.favouriteGames.map(
@@ -152,6 +152,11 @@ export class GameController {
       const { username, role } = _req.user;
 
       const { gameId: slug } = req.params;
+
+      const player = Player.findOne({ username: username })
+      if ((await player).status === 'inactive') {
+        throw createHttpError(403, "player is inactive")
+      }
 
       if (!slug) {
         throw createHttpError(400, "Slug parameter is required");
