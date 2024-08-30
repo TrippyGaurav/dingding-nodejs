@@ -86,6 +86,7 @@ export default class PlayerSocket {
 
   private initializeGameSocket(socket: Socket) {
     this.socketData.gameSocket = socket;
+    this.gameId = socket.handshake.auth.gameId;
     this.socketData.gameSocket.on("disconnect", () => this.handleGameDisconnection());
     this.initGameData();
     this.startHeartbeat();
@@ -280,7 +281,7 @@ export default class PlayerSocket {
 
       const game = platform[0].game;
       const payout = await payoutController.getPayoutVersionData(game.tagName, game.payout);
-     
+
       if (!payout) {
         this.currentGameData.gameSettings = { ...gameData[0] };
         this.currentGameData.currentGameManager = new GameManager(this.currentGameData);

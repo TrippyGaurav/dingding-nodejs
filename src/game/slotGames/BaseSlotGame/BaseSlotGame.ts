@@ -297,7 +297,6 @@ export default class BaseSlotGame implements RequiredSocketMethods {
       },
       maxGambleBet: 300,
     };
-console.log("UiInitData",UiInitData)
 
     this.sendMessage("InitData", dataToSend);
   }
