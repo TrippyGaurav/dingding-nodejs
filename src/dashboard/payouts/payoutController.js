@@ -57,7 +57,7 @@ class PayoutsController {
                     if (playerSocket.gameId === gameId) {
                         const socketUser = socket_1.users.get(username);
                         if ((socketUser === null || socketUser === void 0 ? void 0 : socketUser.currentGameData) && socketUser.currentGameData.gameSettings) {
-                            socketUser.currentGameData.currentGame.initialize(payoutJSONData);
+                            socketUser.currentGameData.currentGameManager.currentGameType.currentGame.initialize(payoutJSONData);
                             // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGameData.gameSettings);
                         }
                         else {
@@ -213,8 +213,8 @@ class PayoutsController {
                     const gameId = tagName;
                     if (playerSocket.gameId === gameId) {
                         const socketUser = socket_1.users.get(username);
-                        if ((socketUser === null || socketUser === void 0 ? void 0 : socketUser.currentGameData) && socketUser.currentGameData.gameSettings) {
-                            socketUser.currentGameData.currentGame.initialize(matchingPayout.content.data);
+                        if (socketUser.currentGameData.currentGameManager && socketUser.currentGameData.gameSettings) {
+                            socketUser.currentGameData.currentGameManager.currentGameType.currentGame.initialize(matchingPayout.content.data);
                             // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGameData.gameSettings);
                         }
                         else {
