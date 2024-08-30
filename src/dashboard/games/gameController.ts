@@ -51,8 +51,12 @@ export class GameController {
       if (role === "player") {
         if (category === "fav") {
           const player = await Player.findOne({ username });
-          if (!player) {
-            throw createHttpError(404, "Player not found");
+          if (!player || player.status === 'inactive') {
+            return next(
+              createHttpError(
+                404,
+                "Player not found or player is inactive"
+              ) )
           }
 
           const favoriteGameIds = player.favouriteGames.map(

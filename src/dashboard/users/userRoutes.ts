@@ -22,7 +22,8 @@ userRoutes.get("/", checkUser, userController.getCurrentUser);
 
 // // GET all subordinates
 userRoutes.get("/all", checkUser, userController.getAllSubordinates);
-
+// // GET all Players
+userRoutes.get('/allPlayer', checkUser, userController.getAllPlayers)
 // GET Current User subordinate
 userRoutes.get(
   "/subordinates",

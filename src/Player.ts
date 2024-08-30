@@ -10,19 +10,19 @@ import { gameData } from "./game/slotGames/testData";
 import { users } from "./socket";
 
 export interface currentGamedata {
-    username : string,
-    currentGame: SlotGame;
-    gameSettings: any;
-    sendMessage: (action: string, message: any) => void;
-    sendError: (message: string) => void;
-    sendAlert: (message: string) => void;
-    updatePlayerBalance: (message: number) => void;
-    deductPlayerBalance: (message: number) => void;
-    getPlayerData: () => playerData;
+  username: string,
+  currentGame: SlotGame;
+  gameSettings: any;
+  sendMessage: (action: string, message: any) => void;
+  sendError: (message: string) => void;
+  sendAlert: (message: string) => void;
+  updatePlayerBalance: (message: number) => void;
+  deductPlayerBalance: (message: number) => void;
+  getPlayerData: () => playerData;
 }
-  
+
 export interface socketData {
-  gameSocket : Socket | null;
+  gameSocket: Socket | null;
   heartbeatInterval: NodeJS.Timeout;
   reconnectionAttempts: number;
   maxReconnectionAttempts: number;
@@ -51,10 +51,10 @@ export default class PlayerSocket {
     gameSocket: Socket,
     public gameId: string
   ) {
-    
+
     this.socketData = {
-      gameSocket : null,
-      heartbeatInterval: setInterval(() => {}, 0),
+      gameSocket: null,
+      heartbeatInterval: setInterval(() => { }, 0),
       reconnectionAttempts: 0,
       maxReconnectionAttempts: 5,
       reconnectionTimeout: 5000,
@@ -77,7 +77,7 @@ export default class PlayerSocket {
       updatePlayerBalance: this.updatePlayerBalance.bind(this),
       deductPlayerBalance: this.deductPlayerBalance.bind(this),
       getPlayerData: () => this.playerData,
-      username : this.playerData.username
+      username: this.playerData.username
     };
     console.log("Welcome : ", this.playerData.username);
     this.initializeGameSocket(gameSocket);
@@ -85,6 +85,7 @@ export default class PlayerSocket {
 
   private initializeGameSocket(socket: Socket) {
     this.socketData.gameSocket = socket;
+    this.gameId = socket.handshake.auth.gameId;
     this.socketData.gameSocket.on("disconnect", () => this.handleGameDisconnection());
     this.initGameData();
     this.startHeartbeat();
@@ -116,20 +117,19 @@ export default class PlayerSocket {
     this.socketData.gameSocket.emit("alert", message);
   }
 
-  private messageHandler()
-  {
+  private messageHandler() {
     this.socketData.gameSocket.on("message", (message) => {
       try {
-          const response = JSON.parse(message);
-          console.log(`Message Recieved for ${this.playerData.username} : `, message);
-          this.currentGameData.currentGame.messageHandler(response);
+        const response = JSON.parse(message);
+        console.log(`Message Recieved for ${this.playerData.username} : `, message);
+        this.currentGameData.currentGame.messageHandler(response);
       } catch (error) {
-          console.error("Failed to parse message:", error);
-          this.sendError("Failed to parse message");
+        console.error("Failed to parse message:", error);
+        this.sendError("Failed to parse message");
       }
-  });
-}
-  
+    });
+  }
+
 
   private async updateDatabase() {
     const session = await mongoose.startSession();
@@ -221,7 +221,7 @@ export default class PlayerSocket {
       updatePlayerBalance: this.updatePlayerBalance.bind(this),
       deductPlayerBalance: this.deductPlayerBalance.bind(this),
       getPlayerData: () => this.playerData,
-      username : this.playerData.username,
+      username: this.playerData.username,
     };
 
     this.socketData = {
@@ -231,13 +231,19 @@ export default class PlayerSocket {
     };
   }
 
-  private onExit() {
+  public onExit() {
     this.socketData.gameSocket?.on("EXIT", () => {
       users.delete(this.playerData.username);
       this.cleanup();
     });
   }
 
+
+  public forceExit() {
+    this.sendAlert("ForcedExit");
+    users.delete(this.playerData.username);
+    this.cleanup();
+  }
   public async updateGameSocket(socket: Socket) {
     if (socket.request.headers["user-agent"] !== this.playerData.userAgent) {
       socket.emit("alert", {
@@ -257,6 +263,7 @@ export default class PlayerSocket {
 
     try {
       const tagName = this.gameId;
+      console.log(tagName)
       const platform = await Platform.aggregate([
         { $unwind: "$games" },
         { $match: { "games.tagName": tagName, "games.status": "active" } },

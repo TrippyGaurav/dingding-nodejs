@@ -16,9 +16,14 @@ import Transaction from "../transactions/transactionModel";
 import { QueryParams } from "../../game/Utils/globalTypes";
 import { users } from "../../socket";
 import { IPlayer, IUser } from "./userType";
+import { playerData } from "../../Player";
 
 
 
+interface ActivePlayer {
+  username: string;
+  currentGame: string;
+}
 export class UserController {
   private userService: UserService;
   private static rolesHierarchy = {
@@ -35,6 +40,7 @@ export class UserController {
     this.createUser = this.createUser.bind(this);
     this.getCurrentUser = this.getCurrentUser.bind(this);
     this.getAllSubordinates = this.getAllSubordinates.bind(this);
+    this.getAllPlayers = this.getAllPlayers.bind(this);
     this.getSubordinateById = this.getSubordinateById.bind(this);
     this.deleteUser = this.deleteUser.bind(this);
     this.updateClient = this.updateClient.bind(this);
@@ -399,7 +405,6 @@ export class UserController {
 
       const userCount = await User.countDocuments(query);
       const playerCount = await PlayerModel.countDocuments(query);
-
       const totalSubordinates = userCount + playerCount;
       const totalPages = Math.ceil(totalSubordinates / limit);
 
@@ -438,7 +443,6 @@ export class UserController {
       }
 
       const allSubordinates = [...users, ...players];
-      console.log(allSubordinates.length);
 
       res.status(200).json({
         totalSubordinates,
@@ -450,6 +454,143 @@ export class UserController {
       next(error);
     }
   }
+
+  async getAllPlayers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const activePlayers = new Set();
+      users.forEach((value, key) => {
+        activePlayers.add({ username: key, currentGame: value.gameId });
+      });
+
+      const _req = req as AuthRequest;
+      const { username: loggedUserName, role: loggedUserRole } = _req.user;
+
+      const loggedUser = await this.userService.findUserByUsername(loggedUserName);
+
+      if (!loggedUser) {
+        throw createHttpError(404, "User not found");
+      }
+
+      if (loggedUser.role !== "company") {
+        throw createHttpError(
+          403,
+          "Access denied. Only users with the role 'company' can access this resource."
+        );
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+      const filter = req.query.filter || "";
+      const search = req.query.search as string;
+      let parsedData: QueryParams = {
+        role: "",
+        status: "",
+        totalRecharged: { From: 0, To: Infinity },
+        totalRedeemed: { From: 0, To: Infinity },
+        credits: { From: 0, To: Infinity },
+        updatedAt: { From: null, To: null },
+        type: "",
+        amount: { From: 0, To: 0 },
+      };
+
+      let role, status, redeem, recharge, credits;
+
+      if (search) {
+        parsedData = JSON.parse(search);
+        if (parsedData) {
+          role = parsedData.role;
+          status = parsedData.status;
+          redeem = parsedData.totalRedeemed;
+          recharge = parsedData.totalRecharged;
+          credits = parsedData.credits;
+        }
+      }
+
+      let query: any = {
+        username: { $in: Array.from(activePlayers).map((player: ActivePlayer) => player.username) },
+      };
+
+      if (filter) {
+        query.username.$regex = filter;
+        query.username.$options = "i";
+      }
+      if (role) {
+        query.role = role;
+      }
+      if (status) {
+        query.status = status;
+      }
+      if (parsedData.totalRecharged) {
+        query.totalRecharged = {
+          $gte: parsedData.totalRecharged.From,
+          $lte: parsedData.totalRecharged.To,
+        };
+      }
+
+      if (parsedData.totalRedeemed) {
+        query.totalRedeemed = {
+          $gte: parsedData.totalRedeemed.From,
+          $lte: parsedData.totalRedeemed.To,
+        };
+      }
+
+      if (parsedData.credits) {
+        query.credits = {
+          $gte: parsedData.credits.From,
+          $lte: parsedData.credits.To,
+        };
+      }
+
+      const playerCount = await PlayerModel.countDocuments(query);
+      const totalPages = Math.ceil(playerCount / limit);
+
+      if (playerCount === 0) {
+        return res.status(200).json({
+          message: "No players found",
+          totalSubordinates: 0,
+          totalPages: 0,
+          currentPage: 0,
+          subordinates: [],
+        });
+      }
+
+      if (page > totalPages) {
+        return res.status(400).json({
+          message: `Page number ${page} is out of range. There are only ${totalPages} pages available.`,
+          totalSubordinates: playerCount,
+          totalPages,
+          currentPage: page,
+          subordinates: [],
+        });
+      }
+
+      const players = await PlayerModel.find(query).skip(skip).limit(limit);
+
+      const playersWithGameInfo = players.map(player => {
+        const activePlayer = Array.from(activePlayers).find((ap: ActivePlayer) => ap.username === player.username) as ActivePlayer | undefined;
+
+        return {
+          ...player.toObject(),
+          currentGame: activePlayer?.currentGame || 'inactive',
+        };
+      });
+
+
+
+      res.status(200).json({
+        totalSubordinates: playerCount,
+        totalPages,
+        currentPage: page,
+        subordinates: playersWithGameInfo,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+
+
 
   async getCurrentUserSubordinates(
     req: Request,
@@ -785,7 +926,7 @@ export class UserController {
               createdBy: subordinateId,
             });
 
-            client = client.toObject(); // Convert Mongoose Document to plain JavaScript object
+            client = client.toObject();
             client.subordinates = [...userSubordinates, ...playerSubordinates];
 
             break;
@@ -810,7 +951,7 @@ export class UserController {
           throw createHttpError(404, "Client not found");
         }
 
-        console.log(client);
+
 
         res.status(200).json(client);
       } else {
@@ -970,7 +1111,7 @@ export class UserController {
           transactions: transactions,
         });
       } else {
-  
+
 
 
         const userRechargeAmt = await Transaction.aggregate([
