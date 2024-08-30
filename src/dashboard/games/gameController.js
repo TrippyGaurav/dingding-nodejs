@@ -63,8 +63,8 @@ class GameController {
                 if (role === "player") {
                     if (category === "fav") {
                         const player = yield userModel_1.Player.findOne({ username });
-                        if (!player) {
-                            throw (0, http_errors_1.default)(404, "Player not found");
+                        if (!player || player.status === 'inactive') {
+                            return next((0, http_errors_1.default)(404, "Player not found or player is inactive"));
                         }
                         const favoriteGameIds = player.favouriteGames.map((game) => new mongoose_1.default.Types.ObjectId(game));
                         const favoriteGames = yield gameModel_1.Platform.aggregate([
