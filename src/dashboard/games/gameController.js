@@ -140,9 +140,29 @@ class GameController {
     getGameBySlug(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                // Extract the main domain by removing any leading subdomain
+                const mainDomain = config_1.config.hosted_url_cors.replace(/^[^.]+\./, '');
+                // Create a regex to match any subdomain and the main domain
+                const hostPattern = new RegExp(`(^|\\.)${mainDomain.replace('.', '\\.')}$`);
+                // Test if the request host matches the pattern
+                if (hostPattern.test(req.headers.host)) {
+                    console.log('authorized request');
+                }
+                else {
+                    console.log('unauthorized request');
+                    throw (0, http_errors_1.default)(401, "unauthorized request");
+                }
                 const _req = req;
                 const { username, role } = _req.user;
                 const { gameId: slug } = req.params;
+                const currentPlayer = yield userModel_1.Player.aggregate([
+                    { $match: { username: username, status: "active" } },
+                    { $limit: 1 }
+                ]);
+                if (!currentPlayer[0]) {
+                    console.log('user is inactive contact to your store');
+                    throw (0, http_errors_1.default)(403, "user is inactive contact to your store");
+                }
                 if (!slug) {
                     throw (0, http_errors_1.default)(400, "Slug parameter is required");
                 }
@@ -165,13 +185,12 @@ class GameController {
                     throw (0, http_errors_1.default)(404, "Game not found");
                 }
                 const game = platform[0];
+                console.log(req.headers.host);
                 if (game.status === "active") {
                     res.status(200).json({ url: game.url });
                 }
                 else {
-                    res
-                        .status(200)
-                        .json({ message: "The game is currently under maintenance." });
+                    res.status(200).json({ message: "The game is currently under maintenance." });
                 }
             }
             catch (error) {
@@ -246,7 +265,7 @@ class GameController {
                         content: [
                             {
                                 _id: new mongoose_1.default.Types.ObjectId(),
-                                name: `${payoutFileName}-1`,
+                                name: `${payoutFileName} -1`,
                                 data: payoutJSONData,
                                 version: 1
                             }
@@ -262,7 +281,7 @@ class GameController {
                     contentId = new mongoose_1.default.Types.ObjectId();
                     const newContent = {
                         _id: contentId,
-                        name: `${payoutFileName}-${newVersion}`,
+                        name: `${payoutFileName} -${newVersion} `,
                         data: payoutJSONData,
                         version: newVersion,
                         createdAt: new Date()
