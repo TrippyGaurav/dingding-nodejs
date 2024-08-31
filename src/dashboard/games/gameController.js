@@ -140,18 +140,6 @@ class GameController {
     getGameBySlug(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                // Extract the main domain by removing any leading subdomain
-                const mainDomain = config_1.config.hosted_url_cors.replace(/^[^.]+\./, '');
-                // Create a regex to match any subdomain and the main domain
-                const hostPattern = new RegExp(`(^|\\.)${mainDomain.replace('.', '\\.')}$`);
-                // Test if the request host matches the pattern
-                if (hostPattern.test(req.headers.host)) {
-                    console.log('authorized request');
-                }
-                else {
-                    console.log('unauthorized request');
-                    throw (0, http_errors_1.default)(401, "unauthorized request");
-                }
                 const _req = req;
                 const { username, role } = _req.user;
                 const { gameId: slug } = req.params;
@@ -172,7 +160,7 @@ class GameController {
                 }
                 const platform = yield gameModel_1.Platform.aggregate([
                     { $unwind: "$games" },
-                    { $match: { "games.slug": slug, "games.status": { $ne: "inactive" } } },
+                    { $match: { "games.slug": slug, "games.status": "active" } },
                     {
                         $project: {
                             _id: 0,
@@ -181,16 +169,20 @@ class GameController {
                         },
                     },
                 ]);
-                if (!platform || platform.length === 0) {
-                    throw (0, http_errors_1.default)(404, "Game not found");
-                }
                 const game = platform[0];
-                console.log(req.headers.host);
-                if (game.status === "active") {
+                // Extract the main domain by removing any leading subdomain
+                const mainDomain = config_1.config.hosted_url_cors.replace(/^[^.]+\./, '');
+                const hostPattern = new RegExp(`(^|\\.)${mainDomain.replace('.', '\\.')}$`);
+                // Check if the game URL exists and matches the pattern
+                if (game && hostPattern.test(game.url)) {
                     res.status(200).json({ url: game.url });
                 }
                 else {
-                    res.status(200).json({ message: "The game is currently under maintenance." });
+                    console.log('Unauthorized request');
+                    throw (0, http_errors_1.default)(401, "Unauthorized request");
+                }
+                if (!platform || platform.length === 0) {
+                    throw (0, http_errors_1.default)(404, "Game not found");
                 }
             }
             catch (error) {
