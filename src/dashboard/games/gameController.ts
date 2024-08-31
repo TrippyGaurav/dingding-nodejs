@@ -149,20 +149,6 @@ export class GameController {
   async getGameBySlug(req: Request, res: Response, next: NextFunction) {
 
     try {
-      // Extract the main domain by removing any leading subdomain
-      const mainDomain = config.hosted_url_cors.replace(/^[^.]+\./, '');
-
-      // Create a regex to match any subdomain and the main domain
-      const hostPattern = new RegExp(`(^|\\.)${mainDomain.replace('.', '\\.')}$`);
-      // Test if the request host matches the pattern
-      if (hostPattern.test(req.headers.host)) {
-        console.log('authorized request');
-      } else {
-        console.log('unauthorized request');
-        throw createHttpError(401, "unauthorized request");
-      }
-
-
 
 
       const _req = req as AuthRequest;
@@ -192,7 +178,7 @@ export class GameController {
 
       const platform = await Platform.aggregate([
         { $unwind: "$games" },
-        { $match: { "games.slug": slug, "games.status": { $ne: "inactive" } } },
+        { $match: { "games.slug": slug, "games.status": "active" } },
         {
           $project: {
             _id: 0,
@@ -202,19 +188,20 @@ export class GameController {
         },
       ]);
 
-      if (!platform || platform.length === 0) {
-        throw createHttpError(404, "Game not found");
-      }
-
       const game = platform[0];
-
-
-
-      console.log(req.headers.host)
-      if (game.status === "active") {
+      // Extract the main domain by removing any leading subdomain
+      const mainDomain = config.hosted_url_cors.replace(/^[^.]+\./, '');
+      const hostPattern = new RegExp(`(^|\\.)${mainDomain.replace('.', '\\.')}$`);
+      // Check if the game URL exists and matches the pattern
+      if (game && hostPattern.test(game.url)) {
         res.status(200).json({ url: game.url });
       } else {
-        res.status(200).json({ message: "The game is currently under maintenance." });
+        console.log('Unauthorized request');
+        throw createHttpError(401, "Unauthorized request");
+      }
+
+      if (!platform || platform.length === 0) {
+        throw createHttpError(404, "Game not found");
       }
 
     } catch (error) {
