@@ -149,8 +149,12 @@ export class GameController {
   async getGameBySlug(req: Request, res: Response, next: NextFunction) {
 
     try {
-      const hostPattern = new RegExp(`(^|\\.)${config.hosted_url_cors.replace('.', '\\.')}$`);
-      console.log(req.headers.host, 'req.headers.host')
+      // Extract the main domain by removing any leading subdomain
+      const mainDomain = config.hosted_url_cors.replace(/^[^.]+\./, '');
+
+      // Create a regex to match any subdomain and the main domain
+      const hostPattern = new RegExp(`(^|\\.)${mainDomain.replace('.', '\\.')}$`);
+      // Test if the request host matches the pattern
       if (hostPattern.test(req.headers.host)) {
         console.log('authorized request');
       } else {
