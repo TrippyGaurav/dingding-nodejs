@@ -99,8 +99,25 @@ export class SLCM {
     private checkResult()
     {
       this.settings.resultSymbolMatrix = this.settings.resultSymbolMatrix[0];
+      // console.log("GOT RESULT :::: ",this.settings.resultSymbolMatrix);
+        
+      if(this.settings.lastReSpin.length != 0)
+      {
+        this.settings.lastReSpin.forEach(element => {
+          // console.log("AT INDEX : ", element.Symbol);
+          this.settings.resultSymbolMatrix[element.Index] = element.Symbol.Id;
+        });
+      }
+      if(this.settings.lastRedSpin.length != 0)
+        {
+          this.settings.lastRedSpin.forEach(element => {
+            // console.log("AT INDEX : ",  element);
+            this.settings.resultSymbolMatrix[element.Index] = element.Symbol.Id;
+          });
+        }
       this.settings.resultSymbolMatrix.forEach((element,index) => {
         const symbol = this.settings.Symbols.filter(symbol => symbol.Id === element);
+        
         if(symbol[0].Id != 0)
         this.settings.resultSymbolMatrix[index] = symbol[0];
         else
@@ -108,13 +125,11 @@ export class SLCM {
       });
       // console.log( this.settings.resultSymbolMatrix);
       
-      console.log("After", this.settings.resultSymbolMatrix);
       const totalPayout =  this.settings.resultSymbolMatrix
       .filter(symbol => symbol !== "Blank")  // Filter out any -1 values
       .map(symbol => symbol.payout)     // Map to the payout values
       .join('') || "0";   
         this.playerData.currentPayout = parseInt(totalPayout);
-      console.log(`Total payout: ${totalPayout}`);
       if( this.settings.resultSymbolMatrix.length != 0)
       {
           if(this.playerData.currentPayout == 0)
@@ -123,23 +138,16 @@ export class SLCM {
           if(this.playerData.currentPayout > 0 && this.playerData.currentPayout <=5)
           this.checkForRedSpin();
     }
+    console.log("After", this.settings.resultSymbolMatrix);
+    console.log(`Total payout: ${totalPayout}`);
+
+    
   }
   private checkForReSpin() {
-    this.settings.resultSymbolMatrix = this.settings.resultSymbolMatrix.flat();
-  
     this.settings.resultSymbolMatrix.forEach((Element, Index) => {
       if (Element !== "Blank" && Element.canCallRespin) {
-        this.settings.lastReSpin.push({ Symbol: Element, Index: Index });
+        this.settings.lastReSpin.push({ Index: Index,Symbol: Element });
         new RandomResultGenerator(this);
-  
-        console.log("Called ReSpin", this.settings.resultSymbolMatrix[Index]);
-  
-        this.settings.lastReSpin.forEach(element => {
-          this.settings.resultSymbolMatrix[element.Index] = element.Symbol;
-        });
-  
-        console.log("For ReSpin:", this.settings.resultSymbolMatrix);
-  
         this.checkResult();
         return;
       }
@@ -149,26 +157,16 @@ export class SLCM {
 
     private checkForRedSpin()
     {
-      this.settings.resultSymbolMatrix = this.settings.resultSymbolMatrix.flat();
-  
       this.settings.resultSymbolMatrix.forEach((Element, Index) => {
         if (Element !== "Blank" && Element.canCallRedpin) {
-          this.settings.lastRedSpin.push({ Symbol: Element, Index: Index });
+          this.settings.lastRedSpin.push({Index: Index , Symbol: Element});
           new RandomResultGenerator(this);
-    
-          console.log("Called RedSpin", this.settings.resultSymbolMatrix[Index]);
-    
-          this.settings.lastRedSpin.forEach(element => {
-            this.settings.resultSymbolMatrix[element.Index] = element.Symbol;
-          });
-    
-          console.log("For RedSpin:", this.settings.resultSymbolMatrix);
-    
           this.checkResult();
           return;
         }
       });
     }
+
     private initialize(gameData : any) {
       this.settings.currentGamedata = gameData;
         this.settings._winData = new WinData(this);
@@ -260,8 +258,8 @@ interface Symbol {
   bets: number[];
   reels: any[][];
   Symbols : Symbol[];
-  lastRedSpin : {Index : number, Symbol : number}[],
-  lastReSpin : {Index : number, Symbol : number}[],
+  lastRedSpin : {Index : number, Symbol : Symbol}[],
+  lastReSpin : {Index : number, Symbol : Symbol}[],
 
 
 }
