@@ -16,6 +16,7 @@ export class SLCM {
       totalbet: 0,
       rtpSpinCount: 0,
       totalSpin: 0,
+      currentPayout : 0
     };
 
     constructor(public currentGameData : currentGamedata)
@@ -113,50 +114,52 @@ export class SLCM {
        payoutSheet.push(symbolPayout[0].payout)
     });
     
-      const payout : number = parseInt(payoutSheet.map(num => num.toString()).join(''));
-      console.log("Payout : ", payout || 0);
+      this.playerData.currentPayout = parseInt(payoutSheet.map(num => num.toString()).join(''));
+      console.log("Payout : ", this.playerData.currentPayout || 0);
       // Convert the sum to a string and return it
-
+         
+      //RESPINNNNN
+         if(this.playerData.currentPayout == 0)
+          {
+            payoutSheet.forEach((payoutSymbol , index)=>{
+              const symbolPayout = this.settings.Symbols.find(symbol => symbol.Id === payoutSymbol);
+              // console.log("Symboil RESPINNNNN : ",symbolPayout.canCallRespin , "lastIndex symbol ", this.settings.lastReSpin.Symbol  , " ",this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index]);
+              
+              if(symbolPayout.canCallRespin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol || this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] == undefined)
+                {
+                  console.log("RESPIN : ",this.settings.resultSymbolMatrix);
+                  new RandomResultGenerator(this);
+                  
+                  this.settings.resultSymbolMatrix[0][index] = payoutSymbol;
+                  // console.log("CALLLEDD FREE SPIN");
+                  this.settings.lastReSpin  = {Index :index, Symbol : payoutSymbol};
+                  this.checkResult();
+                  return;
+                 }
+               });
+            }
     //REDSPINNNNN
-      if(payout > 0 && payout <=5 && this.settings.matrix.x >=2) 
+      if(this.playerData.currentPayout > 0 && this.playerData.currentPayout <=5 && this.settings.matrix.x >=2) 
         {
           payoutSheet.forEach((payoutSymbol , index)=>{
             
             const symbolPayout = this.settings.Symbols.find(symbol => symbol.Id === payoutSymbol);
-            console.log("Symboil REDSPINNNNN : ",symbolPayout.Id);
-            if(symbolPayout.canCallRedSpin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol)
+            // console.log("Symboil REDSPINNNNN : ",symbolPayout.Id);
+            if(symbolPayout.canCallRedSpin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol  || this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] == undefined)
               {
                 console.log("REDSPIN : ",this.settings.resultSymbolMatrix);
               new RandomResultGenerator(this);
 
                 this.settings.resultSymbolMatrix[0][index] = payoutSymbol;
-                console.log("CALLLEDD FREE SPIN");
+                // console.log("CALLLEDD FREE SPIN");
                 this.settings.lastRedSpin  = {Index :index, Symbol : payoutSymbol};
                 this.checkResult();
+                return;
                }
              });
           }
 
-          //RESPINNNNN
-      if(payout == 0)
-      {
-        payoutSheet.forEach((payoutSymbol , index)=>{
-          const symbolPayout = this.settings.Symbols.find(symbol => symbol.Id === payoutSymbol);
-          console.log("Symboil RESPINNNNN : ",symbolPayout.Id);
-          
-          if(symbolPayout.canCallRespin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol)
-            {
-              console.log("RESPIN : ",this.settings.resultSymbolMatrix);
-              new RandomResultGenerator(this);
-              
-              this.settings.resultSymbolMatrix[0][index] = payoutSymbol;
-              console.log("CALLLEDD FREE SPIN");
-              this.settings.lastReSpin  = {Index :index, Symbol : payoutSymbol};
-              this.checkResult();
-              return;
-             }
-           });
-        }
+ 
       
       
       
