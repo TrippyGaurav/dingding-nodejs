@@ -147,15 +147,33 @@ export class GameController {
 
   // GET : Get Game By Slug
   async getGameBySlug(req: Request, res: Response, next: NextFunction) {
+
     try {
+      const hostPattern = new RegExp(`(^|\\.)${config.hosted_url_cors.replace('.', '\\.')}$`);
+      console.log(req.headers.host, 'req.headers.host')
+      if (hostPattern.test(req.headers.host)) {
+        console.log('authorized request');
+      } else {
+        console.log('unauthorized request');
+        throw createHttpError(401, "unauthorized request");
+      }
+
+
+
+
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
 
       const { gameId: slug } = req.params;
 
-      const player = Player.findOne({ username: username })
-      if ((await player).status === 'inactive') {
-        throw createHttpError(403, "player is inactive")
+      const currentPlayer = await Player.aggregate([
+        { $match: { username: username, status: "active" } },
+        { $limit: 1 }
+      ]);
+
+      if (!currentPlayer[0]) {
+        console.log('user is inactive contact to your store')
+        throw createHttpError(403, "user is inactive contact to your store")
       }
 
       if (!slug) {
@@ -186,13 +204,15 @@ export class GameController {
 
       const game = platform[0];
 
+
+
+      console.log(req.headers.host)
       if (game.status === "active") {
         res.status(200).json({ url: game.url });
       } else {
-        res
-          .status(200)
-          .json({ message: "The game is currently under maintenance." });
+        res.status(200).json({ message: "The game is currently under maintenance." });
       }
+
     } catch (error) {
       next(error);
     }
@@ -299,7 +319,7 @@ export class GameController {
           content: [
             {
               _id: new mongoose.Types.ObjectId(),
-              name: `${payoutFileName}-1`,
+              name: `${payoutFileName} -1`,
               data: payoutJSONData,
               version: 1
             }
@@ -316,7 +336,7 @@ export class GameController {
 
         const newContent = {
           _id: contentId,
-          name: `${payoutFileName}-${newVersion}`,
+          name: `${payoutFileName} -${newVersion} `,
           data: payoutJSONData,
           version: newVersion,
           createdAt: new Date()
