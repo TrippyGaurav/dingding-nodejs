@@ -1,5 +1,7 @@
-import SlotGame from "./slotGame";
-import { bonusGameType } from "./gameUtils";
+import { bonusGameType } from "../../Utils/gameUtils";
+import SlotGame from "../slotGame";
+import BaseSlotGame from "./BaseSlotGame";
+
 export class BonusGame {
     type: String;
     noOfItems: number;
@@ -8,9 +10,9 @@ export class BonusGame {
     noise: number;
     minPay: number;
     maxPay: number;
-    parent: SlotGame
+    parent: BaseSlotGame
 
-    constructor(nosOfItem: number, parent: SlotGame) {
+    constructor(nosOfItem: number, parent: BaseSlotGame) {
         this.noOfItems = nosOfItem;
         this.type = bonusGameType.default;
         this.result = [];

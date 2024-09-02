@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IPlatform } from "./gameType";
+import { IPlatform } from "../../game/slotGames/BaseSlotGame/gameType";
 
 
 

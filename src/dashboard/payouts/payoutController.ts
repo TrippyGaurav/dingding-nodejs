@@ -69,12 +69,12 @@ class PayoutsController {
         throw createHttpError(404, "Platform or game not found");
       }
       for (const [username, playerSocket] of users) {
-
+        
         const gameId = payoutFileName.split('_')[0];
         if (playerSocket.gameId === gameId) {
           const socketUser = users.get(username);
           if (socketUser?.currentGameData && socketUser.currentGameData.gameSettings) {
-            socketUser.currentGameData.currentGame.initialize(payoutJSONData)
+            socketUser.currentGameData.currentGameManager.currentGameType.currentGame.initialize(payoutJSONData)
             // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGameData.gameSettings);
           } else {
             console.warn(`User ${username} does not have a current game or settings.`);
@@ -270,8 +270,8 @@ class PayoutsController {
         const gameId = tagName;
         if (playerSocket.gameId === gameId) {
           const socketUser = users.get(username);
-          if (socketUser?.currentGameData && socketUser.currentGameData.gameSettings) {
-            socketUser.currentGameData.currentGame.initialize(matchingPayout.content.data)
+          if (socketUser.currentGameData.currentGameManager && socketUser.currentGameData.gameSettings) {
+            socketUser.currentGameData.currentGameManager.currentGameType.currentGame.initialize(matchingPayout.content.data)
             // console.log(`Updated current game data for user: ${username} to `, socketUser.currentGameData.gameSettings);
           } else {
             console.warn(`User ${username} does not have a current game or settings.`);

@@ -51,8 +51,12 @@ export class GameController {
       if (role === "player") {
         if (category === "fav") {
           const player = await Player.findOne({ username });
-          if (!player) {
-            throw createHttpError(404, "Player not found");
+          if (!player || player.status === 'inactive') {
+            return next(
+              createHttpError(
+                404,
+                "Player not found or player is inactive"
+              ))
           }
 
           const favoriteGameIds = player.favouriteGames.map(
@@ -143,11 +147,24 @@ export class GameController {
 
   // GET : Get Game By Slug
   async getGameBySlug(req: Request, res: Response, next: NextFunction) {
+
     try {
+
+
       const _req = req as AuthRequest;
       const { username, role } = _req.user;
 
       const { gameId: slug } = req.params;
+
+      const currentPlayer = await Player.aggregate([
+        { $match: { username: username, status: "active" } },
+        { $limit: 1 }
+      ]);
+
+      if (!currentPlayer[0]) {
+        console.log('user is inactive contact to your store')
+        throw createHttpError(403, "user is inactive contact to your store")
+      }
 
       if (!slug) {
         throw createHttpError(400, "Slug parameter is required");
@@ -161,7 +178,7 @@ export class GameController {
 
       const platform = await Platform.aggregate([
         { $unwind: "$games" },
-        { $match: { "games.slug": slug, "games.status": { $ne: "inactive" } } },
+        { $match: { "games.slug": slug, "games.status": "active" } },
         {
           $project: {
             _id: 0,
@@ -171,19 +188,22 @@ export class GameController {
         },
       ]);
 
+      const game = platform[0];
+      // Extract the main domain by removing any leading subdomain
+      const mainDomain = config.hosted_url_cors.replace(/^[^.]+\./, '');
+      const hostPattern = new RegExp(`(^|\\.)${mainDomain.replace('.', '\\.')}$`);
+      // Check if the game URL exists and matches the pattern
+      if (game && hostPattern.test(game.url)) {
+        res.status(200).json({ url: game.url });
+      } else {
+        console.log('Unauthorized request');
+        throw createHttpError(401, "Unauthorized request");
+      }
+
       if (!platform || platform.length === 0) {
         throw createHttpError(404, "Game not found");
       }
 
-      const game = platform[0];
-
-      if (game.status === "active") {
-        res.status(200).json({ url: game.url });
-      } else {
-        res
-          .status(200)
-          .json({ message: "The game is currently under maintenance." });
-      }
     } catch (error) {
       next(error);
     }
@@ -290,7 +310,7 @@ export class GameController {
           content: [
             {
               _id: new mongoose.Types.ObjectId(),
-              name: `${payoutFileName}-1`,
+              name: `${payoutFileName} -1`,
               data: payoutJSONData,
               version: 1
             }
@@ -307,7 +327,7 @@ export class GameController {
 
         const newContent = {
           _id: contentId,
-          name: `${payoutFileName}-${newVersion}`,
+          name: `${payoutFileName} -${newVersion} `,
           data: payoutJSONData,
           version: newVersion,
           createdAt: new Date()
