@@ -17,7 +17,7 @@ export const gameData = [
             {
                 "Name": "Blank",
                 "Id": 0,
-                "payout": 0,
+                "payout": "0",
                 "canCallRedSpin" : false,
                 "canCallRespin" : false,
                 "reelInstance": {
@@ -29,7 +29,7 @@ export const gameData = [
             {
                 "Name": "1",
                 "Id": 1,
-                "payout": 1,
+                "payout": "1",
                 "canCallRedSpin" : true,
                 "canCallRespin" : false,
                 "reelInstance": {
@@ -41,7 +41,7 @@ export const gameData = [
             {
                 "Name": "2",
                 "Id": 2,
-                "payout": 2,
+                "payout": "2",
                 "canCallRedSpin" : true,
                 "canCallRespin" : false,
                 "reelInstance": {
@@ -53,7 +53,7 @@ export const gameData = [
             {
                 "Name": "5",
                 "Id": 3,
-                "payout": 5,
+                "payout": "5",
                 "canCallRedSpin" : true,
                 "canCallRespin" : false,
                 "reelInstance": {
@@ -65,7 +65,7 @@ export const gameData = [
             {
                 "Name": "10",
                 "Id": 4,
-                "payout": 10,
+                "payout": "10",
                 "canCallRedSpin" : false,
                 "canCallRespin" : false,
                 "reelInstance": {
@@ -77,7 +77,7 @@ export const gameData = [
             {
                 "Name": "0",
                 "Id": 5,
-                "payout": 0,
+                "payout": "0",
                 "canCallRedSpin" : false,
                 "canCallRespin" : true,
                 "reelInstance": {
@@ -89,7 +89,7 @@ export const gameData = [
             {
                 "Name": "00",
                 "Id": 6,
-                "payout": 0,
+                "payout": "00",
                 "canCallRedSpin" : false,
                 "canCallRespin" : true,
                 "reelInstance": {
