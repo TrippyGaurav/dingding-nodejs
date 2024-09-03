@@ -78,8 +78,6 @@ export class SLCM {
       }
       await this.deductPlayerBalance(this.settings.currentBet);
       this.playerData.totalbet += this.settings.currentBet;
-      this.settings.lastReSpin = [];
-      this.settings.lastRedSpin = [];
       new RandomResultGenerator(this);
       this.checkResult();
     } catch (error) {
@@ -90,12 +88,45 @@ export class SLCM {
 
   private checkResult() {
     if (this.settings.freezeIndex.length > 0 && this.settings.hasRespin) {
-      const currentArr = this.settings.lastReSpin
-      const freezeIndex = this.settings.freezeIndex
+      const currentArr = this.settings.lastReSpin;
+      const freezeIndex = this.settings.freezeIndex;
 
+      console.log(freezeIndex, 'Freeze Indexes');
+      console.log(currentArr, 'Previous Array');
 
-      console.log(this.settings.lastReSpin, 'sdhkfsjhgkjsdfhgjkdf')
+      let newMatrix = this.settings.resultSymbolMatrix[0].map((item, index) => {
+        if (freezeIndex.includes(index)) {
+          return currentArr[index]?.Symbol?.Id ?? currentArr[index];
+        }
+        return item;
+      });
+
+      console.log(newMatrix, 'New Matrix after Replacement');
+      // Use JSON.stringify for deep comparison of objects
+      const allValuesSame = currentArr.every((item, index) => {
+        return JSON.stringify(item) === JSON.stringify(newMatrix[index]);
+      });
+
+      console.log(allValuesSame, 'allValuesSame');
+
+      if (allValuesSame) {
+        console.log('All values are the same. Respin stopped.');
+        this.settings.hasRespin = false;
+        this.settings.freezeIndex = [];
+        return
+      } else {
+        this.settings.resultSymbolMatrix[0] = newMatrix;
+        this.settings.freezeIndex = [];
+        this.settings.hasRespin = false;
+      }
     }
+
+
+
+
+
+
+
 
 
     const resultRow = this.settings.resultSymbolMatrix[0];
@@ -126,24 +157,27 @@ export class SLCM {
 
     const finalPayout = totalPayout ? parseInt(totalPayout, 10) : 0;
     this.playerData.currentPayout = totalPayout;
-    console.log("After", this.settings.resultSymbolMatrix);
-    console.log(`Total Payout: ${finalPayout}`);
+
+
+
+    console.log('SYMBOLS:', this.settings.resultSymbolMatrix);
+    console.log('FINALPAY:', finalPayout);
     if (shouldRespin && finalPayout === 0) {
       this.initiateRespin(this.settings.resultSymbolMatrix);
     }
   }
 
   private hasRespinPattern(result: any[]): boolean {
-    if (!this.settings.hasRespin) {
-      const hasRespin = result.some(element => element.Name === "0" || element.Name === "doubleZero")
-      return hasRespin
-    }
-    return false
+
+    const hasRespin = result.some(element => element.Name === "0" || element.Name === "doubleZero")
+    return hasRespin
+
   }
 
   private async initiateRespin(currentArr: any[]) {
+    console.log('RE-SPIN')
     this.settings.hasRespin = true;
-    this.settings.lastReSpin = currentArr;
+    this.settings.lastReSpin = currentArr.map(item => item.Id);
     const currentFreezeIndexes = currentArr
       .map((item, index) => (item.Name == "0" || item.Name == "doubleZero" ? index : -1))
       .filter(index => index !== -1);
@@ -152,6 +186,4 @@ export class SLCM {
       this.spinResult()
     }
   }
-
-
 }
