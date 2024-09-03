@@ -163,7 +163,6 @@ export default class BaseSlotGame implements RequiredSocketMethods {
         const sendData = this.settings.gamble.sendInitGambleData(
           response.data.GAMBLETYPE
         );
-        console.log(sendData);
 
         this.sendMessage("gambleInitData", sendData);
         break;
