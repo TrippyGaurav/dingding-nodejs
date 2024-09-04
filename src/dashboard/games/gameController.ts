@@ -193,12 +193,23 @@ export class GameController {
       const mainDomain = config.hosted_url_cors.replace(/^[^.]+\./, '');
       const hostPattern = new RegExp(`(^|\\.)${mainDomain.replace('.', '\\.')}$`);
       // Check if the game URL exists and matches the pattern
-      if (game && hostPattern.test(game.url)) {
-        res.status(200).json({ url: game.url });
+
+      if (config.env === 'development') {
+        if (game) {
+          res.status(200).json({ url: game.url });
+        } else {
+          console.log('Unauthorized request');
+          throw createHttpError(401, "Unauthorized request");
+        }
       } else {
-        console.log('Unauthorized request');
-        throw createHttpError(401, "Unauthorized request");
+        if (game && hostPattern.test(game.url)) {
+          res.status(200).json({ url: game.url });
+        } else {
+          console.log('Unauthorized request');
+          throw createHttpError(401, "Unauthorized request");
+        }
       }
+
 
       if (!platform || platform.length === 0) {
         throw createHttpError(404, "Game not found");
