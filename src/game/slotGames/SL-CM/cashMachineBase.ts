@@ -87,9 +87,9 @@ export class SLCM {
   }
 
   private checkResult() {
-    if (this.settings.freezeIndex.length > 0 && this.settings.hasRespin) {
+    if (this.settings.freezeIndex.length > 0 && (this.settings.hasRespin || this.settings.hasRedrespin)) {
       const currentArr = this.settings.lastReSpin;
-      const freezeIndex = this.settings.freezeIndex;
+      const freezeIndex = this.settings.freezeIndex; 
 
       console.log(freezeIndex, 'Freeze Indexes');
       console.log(currentArr, 'Previous Array');
@@ -103,31 +103,31 @@ export class SLCM {
 
       console.log(newMatrix, 'New Matrix after Replacement');
       // Use JSON.stringify for deep comparison of objects
-      const allValuesSame = currentArr.every((item, index) => {
-        return JSON.stringify(item) === JSON.stringify(newMatrix[index]);
-      });
+      if (this.settings.hasRespin )
+      {
+          const allValuesSame = currentArr.every((item, index) => {
+          return JSON.stringify(item) === JSON.stringify(newMatrix[index]);
+        });
 
-      console.log(allValuesSame, 'allValuesSame');
+        console.log(allValuesSame, 'allValuesSame');
 
-      if (allValuesSame) {
-        console.log('All values are the same. Respin stopped.');
-        this.settings.hasRespin = false;
-        this.settings.freezeIndex = [];
-        return
-      } else {
-        this.settings.resultSymbolMatrix[0] = newMatrix;
-        this.settings.freezeIndex = [];
-        this.settings.hasRespin = false;
+        if (allValuesSame) {
+          console.log('All values are the same. Respin stopped.');
+          this.settings.hasRespin = false;
+          this.settings.freezeIndex = [];
+          return
+        } else {
+          this.settings.resultSymbolMatrix[0] = newMatrix;
+          this.settings.freezeIndex = [];
+          this.settings.hasRespin = false;
+        }
+      }
+      else if(this.settings.hasRedrespin){
+        
+
+
       }
     }
-
-
-
-
-
-
-
-
 
     const resultRow = this.settings.resultSymbolMatrix[0];
     const preProcessedResult = resultRow.map(element => {
@@ -142,6 +142,9 @@ export class SLCM {
       }
       return element;
     });
+
+    const shouldredrespin = this.hasRedspinPatttern(preProcessedResult);
+    
 
 
     this.settings.resultSymbolMatrix = processedResult;
@@ -165,6 +168,13 @@ export class SLCM {
     if (shouldRespin && finalPayout === 0) {
       this.initiateRespin(this.settings.resultSymbolMatrix);
     }
+    if(finalPayout > 0 && finalPayout<= 5 )
+    {
+      const Redspinprob = (Math.random())
+      if (Redspinprob >= 0.1){
+        this.initiateRedRespin(this.settings.resultSymbolMatrix)
+      }
+    }
   }
 
   private hasRespinPattern(result: any[]): boolean {
@@ -172,6 +182,11 @@ export class SLCM {
     const hasRespin = result.some(element => element.Name === "0" || element.Name === "doubleZero")
     return hasRespin
 
+  }
+
+  private hasRedspinPatttern(result : any[]): boolean {
+      const hasRedspin = result.some(element => element.Name === "1" || element.Name === "2" || element.Name === "5" )
+      return hasRedspin
   }
 
   private async initiateRespin(currentArr: any[]) {
@@ -184,6 +199,21 @@ export class SLCM {
     this.settings.freezeIndex = currentFreezeIndexes;
     if (this.settings.freezeIndex.length > 0 && this.settings.hasRespin) {
       this.spinResult()
+    }
+  }
+  private async initiateRedRespin(currentArr: any[]) {
+    console.log('RED-RE-SPIN');
+    this.settings.hasRedrespin = true;
+    this.settings.lastReSpin = currentArr.map(item => item.Id);
+  
+    const currentFreezeIndexes = currentArr
+      .map((item, index) => (item.Name === "1" || item.Name === "2" || item.Name === "5" ? index : -1))
+      .filter(index => index !== -1);
+  
+    this.settings.freezeIndex = currentFreezeIndexes;
+  
+    if (this.settings.freezeIndex.length > 0 && this.settings.hasRedrespin) {
+      this.spinResult();
     }
   }
 }
