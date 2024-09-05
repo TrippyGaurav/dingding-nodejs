@@ -87,7 +87,7 @@ export class SLCM {
   }
 
   private checkResult() {
-    if (this.settings.freezeIndex.length > 0 && (this.settings.hasRespin || this.settings.hasRedrespin)) {
+    if (this.settings.freezeIndex.length > 0 && (this.settings.hasRespin || this.settings.hasRedrespin.state)) {
       const currentArr = this.settings.lastReSpin;
       const freezeIndex = this.settings.freezeIndex; 
 
@@ -122,9 +122,14 @@ export class SLCM {
           this.settings.hasRespin = false;
         }
       }
-      else if(this.settings.hasRedrespin){
-        
-
+      else if(this.settings.hasRedrespin.state){
+          if(this.playerData.currentWining> this.settings.hasRedrespin.initialpay)          
+            {
+              this.settings.hasRedrespin.state = false;
+              this.settings.freezeIndex = [];
+              return 
+            }                                                                                                                                        
+            
 
       }
     }
@@ -136,19 +141,13 @@ export class SLCM {
     });
 
     const shouldRespin = this.hasRespinPattern(preProcessedResult);
-    const processedResult = preProcessedResult.map(element => {
-      if (element.Name === "00") {
-        return shouldRespin ? "0" : "00";
-      }
-      return element;
-    });
 
-    const shouldredrespin = this.hasRedspinPatttern(preProcessedResult);
+  this.hasRedspinPatttern(preProcessedResult);
     
 
 
-    this.settings.resultSymbolMatrix = processedResult;
-    const totalPayout = processedResult
+    this.settings.resultSymbolMatrix = preProcessedResult;
+    const totalPayout = preProcessedResult
       .reduce((acc, symbol) => {
         if (symbol.Name !== undefined) {
           const newPayout = acc + symbol.payout;
@@ -159,23 +158,32 @@ export class SLCM {
       .trim();
 
     const finalPayout = totalPayout ? parseInt(totalPayout, 10) : 0;
-    this.playerData.currentPayout = totalPayout;
+    this.playerData.currentWining= finalPayout
+    // this.playerData.currentPayout = ;
 
-
-
-    console.log('SYMBOLS:', this.settings.resultSymbolMatrix);
-    console.log('FINALPAY:', finalPayout);
+   
     if (shouldRespin && finalPayout === 0) {
       this.initiateRespin(this.settings.resultSymbolMatrix);
     }
-    if(finalPayout > 0 && finalPayout<= 5 )
-    {
-      const Redspinprob = (Math.random())
-      if (Redspinprob >= 0.1){
-        this.initiateRedRespin(this.settings.resultSymbolMatrix)
+    if (finalPayout > 0 && finalPayout <= 5) {
+      this.settings.hasRedrespin.initialpay = finalPayout;
+      const Redspinprob = Math.random();
+      if (Redspinprob >= 0.1) {
+          this.initiateRedRespin(this.settings.resultSymbolMatrix);
       }
-    }
   }
+  console.log('SYMBOLS:', this.settings.resultSymbolMatrix);
+  console.log('FINALPAY:', finalPayout);
+  }
+  
+  private calculatePayout(resultMatrix: any[]): number {
+    return resultMatrix
+      .reduce((acc, symbol) => {
+        const symbolData = this.settings.Symbols.find(sym => sym.Id === symbol);
+        return acc + (symbolData?.payout || 0);
+      }, 0);
+  }
+
 
   private hasRespinPattern(result: any[]): boolean {
 
@@ -203,16 +211,15 @@ export class SLCM {
   }
   private async initiateRedRespin(currentArr: any[]) {
     console.log('RED-RE-SPIN');
-    this.settings.hasRedrespin = true;
+    this.settings.hasRedrespin.state = true;
     this.settings.lastReSpin = currentArr.map(item => item.Id);
-  
     const currentFreezeIndexes = currentArr
       .map((item, index) => (item.Name === "1" || item.Name === "2" || item.Name === "5" ? index : -1))
       .filter(index => index !== -1);
   
     this.settings.freezeIndex = currentFreezeIndexes;
   
-    if (this.settings.freezeIndex.length > 0 && this.settings.hasRedrespin) {
+    if (this.settings.freezeIndex.length > 0 && this.settings.hasRedrespin.state) {
       this.spinResult();
     }
   }
