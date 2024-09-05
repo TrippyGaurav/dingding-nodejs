@@ -19,7 +19,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCM) {
         lastRedSpin: [],
         lastReSpin: [],
         hasRespin: false,
-        hasRedrespin: false,
+        hasRedrespin: { initialpay: 0, state: false },
         freezeIndex: [],
         reSpinWinIndex: []
     };

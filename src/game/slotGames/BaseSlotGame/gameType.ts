@@ -51,6 +51,7 @@ export interface GameData {
   bets: number[]; // Add this line to include bets property
   matrix: { x: number; y: number };
   linesCount: number; // Add this line to include linesCount property
+  
 }
 
 
