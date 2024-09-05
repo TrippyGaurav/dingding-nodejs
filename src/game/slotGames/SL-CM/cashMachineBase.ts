@@ -174,18 +174,15 @@ export class SLCM {
           }
         }
       } else if (this.settings.hasRedrespin.state) {
+        this.settings.resultSymbolMatrix[0] = newMatrix;
         // Handling red respin condition
         if (this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
           this.settings.hasRedrespin.state = false;
           this.settings.freezeIndex = [];
-          return;
-        }
-      }
-      else if (this.settings.hasRedrespin.state) {
-        if (this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
-          this.settings.hasRedrespin.state = false;
-          this.settings.freezeIndex = [];
-          return;
+
+          if(this.playerData.currentWining>5){
+            return
+          }
         }
       }
     }

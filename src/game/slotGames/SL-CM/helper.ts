@@ -112,17 +112,17 @@ export function hasRedspinPatttern(result: any[]): boolean {
  * @param currentArr - The array of current result symbols.
  */
 export async function initiateRespin(gameInstance: SLCM, currentArr: any[]) {
-    console.log('RE-SPIN');
-    const settings = gameInstance.settings;
-    settings.hasRespin = true;
-    settings.lastReSpin = currentArr.map(item => item.Id);
-    const currentFreezeIndexes = currentArr
-        .map((item, index) => (item.Name === "0" || item.Name === "doubleZero" ? index : -1))
-        .filter(index => index !== -1);
-    settings.freezeIndex = currentFreezeIndexes;
-    if (settings.freezeIndex.length > 0 && settings.hasRespin) {
-        gameInstance.spinResult();
-    }
+    // console.log('RE-SPIN');
+    // const settings = gameInstance.settings;
+    // settings.hasRespin = true;
+    // settings.lastReSpin = currentArr.map(item => item.Id);
+    // const currentFreezeIndexes = currentArr
+    //     .map((item, index) => (item.Name === "0" || item.Name === "doubleZero" ? index : -1))
+    //     .filter(index => index !== -1);
+    // settings.freezeIndex = currentFreezeIndexes;
+    // if (settings.freezeIndex.length > 0 && settings.hasRespin) {
+    //     gameInstance.spinResult();
+    // }
 }
 
 /**
@@ -131,16 +131,16 @@ export async function initiateRespin(gameInstance: SLCM, currentArr: any[]) {
  * @param currentArr - The array of current result symbols.
  */
 export async function initiateRedRespin(gameInstance: SLCM, currentArr: any[]) {
-    // console.log('RED-RE-SPIN');
-    // const settings = gameInstance.settings;
-    // settings.hasRedrespin.state = true;
-    // settings.lastReSpin = currentArr.map(item => item.Id);
-    // const currentFreezeIndexes = currentArr
-    //     .map((item, index) => (item.Name === "1" || item.Name === "2" || item.Name === "5" ? index : -1))
-    //     .filter(index => index !== -1);
-    // settings.freezeIndex = currentFreezeIndexes;
+    console.log('RED-RE-SPIN');
+    const settings = gameInstance.settings;
+    settings.hasRedrespin.state = true;
+    settings.lastReSpin = currentArr.map(item => item.Id);
+    const currentFreezeIndexes = currentArr
+        .map((item, index) => (item.Name === "1" || item.Name === "2" || item.Name === "5" ? index : -1))
+        .filter(index => index !== -1);
+    settings.freezeIndex = currentFreezeIndexes;
 
-    // if (settings.freezeIndex.length > 0 && settings.hasRedrespin.state) {
-    //     gameInstance.spinResult(); 
-    // }
+    if (settings.freezeIndex.length > 0 && settings.hasRedrespin.state) {
+        gameInstance.spinResult(); 
+    }
 }

@@ -2,193 +2,103 @@ export const moolahPayOut = [5, 10, 15, 20]
 export const gameData = [
 
     {
-        "id": "SL-CRZ",
+        "id": "SL-CM",
+        "isSpecial": true,
         "matrix": {
-            "x": 4,
-            "y": 3
+            "x": 3,
+            "y": 1
         },
-        "linesApiData": [
-            [1, 1, 1]
+        "bets": [
+            1,
+            5,
+            10
         ],
-        "bonus" : false,
-        "linesCount": [1],
-        "bets": [0.1, 0.25, 0.5, 0.75, 1],
         "Symbols": [
             {
                 "Name": "Blank",
                 "Id": 0,
-                "isSpecial" : false,
-                "payout": 0,
-                "mixedPayout": 0,
-                "canmatch": [],
+                "payout": "",
+                "canCallRedSpin": false,
+                "canCallRespin": false,
                 "reelInstance": {
                     "0": 60,
                     "1": 62,
-                    "2": 55,
-                    "4": 2
+                    "2": 55
                 }
             },
             {
-                "Name": "777",
+                "Name": "1",
                 "Id": 1,
-                "payout": 1000,
-                "mixedPayout": 200,
-                "isSpecial" : false,
-                "canmatch": ["2", "3"],
+                "payout": "1",
+                "canCallRedSpin": true,
+                "canCallRespin": false,
                 "reelInstance": {
                     "0": 5,
                     "1": 0,
-                    "2": 0,
-                    "4": 2
+                    "2": 0
                 }
             },
             {
-                "Name": "77",
+                "Name": "2",
                 "Id": 2,
-                "payout": 200,
-                "mixedPayout": 0,
-                "isSpecial" : false,
-                "canmatch": ["1", "3"],
+                "payout": "2",
+                "canCallRedSpin": true,
+                "canCallRespin": false,
                 "reelInstance": {
                     "0": 4,
                     "1": 0,
-                    "2": 0,
-                    "4": 2
+                    "2": 0
                 }
             },
             {
-                "Name": "7",
+                "Name": "5",
                 "Id": 3,
-                "payout": 5,
-                "mixedPayout": 0,
-                "isSpecial" : false,
-                "canmatch": ["1", "2"],
+                "payout": "5",
+                "canCallRedSpin": true,
+                "canCallRespin": false,
                 "reelInstance": {
                     "0": 2,
                     "1": 5,
-                    "2": 8,
-                    "4": 2
+                    "2": 8
                 }
             },
             {
-                "Name": "bar/bar",
+                "Name": "10",
                 "Id": 4,
-                "payout": 40,
-                "mixedPayout": 0,
-                "isSpecial" : false,
-                "canmatch": ["5"],
+                "payout": "10",
+                "canCallRedSpin": false,
+                "canCallRespin": false,
                 "reelInstance": {
                     "0": 1,
                     "1": 0,
-                    "2": 0,
-                    "4": 2
+                    "2": 0
                 }
             },
             {
-                "Name": "bar",
+                "Name": "0",
                 "Id": 5,
-                "payout": 20,
-                "mixedPayout": 0,
-                "isSpecial" : false,
-                "canmatch": ["4"],
+                "payout": "0",
+                "canCallRedSpin": false,
+                "canCallRespin": true,
                 "reelInstance": {
                     "0": 0,
-                    "1": 4,
-                    "2": 5,
-                    "4": 2
+                    "1": 3,
+                    "2": 0
                 }
             },
             {
-                "Name": "10x",
+                "Name": "doubleZero",
                 "Id": 6,
-                "payout": 10,
-                "mixedPayout": 0,
-                "isSpecial" : true,
-                "canmatch": [],
-                "SpecialType " : "MULTIPLY",
+                "payout": "00",
+                "canCallRedSpin": false,
+                "canCallRespin": true,
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 4,
-                    "4": 2
-                }
-            },
-            {
-                "Name": "5X",
-                "Id": 7,
-                "payout": 5,
-                "mixedPayout": 0,
-                "SpecialType " : "MULTIPLY",
-                "isSpecial" : true,
-                "canmatch": [],
-                "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 4,
-                    "4": 2
-                }
-            },
-            {
-                "Name": "2X",
-                "Id": 8,
-                "payout": 2,
-                "mixedPayout": 0,
-                "SpecialType " : "MULTIPLY",
-                "isSpecial" : true,
-                "canmatch": [],
-                "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 4,
-                    "4": 2
-                }
-            },
-            {
-                "Name": "DOUBLE+",
-                "Id": 9,
-                "payout": 100,
-                "mixedPayout": 0,
-                "SpecialType " : "ADD",
-                "isSpecial" : true,
-                "canmatch": [],
-                "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 4,
-                    "4": 2
-                }
-                
-            },
-            {
-                "Name": "ADD",
-                "Id": 10,
-                "payout": 10,
-                "mixedPayout": 0,
-                "SpecialType " : "ADD",
-                "isSpecial" : true,
-                "canmatch": [],
-                "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 40,
-                }
-            },
-            {
-                "Name": "RESPIN",
-                "Id": 11,
-                "payout": 0,
-                "mixedPayout": 0,
-                "isSpecial" : true,
-                "canmatch": [],
-                "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 4,
-                    "4": 2
+                    "2": 40
                 }
             }
-        ],
-        "defaultPayout": 10 
+        ]
     }
 
 ]
