@@ -25,6 +25,7 @@ export interface CMSettings {
     lastRedSpin: { Index: number, Symbol: Symbol }[],
     lastReSpin: { Index: number, Symbol: Symbol }[]
     hasRespin: boolean
+    hasRedrespin : boolean
     freezeIndex: any[],
     reSpinWinIndex: any[]
 }
