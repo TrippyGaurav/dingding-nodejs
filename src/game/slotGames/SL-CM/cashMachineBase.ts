@@ -142,7 +142,7 @@ export class SLCM {
 
     const shouldRespin = this.hasRespinPattern(preProcessedResult);
 
-  this.hasRedspinPatttern(preProcessedResult);
+    this.hasRedspinPatttern(preProcessedResult);
     
 
 
