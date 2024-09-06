@@ -236,9 +236,8 @@ export default class PlayerSocket {
 
   public onExit() {
     this.socketData.gameSocket?.on("EXIT", () => {
-
-
-      console.log(this.playerData.username, "EXITS FROM", this.gameId)
+      console.log(this.playerData.username, "EXITS FROM", this.gameId);
+      this.sendMessage('ExitUser', '')
       users.delete(this.playerData.username);
       this.cleanup();
     });
