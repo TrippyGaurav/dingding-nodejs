@@ -25,7 +25,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCM) {
         lastRedSpin: [],
         lastReSpin: [],
         hasRespin: false,
-        hasRedrespin: { initialpay: 0, state: false },
+        hasRedrespin: { initialpay: 0, state: false, freezeIndex: [] },
         freezeIndex: [],
         reSpinWinIndex: []
     };
@@ -92,55 +92,75 @@ export function sendInitData(gameInstance: SLCM) {
  * @param result - The array of result symbols to check.
  * @returns A boolean indicating whether the respin pattern is present.
  */
-export function hasRespinPattern(result: any[]): boolean {
-    const hasRespin = result.some(element => element.Name === "0" || element.Name === "doubleZero")
-    return hasRespin
+export function hasRespinPattern(result: Array<{ Name: string }>): boolean {
+    const respinArray = ["0", "doubleZero"];
+    return result.some(({ Name }) => respinArray.includes(Name));
 }
+
+
 
 /**
  * Checks if the result contains symbols that trigger a red respin.
  * @param result - The array of result symbols to check.
  * @returns A boolean indicating whether the red respin pattern is present.
  */
-export function hasRedspinPatttern(result: any[]): boolean {
-    const hasRedspin = result.some(element => element.Name === "1" || element.Name === "2" || element.Name === "5")
-    return hasRedspin
+export function hasRedspinPattern(result: any[]): boolean {
+    const redspinSet = ["1", "2", "5"];
+    return result.some(({ Name }) => redspinSet.includes(Name));
 }
+
 /**
  * Initiates a respin if the current result contains respin symbols.
  * @param settings - The settings object containing game settings and state.
  * @param currentArr - The array of current result symbols.
  */
-export async function initiateRespin(gameInstance: SLCM, currentArr: any[]) {
-    // console.log('RE-SPIN');
-    // const settings = gameInstance.settings;
+export async function initiateRespin(gameInstance: SLCM, currentArr: any[]): Promise<void> {
+    // const { settings } = gameInstance;
     // settings.hasRespin = true;
-    // settings.lastReSpin = currentArr.map(item => item.Id);
-    // const currentFreezeIndexes = currentArr
-    //     .map((item, index) => (item.Name === "0" || item.Name === "doubleZero" ? index : -1))
-    //     .filter(index => index !== -1);
-    // settings.freezeIndex = currentFreezeIndexes;
+    // settings.lastReSpin = currentArr.map(({ Id }) => Id);
+
+    // settings.freezeIndex = currentArr.reduce<number[]>((acc, { Name }, index) => {
+    //     if (["0", "doubleZero"].includes(Name)) {
+    //         acc.push(index);
+    //     }
+    //     return acc;
+    // }, []);
     // if (settings.freezeIndex.length > 0 && settings.hasRespin) {
-    //     gameInstance.spinResult();
+    //     try {
+    //         await gameInstance.spinResult();
+    //     } catch (error) {
+    //         console.error('Error during spin result:', error);
+    //     }
     // }
 }
+
 
 /**
  * Initiates a red respin if the current result contains red respin symbols.
  * @param settings - The settings object containing game settings and state.
  * @param currentArr - The array of current result symbols.
  */
-export async function initiateRedRespin(gameInstance: SLCM, currentArr: any[]) {
-    console.log('RED-RE-SPIN');
-    const settings = gameInstance.settings;
+export async function initiateRedRespin(gameInstance: SLCM, currentArr: any[]): Promise<void> {
+    const { settings } = gameInstance;
     settings.hasRedrespin.state = true;
-    settings.lastReSpin = currentArr.map(item => item.Id);
-    const currentFreezeIndexes = currentArr
-        .map((item, index) => (item.Name === "1" || item.Name === "2" || item.Name === "5" ? index : -1))
-        .filter(index => index !== -1);
-    settings.freezeIndex = currentFreezeIndexes;
-
+    settings.hasRedrespin.freezeIndex = [];
+    Object.assign(settings, {
+        lastReSpin: currentArr.map(({ Id }) => Id),
+        freezeIndex: currentArr.reduce<number[]>((acc, { Name }, index) => {
+            if (["1", "2", "5"].includes(Name)) {
+                acc.push(index);
+                settings.hasRedrespin.freezeIndex.push(index);
+            }
+            return acc;
+        }, [])
+    });
     if (settings.freezeIndex.length > 0 && settings.hasRedrespin.state) {
-        gameInstance.spinResult(); 
+        try {
+            await gameInstance.spinResult();
+        } catch (error) {
+            console.error('Spin result error:', error);
+        }
     }
+
 }
+

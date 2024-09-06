@@ -1,7 +1,7 @@
 import { WinData } from "../BaseSlotGame/WinData";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { CMSettings } from "./types";
-import { initializeGameSettings, generateInitialReel, sendInitData, hasRedspinPatttern, hasRespinPattern, initiateRedRespin, initiateRespin } from "./helper";
+import { initializeGameSettings, generateInitialReel, sendInitData, hasRespinPattern, initiateRedRespin, initiateRespin } from "./helper";
 import { currentGamedata } from "../../../Player";
 
 /**
@@ -180,7 +180,7 @@ export class SLCM {
           this.settings.hasRedrespin.state = false;
           this.settings.freezeIndex = [];
 
-          if(this.playerData.currentWining>5){
+          if (this.playerData.currentWining > 5) {
             return
           }
         }
@@ -192,7 +192,7 @@ export class SLCM {
       const symbol = this.settings.Symbols.find(sym => sym.Id === element);
       return symbol;
     });
-    hasRedspinPatttern(preProcessedResult);
+    hasRespinPattern(preProcessedResult);
     const shouldRespin = hasRespinPattern(preProcessedResult);
     this.settings.resultSymbolMatrix = preProcessedResult;
     const totalPayout = preProcessedResult
