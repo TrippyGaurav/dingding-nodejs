@@ -63,8 +63,8 @@ export class SLCRZ {
   }
 
   private prepareSpin(data: any) {
-    this.settings.matrix.x = 4;
-    this.settings.matrix.y = 3;
+    this.settings.matrix.x;
+    this.settings.matrix.y;
     this.settings.currentLines = data.currentLines;
     this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
     this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
@@ -88,8 +88,65 @@ export class SLCRZ {
   }
 
   private checkResult() {
-    const resultRow = this.settings.resultSymbolMatrix;
-    console.log("Result matrix",this.settings.resultSymbolMatrix);
-    
-  }   
+    const resultmatrix = this.settings.resultSymbolMatrix;
+    const checkMatrix = resultmatrix.map(row => row.slice(0, 3));
+    const specialMatrix = resultmatrix.map(row => row[3]);
+    this.printMatrix (resultmatrix)
+    // this.printMatrix(checkMatrix)
+    // this.printMatrix(specialMatrix, true)
+
+    const middleRow = checkMatrix[1];
+    const extrasymbol= specialMatrix[1];
+    console.log("Middle row:", middleRow);
+    console.log("special element:", extrasymbol);
+
+
+    const isWinning = !middleRow.includes(0); // If '0' exists, no win
+
+    if (isWinning) {
+        console.log("Winning condition met! Calculating payout...");
+        const payout = this.calculatePayout(middleRow);
+        console.log("Payout:", payout);
+    } else {
+        console.log("No winning condition due to a 'Blank' symbol.");
+    }
+  }
+  private calculatePayout(symbols: any[]): number {
+    let payout = 0;
+
+    symbols.forEach(symbol => {
+        if (symbol === '0') {
+            return; 
+        }
+
+        switch (symbol) {
+            case '1': // Example symbol '1'
+                payout += 10;  // Example payout value
+                break;
+            case '2': // Example symbol '2'
+                payout += 20;  // Example payout value
+                break;
+            // Add more cases for different symbols
+            default:
+                payout += 5; // Default payout for other symbols
+        }
+    });
+
+    return payout;
+  }
+  
+
+  private printMatrix(matrix: any[][] | any[], isSingleColumn: boolean = false) {
+    if (isSingleColumn) {
+        // If it's a single column matrix (like specialMatrix)
+        matrix.forEach((item: any) => {
+            console.log(`[ '${item}' ]`);
+        });
+    } else {
+        // For regular matrices like resultSymbolMatrix or checkMatrix
+        matrix.forEach((row: any[]) => {
+            console.log(`[ '${row.join("', '")}' ]`);
+        });
+    }
+}
 }

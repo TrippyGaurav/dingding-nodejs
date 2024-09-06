@@ -11,7 +11,7 @@ export class RandomResultGenerator {
             }
         }
 
-        console.log(matrix, 'matrix')
+        // console.log(matrix, 'matrix')
         current.settings.resultReelIndex = matrix;
         current.settings.resultSymbolMatrix = matrix;
         // matrix.pop();

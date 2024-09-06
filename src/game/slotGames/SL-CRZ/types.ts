@@ -14,6 +14,8 @@ export interface CRZSETTINGS {
     currentGamedata: GameData;
     resultSymbolMatrix: any[];
     _winData: WinData | undefined;
+    canmatch : number[];
+    mixedPayout : number;
     currentBet: number;
     currentLines: number;
     BetPerLines: number;

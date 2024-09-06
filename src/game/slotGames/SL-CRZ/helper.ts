@@ -12,6 +12,8 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCRZ) {
         resultSymbolMatrix: [],
         currentGamedata: gameData.gameSettings,
         _winData: new WinData(gameInstance),
+        canmatch : [],
+        mixedPayout: 0,
         currentBet: 0,
         currentLines: 0,
         BetPerLines: 0,
