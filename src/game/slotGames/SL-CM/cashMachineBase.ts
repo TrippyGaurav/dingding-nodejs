@@ -138,8 +138,7 @@ export class SLCM {
     if (this.settings.freezeIndex.length > 0 && (this.settings.hasRespin || this.settings.hasRedrespin.state)) {
       const currentArr = this.settings.lastReSpin;
       const freezeIndex = this.settings.freezeIndex;
-      console.log(freezeIndex, 'Freeze Indexes');
-      console.log(currentArr, 'Previous Array');
+
       let newMatrix = this.settings.resultSymbolMatrix[0].map((item, index) => {
         if (freezeIndex.includes(index)) {
           return currentArr[index]?.Symbol?.Id ?? currentArr[index];
@@ -174,16 +173,8 @@ export class SLCM {
           }
         }
       } else if (this.settings.hasRedrespin.state) {
+        console.log('RED RE SPIN HERE')
         this.settings.resultSymbolMatrix[0] = newMatrix;
-        // Handling red respin condition
-        if (this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
-          this.settings.hasRedrespin.state = false;
-          this.settings.freezeIndex = [];
-
-          if (this.playerData.currentWining > 5) {
-            return
-          }
-        }
       }
     }
 
@@ -207,7 +198,11 @@ export class SLCM {
 
     const finalPayout = totalPayout ? parseInt(totalPayout, 10) : 0;
     this.playerData.currentWining = finalPayout;
-
+    if (this.settings.hasRedrespin.state && this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
+      console.log('RED RE SPIN' , 'With', this.playerData.currentWining + 'and', this.settings.hasRedrespin.initialpay)
+      this.settings.hasRedrespin.state = false;
+      this.settings.freezeIndex = [];
+    }
     if (shouldRespin && finalPayout === 0) {
       initiateRespin(this, this.settings.resultSymbolMatrix);
     }
