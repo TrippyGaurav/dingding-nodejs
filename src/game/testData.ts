@@ -94,8 +94,8 @@ export const gameData = [
                 "canCallRespin": true,
                 "reelInstance": {
                     "0": 0,
-                    "1": 0,
-                    "2": 40
+                    "1": 40,
+                    "2": 0
                 }
             }
         ]

@@ -103,16 +103,18 @@ export class SLCM {
    * @param data - The data related to the spin configuration.
    */
   private prepareSpin(data: any) {
-    this.settings.matrix.x = 3;
+    this.settings.matrix.x = data.matrixX;
     this.settings.currentLines = data.currentLines;
     this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
     this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
+
   }
 
   /**
    * Executes the spin operation, deducts the player's balance, and generates spin results.
    * Handles errors and logs them if the spin fails.
    */
+
   public async spinResult() {
     try {
       const playerData = this.getPlayerData();
@@ -199,7 +201,7 @@ export class SLCM {
     const finalPayout = totalPayout ? parseInt(totalPayout, 10) : 0;
     this.playerData.currentWining = finalPayout;
     if (this.settings.hasRedrespin.state && this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
-      console.log('RED RE SPIN' , 'With', this.playerData.currentWining + 'and', this.settings.hasRedrespin.initialpay)
+      console.log('RED RE SPIN', 'With', this.playerData.currentWining + 'and', this.settings.hasRedrespin.initialpay)
       this.settings.hasRedrespin.state = false;
       this.settings.freezeIndex = [];
     }
