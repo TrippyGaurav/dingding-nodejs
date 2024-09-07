@@ -89,61 +89,75 @@ export class SLCRZ {
 
   private checkResult() {
     const resultmatrix = this.settings.resultSymbolMatrix;
-    const checkMatrix = resultmatrix.map(row => row.slice(0, 3));
-    const specialMatrix = resultmatrix.map(row => row[3]);
-    this.printMatrix (resultmatrix)
-    // this.printMatrix(checkMatrix)
-    // this.printMatrix(specialMatrix, true)
+    const checkMatrix = resultmatrix.map(row => row.slice(0, 3)); 
+    const specialMatrix = resultmatrix.map(row => row[3]); 
+    this.printMatrix(resultmatrix);
 
-    const middleRow = checkMatrix[1];
-    const extrasymbol= specialMatrix[1];
+    const middleRow = checkMatrix[1]; 
+    const extrasymbol = specialMatrix[1];
+
     console.log("Middle row:", middleRow);
     console.log("special element:", extrasymbol);
 
+    if (middleRow.includes(0)) {
+        console.log("No win: '0' present in the middle row.");
+        return;
+    }
+    const isWinning = this.checkWinningCondition(middleRow);
 
-    const isWinning = !middleRow.includes(0); // If '0' exists, no win
-
-    if (isWinning) {
-        console.log("Winning condition met! Calculating payout...");
-        const payout = this.calculatePayout(middleRow);
+    if (isWinning.winType === 'regular') {
+        console.log("Regular Win! Calculating payout...");
+        const payout = this.calculatePayout(middleRow, isWinning.symbolId, 'regular');
         console.log("Payout:", payout);
+    } else if (isWinning.winType === 'mixed') {
+        console.log("Mixed Win! Calculating mixed payout...");
+        const payout = this.calculatePayout(middleRow, isWinning.symbolId, 'mixed');
+        console.log("Mixed Payout:", payout);
     } else {
-        console.log("No winning condition due to a 'Blank' symbol.");
+        console.log("No specific win condition met. Applying default payout.");
+        const payout = this.settings.defaultPayout; // Use default payout
+        console.log("Default Payout:", payout);
     }
   }
-  private calculatePayout(symbols: any[]): number {
-    let payout = 0;
 
-    symbols.forEach(symbol => {
-        if (symbol === '0') {
-            return; 
-        }
+  private checkWinningCondition(row: any[]): { winType: string, symbolId?: number } {
+      const firstSymbolId = row[0];
 
-        switch (symbol) {
-            case '1': // Example symbol '1'
-                payout += 10;  // Example payout value
-                break;
-            case '2': // Example symbol '2'
-                payout += 20;  // Example payout value
-                break;
-            // Add more cases for different symbols
-            default:
-                payout += 5; // Default payout for other symbols
-        }
-    });
+      const allSame = row.every(symbol => symbol === firstSymbolId);
+      if (allSame) {
+          return { winType: 'regular', symbolId: firstSymbolId };
+      }
 
-    return payout;
-  }
+      const firstSymbol = this.settings.Symbols.find(sym => sym.Id === firstSymbolId);
+      const canMatch = firstSymbol.canmatch;
+      const isMixedWin = row.slice(1).every(symbol => canMatch.includes(symbol.toString()));
+
+      if (isMixedWin) {
+          return { winType: 'mixed', symbolId: firstSymbolId };
+      }
+
+      return { winType: 'default' };
+    }
+    private calculatePayout(symbols: any[], symbolId: number, winType: string): number {
+      const symbol = this.settings.Symbols.find(sym => sym.Id === symbolId);
+      let payout = 0;
+
+      if (winType === 'regular') {
+          payout = symbol.payout; 
+      } else if (winType === 'mixed') {
+          payout = symbol.mixedPayout;
+      }
+
+      return payout;
+    }
   
 
   private printMatrix(matrix: any[][] | any[], isSingleColumn: boolean = false) {
     if (isSingleColumn) {
-        // If it's a single column matrix (like specialMatrix)
         matrix.forEach((item: any) => {
             console.log(`[ '${item}' ]`);
         });
     } else {
-        // For regular matrices like resultSymbolMatrix or checkMatrix
         matrix.forEach((row: any[]) => {
             console.log(`[ '${row.join("', '")}' ]`);
         });

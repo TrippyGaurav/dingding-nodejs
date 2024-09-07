@@ -38,7 +38,7 @@ export const gameData = [
                     "0": 20,
                     "1": 10,
                     "2": 52,
-                    "3": 24
+                    "3": 0
                 }
             },
             {
@@ -49,10 +49,10 @@ export const gameData = [
                 "isSpecial" : false,
                 "canmatch": ["1", "3"],
                 "reelInstance": {
-                    "0": 10,
+                    "0": 20,
                     "1": 10,
-                    "2": 10,
-                    "3": 20
+                    "2": 52,
+                    "3": 0
                 }
             },
             {
@@ -64,9 +64,9 @@ export const gameData = [
                 "canmatch": ["1", "2"],
                 "reelInstance": {
                     "0": 20,
-                    "1": 15,
-                    "2": 18,
-                    "3": 20
+                    "1": 10,
+                    "2": 52,
+                    "3": 0
                 }
             },
             {
@@ -80,7 +80,7 @@ export const gameData = [
                     "0": 21,
                     "1": 10,
                     "2": 10,
-                    "3": 12
+                    "3": 0
                 }
             },
             {
@@ -91,10 +91,10 @@ export const gameData = [
                 "isSpecial" : false,
                 "canmatch": ["4"],
                 "reelInstance": {
-                    "0": 0,
-                    "1": 4,
-                    "2": 5,
-                    "3": 2
+                    "0": 20,
+                    "1": 10,
+                    "2": 52,
+                    "3": 0
                 }
             },
             {
@@ -183,7 +183,7 @@ export const gameData = [
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 4,
+                    "2": 0,
                     "3": 2
                 }
             }

@@ -18,6 +18,8 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCRZ) {
         currentLines: 0,
         BetPerLines: 0,
         reels: [],
+        defaultPayout: gameData.gameSettings.defaultPayout,
+        SpecialType : gameData.gameSettings.SpecialType,
     };
 }
 
