@@ -30,5 +30,6 @@ export interface CMSettings {
         , state: boolean, freezeIndex: any[]
     }
     freezeIndex: any[],
-    reSpinWinIndex: any[]
+    reSpinWinIndex: any[],
+    newMatrix: any[]
 }
