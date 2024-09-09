@@ -27,7 +27,8 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCM) {
         hasRespin: false,
         hasRedrespin: { initialpay: 0, state: false, freezeIndex: [] },
         freezeIndex: [],
-        reSpinWinIndex: []
+        reSpinWinIndex: [],
+        newMatrix: []
     };
 }
 

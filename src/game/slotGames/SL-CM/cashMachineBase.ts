@@ -1,7 +1,7 @@
 import { WinData } from "../BaseSlotGame/WinData";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { CMSettings } from "./types";
-import { initializeGameSettings, generateInitialReel, sendInitData, hasRespinPattern, initiateRedRespin, initiateRespin } from "./helper";
+import { initializeGameSettings, generateInitialReel, sendInitData, hasRespinPattern, initiateRedRespin, initiateRespin, hasRedspinPattern } from "./helper";
 import { currentGamedata } from "../../../Player";
 
 /**
@@ -137,10 +137,11 @@ export class SLCM {
    * Updates game settings and triggers additional respin checks if needed.
    */
   private checkResult() {
-    if (this.settings.freezeIndex.length > 0 && (this.settings.hasRespin || this.settings.hasRedrespin.state)) {
-      const currentArr = this.settings.lastReSpin;
-      const freezeIndex = this.settings.freezeIndex;
-
+    const currentArr = this.settings.lastReSpin;
+    const freezeIndex = this.settings.freezeIndex;
+    const redSpinFreezeIndex = this.settings.hasRedrespin.freezeIndex
+    // Check for active Respin
+    if (this.settings.hasRespin) {
       let newMatrix = this.settings.resultSymbolMatrix[0].map((item, index) => {
         if (freezeIndex.includes(index)) {
           return currentArr[index]?.Symbol?.Id ?? currentArr[index];
@@ -149,47 +150,106 @@ export class SLCM {
       });
 
       console.log(newMatrix, 'New Matrix after Replacement');
-      if (this.settings.hasRespin) {
-        const allValuesSame = currentArr.every((item, index) => {
-          return JSON.stringify(item) === JSON.stringify(newMatrix[index]);
-        });
 
-        if (allValuesSame) {
-          console.log('All values are the same. Respin stopped.');
-          this.settings.hasRespin = false;
-          this.settings.freezeIndex = [];
-          return;
+      const allValuesSame = currentArr.every((item, index) => {
+        return JSON.stringify(item) === JSON.stringify(newMatrix[index]);
+      });
+
+      // Stop the respin if the matrix remains the same
+      if (allValuesSame) {
+        console.log('RESPIN: All values are the same. Respin stopped.');
+        this.settings.hasRespin = false;
+        this.settings.freezeIndex = [];
+        return;
+      } else {
+        this.settings.resultSymbolMatrix[0] = newMatrix;
+        this.settings.freezeIndex = [];
+        this.settings.hasRespin = false;
+
+        // Check if respin pattern exists in the new matrix
+        const shouldRespin = hasRespinPattern(newMatrix);
+        if (shouldRespin) {
+          this.settings.hasRedrespin.state = false
+          console.log('RESPIN: Respin pattern found, initiating respin');
+          initiateRespin(this, newMatrix);
         } else {
-          this.settings.resultSymbolMatrix[0] = newMatrix;
-          this.settings.freezeIndex = [];
-          this.settings.hasRespin = false;
-
-          const shouldRespin = hasRespinPattern(newMatrix);
-
-          if (shouldRespin) {
-            console.log('respin pattern found');
+          const shouldRespin = hasRespinPattern(newMatrix)
+          if (shouldRespin && this.playerData.currentWining != 0) {
             initiateRespin(this, newMatrix);
-
           } else {
-            console.log('No respin pattern found, continuing normally.');
+            console.log('RESPIN: No respin pattern found, continuing normally.');
           }
         }
-
-      } 
-      else if (this.settings.hasRedrespin.state) {
-        console.log('RED RE SPIN HERE')
-        this.settings.resultSymbolMatrix[0] = newMatrix;
       }
+
+    }
+    // Check for active Red Respin
+    if (this.settings.hasRedrespin.state) {
+      this.settings.hasRespin = false
+      let newMatrix = this.settings.resultSymbolMatrix[0].map((item, index) => {
+        if (redSpinFreezeIndex.includes(index)) {
+          return currentArr[index]?.Symbol?.Id ?? currentArr[index];
+        }
+        return item;
+      });
+
+      console.log(newMatrix, 'New Matrix after Replacement (Red Respin)');
+
+      const allValuesSame = currentArr.every((item, index) => {
+        return JSON.stringify(item) === JSON.stringify(newMatrix[index]);
+      });
+
+      if (allValuesSame) {
+        // If the matrix is the same in red respin, trigger another red respin
+        console.log('RED RESPIN: Matrix is the same, initiating another red respin');
+        initiateRedRespin(this, newMatrix);
+
+      } else {
+        this.settings.resultSymbolMatrix[0] = newMatrix;
+
+        // Calculate payout
+        const resultRow = newMatrix;
+        const preProcessedResult = resultRow.map(element => {
+          const symbol = this.settings.Symbols.find(sym => sym.Id === element);
+          return symbol;
+        });
+        const totalPayout = preProcessedResult
+          .reduce((acc, symbol) => {
+            if (symbol.Name !== undefined) {
+              const newPayout = acc + symbol.payout;
+              return newPayout;
+            }
+            return acc;
+          }, '')
+          .trim();
+        this.playerData.currentWining = totalPayout;
+
+        // If payout is more than 5, stop the red respin
+        console.log(`RED RESPIN: Payout is greater than ${this.settings.hasRedrespin.initialpay} , stopping red respin ${this.playerData.currentWining}`);
+        if (this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
+          console.log(`RED RESPIN: Payout is greater than ${this.settings.hasRedrespin.initialpay} , stopping red respin`);
+          this.settings.hasRedrespin.state = false;
+          this.settings.hasRedrespin.freezeIndex = [];
+        } else {
+          // Otherwise, continue with the red respin
+          console.log('RED RESPIN: Payout is not sufficient, continuing red respin');
+          initiateRedRespin(this, newMatrix);
+        }
+      }
+
     }
 
+    // Final payout and logging if neither respin nor redrespin is active
     const resultRow = this.settings.resultSymbolMatrix[0];
     const preProcessedResult = resultRow.map(element => {
       const symbol = this.settings.Symbols.find(sym => sym.Id === element);
       return symbol;
     });
-    hasRespinPattern(preProcessedResult);
+
     const shouldRespin = hasRespinPattern(preProcessedResult);
+    const shouldRedRespin = hasRedspinPattern(preProcessedResult)
     this.settings.resultSymbolMatrix = preProcessedResult;
+
     const totalPayout = preProcessedResult
       .reduce((acc, symbol) => {
         if (symbol.Name !== undefined) {
@@ -202,23 +262,24 @@ export class SLCM {
 
     const finalPayout = totalPayout ? parseInt(totalPayout, 10) : 0;
     this.playerData.currentWining = finalPayout;
-    if (this.settings.hasRedrespin.state && this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
-      console.log('RED RE SPIN', 'With', this.playerData.currentWining + 'and', this.settings.hasRedrespin.initialpay)
-      this.settings.hasRedrespin.state = false;
-      this.settings.freezeIndex = [];
-    }
     if (shouldRespin && finalPayout === 0) {
       initiateRespin(this, this.settings.resultSymbolMatrix);
-    }
-    if (finalPayout > 0 && finalPayout <= 5) {
-      this.settings.hasRedrespin.initialpay = finalPayout;
-      const Redspinprob = Math.random();
-      if (Redspinprob >= 0.1) {
-        initiateRedRespin(this, this.settings.resultSymbolMatrix);
-      }
+    } else if (finalPayout <= 5 && shouldRedRespin) {
+      this.settings.hasRedrespin.initialpay = this.playerData.currentWining
+      initiateRedRespin(this, this.settings.resultSymbolMatrix)
     }
     console.log('SYMBOLS:', this.settings.resultSymbolMatrix);
     console.log('FINALPAY:', finalPayout);
   }
 
+
+
+
+
+
+
+
+
 }
+
+
