@@ -1,7 +1,7 @@
 import { WinData } from "../BaseSlotGame/WinData";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { CMSettings } from "./types";
-import { initializeGameSettings, generateInitialReel, sendInitData, hasRedspinPatttern, hasRespinPattern, initiateRedRespin, initiateRespin } from "./helper";
+import { initializeGameSettings, generateInitialReel, sendInitData, hasRespinPattern, initiateRedRespin, initiateRespin } from "./helper";
 import { currentGamedata } from "../../../Player";
 
 /**
@@ -103,16 +103,18 @@ export class SLCM {
    * @param data - The data related to the spin configuration.
    */
   private prepareSpin(data: any) {
-    this.settings.matrix.x = 3;
+    this.settings.matrix.x = data.matrixX;
     this.settings.currentLines = data.currentLines;
     this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
     this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
+
   }
 
   /**
    * Executes the spin operation, deducts the player's balance, and generates spin results.
    * Handles errors and logs them if the spin fails.
    */
+
   public async spinResult() {
     try {
       const playerData = this.getPlayerData();
@@ -138,8 +140,7 @@ export class SLCM {
     if (this.settings.freezeIndex.length > 0 && (this.settings.hasRespin || this.settings.hasRedrespin.state)) {
       const currentArr = this.settings.lastReSpin;
       const freezeIndex = this.settings.freezeIndex;
-      console.log(freezeIndex, 'Freeze Indexes');
-      console.log(currentArr, 'Previous Array');
+
       let newMatrix = this.settings.resultSymbolMatrix[0].map((item, index) => {
         if (freezeIndex.includes(index)) {
           return currentArr[index]?.Symbol?.Id ?? currentArr[index];
@@ -173,17 +174,11 @@ export class SLCM {
             console.log('No respin pattern found, continuing normally.');
           }
         }
-      } else if (this.settings.hasRedrespin.state) {
-        this.settings.resultSymbolMatrix[0] = newMatrix;
-        // Handling red respin condition
-        if (this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
-          this.settings.hasRedrespin.state = false;
-          this.settings.freezeIndex = [];
 
-          if(this.playerData.currentWining>5){
-            return
-          }
-        }
+      } 
+      else if (this.settings.hasRedrespin.state) {
+        console.log('RED RE SPIN HERE')
+        this.settings.resultSymbolMatrix[0] = newMatrix;
       }
     }
 
@@ -192,7 +187,7 @@ export class SLCM {
       const symbol = this.settings.Symbols.find(sym => sym.Id === element);
       return symbol;
     });
-    hasRedspinPatttern(preProcessedResult);
+    hasRespinPattern(preProcessedResult);
     const shouldRespin = hasRespinPattern(preProcessedResult);
     this.settings.resultSymbolMatrix = preProcessedResult;
     const totalPayout = preProcessedResult
@@ -207,7 +202,11 @@ export class SLCM {
 
     const finalPayout = totalPayout ? parseInt(totalPayout, 10) : 0;
     this.playerData.currentWining = finalPayout;
-
+    if (this.settings.hasRedrespin.state && this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
+      console.log('RED RE SPIN', 'With', this.playerData.currentWining + 'and', this.settings.hasRedrespin.initialpay)
+      this.settings.hasRedrespin.state = false;
+      this.settings.freezeIndex = [];
+    }
     if (shouldRespin && finalPayout === 0) {
       initiateRespin(this, this.settings.resultSymbolMatrix);
     }

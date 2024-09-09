@@ -7,8 +7,8 @@ import payoutController from "./dashboard/payouts/payoutController";
 import { getPlayerCredits, messageType } from "./game/Utils/gameUtils";
 import { gameData } from "./game/testData";
 import { users } from "./socket";
-import SlotGame from "./game/slotGames/slotGame";
 import GameManager from "./game/GameManager";
+import createHttpError from "http-errors";
 
 export interface currentGamedata {
   username: string,
@@ -187,6 +187,7 @@ export default class PlayerSocket {
       }
       users.delete(this.playerData.username);
       this.cleanup();
+      throw createHttpError(403, "Please wait to disconnect")
     } catch (error) {
       console.error("Reconnection attempt failed:", error);
     }
@@ -235,6 +236,8 @@ export default class PlayerSocket {
 
   public onExit() {
     this.socketData.gameSocket?.on("EXIT", () => {
+      console.log(this.playerData.username, "EXITS FROM", this.gameId);
+      this.sendMessage('ExitUser', '')
       users.delete(this.playerData.username);
       this.cleanup();
     });
@@ -253,7 +256,8 @@ export default class PlayerSocket {
         message: "You are already playing on another browser",
       });
       socket.disconnect(true);
-      return;
+      throw createHttpError(403, "You are already playing on another browser")
+
     }
     this.initializeGameSocket(socket);
     const credits = await getPlayerCredits(this.playerData.username);

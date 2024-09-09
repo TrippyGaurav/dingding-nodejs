@@ -7,8 +7,8 @@ export interface Symbol {
     canmatch : string[];
     mixedPayout : number;
     defaultPayout : number;
-    SpecialType : string[];
-    isspecial: boolean;
+    SpecialType : string;
+    isSpecial: boolean;
     reelInstance: { [key: string]: number };
 }
 

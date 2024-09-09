@@ -11,90 +11,96 @@ export const gameData = [
             [1, 1, 1]
         ],
         "linesCount": [1],
-        "bets": [0.1, 0.25, 0.5, 0.75, 1],
+        "bets": [0.02,0.04,0.1,0.2,0.3,0.5,1,1.5,3,7,10,15,20,32,64],
         "Symbols": [
             {
                 "Name": "Blank",
                 "Id": 0,
                 "isSpecial" : false,
                 "payout": 0,
+                "SpecialType": "",
                 "mixedPayout": 0,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 35,
-                    "1": 45,
-                    "2": 41,
-                    "3": 25
+                    "1": 35,
+                    "2": 35,
+                    "3": 20
                 }
             },
             {
                 "Name": "777",
                 "Id": 1,
                 "payout": 1000,
-                "mixedPayout": 200,
+                "mixedPayout": 50,
                 "isSpecial" : false,
-                "canmatch": ["2", "3"],
+                "SpecialType": "",
+                "canmatch": ["1","2", "3"],
                 "reelInstance": {
-                    "0": 20,
-                    "1": 10,
-                    "2": 52,
+                    "0": 25,
+                    "1": 24,
+                    "2": 23,
                     "3": 0
                 }
             },
             {
                 "Name": "77",
                 "Id": 2,
-                "payout": 200,
-                "mixedPayout": 0,
+                "payout": 300,
+                "mixedPayout": 50,
                 "isSpecial" : false,
-                "canmatch": ["1", "3"],
+                "SpecialType": "",
+                "canmatch": ["1","2", "3"],
                 "reelInstance": {
-                    "0": 20,
-                    "1": 10,
-                    "2": 52,
+                    "0": 15,
+                    "1": 15,
+                    "2": 10,
                     "3": 0
                 }
             },
             {
                 "Name": "7",
                 "Id": 3,
-                "payout": 5,
-                "mixedPayout": 0,
+                "payout": 100,
+                "mixedPayout": 50,
                 "isSpecial" : false,
-                "canmatch": ["1", "2"],
+                "SpecialType": "",
+                "canmatch": ["1", "2","3"],
                 "reelInstance": {
                     "0": 20,
-                    "1": 10,
-                    "2": 52,
+                    "1": 24,
+                    "2": 25,
                     "3": 0
                 }
             },
             {
                 "Name": "bar/bar",
                 "Id": 4,
-                "payout": 40,
-                "mixedPayout": 0,
+                "payout": 200,
+                "mixedPayout": 30,
                 "isSpecial" : false,
-                "canmatch": ["5"],
+                "SpecialType": "",
+                "canmatch": ["4","5"],
                 "reelInstance": {
-                    "0": 21,
-                    "1": 10,
-                    "2": 10,
+                    "0": 15,
+                    "1": 15,
+                    "2": 15,
                     "3": 0
                 }
             },
             {
                 "Name": "bar",
                 "Id": 5,
-                "payout": 20,
-                "mixedPayout": 0,
+                "payout": 100,
+                "mixedPayout": 30,
                 "isSpecial" : false,
-                "canmatch": ["4"],
+                "SpecialType": "",
+                "canmatch": ["4","5"],
                 "reelInstance": {
-                    "0": 20,
-                    "1": 10,
-                    "2": 52,
-                    "3": 0
+                    "0": 15,
+                    "1": 15,
+                    "2": 15,
+                    "3": 2
                 }
             },
             {
@@ -104,12 +110,12 @@ export const gameData = [
                 "mixedPayout": 0,
                 "isSpecial" : true,
                 "canmatch": [],
-                "SpecialType " : "MULTIPLY",
+                "SpecialType": "MULTIPLY",
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 4,
-                    "3": 2
+                    "2": 0,
+                    "3": 8
                 }
             },
             {
@@ -117,14 +123,14 @@ export const gameData = [
                 "Id": 7,
                 "payout": 5,
                 "mixedPayout": 0,
-                "SpecialType " : "MULTIPLY",
+                "SpecialType": "MULTIPLY",
                 "isSpecial" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 4,
-                    "3": 2
+                    "2": 0,
+                    "3": 12
                 }
             },
             {
@@ -132,14 +138,14 @@ export const gameData = [
                 "Id": 8,
                 "payout": 2,
                 "mixedPayout": 0,
-                "SpecialType " : "MULTIPLY",
+                "SpecialType": "MULTIPLY",
                 "isSpecial" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 4,
-                    "3": 2
+                    "2": 0,
+                    "3": 15
                 }
             },
             {
@@ -147,14 +153,14 @@ export const gameData = [
                 "Id": 9,
                 "payout": 100,
                 "mixedPayout": 0,
-                "SpecialType " : "ADD",
+                "SpecialType": "ADD",
                 "isSpecial" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 4,
-                    "3": 2
+                    "2": 0,
+                    "3": 10
                 }
                 
             },
@@ -163,14 +169,14 @@ export const gameData = [
                 "Id": 10,
                 "payout": 10,
                 "mixedPayout": 0,
-                "SpecialType " : "ADD",
+                "SpecialType": "ADD",
                 "isSpecial" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 4,
-                    "3": 2
+                    "2": 0,
+                    "3": 10
                 }
             },
             {
@@ -179,12 +185,13 @@ export const gameData = [
                 "payout": 0,
                 "mixedPayout": 0,
                 "isSpecial" : true,
+                "SpecialType": "RESPIN",
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
                     "2": 0,
-                    "3": 2
+                    "3": 100
                 }
             }
         ],
