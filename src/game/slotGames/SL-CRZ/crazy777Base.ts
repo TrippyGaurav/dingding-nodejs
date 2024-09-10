@@ -7,6 +7,7 @@ import { initializeGameSettings, generateInitialReel, sendInitData } from "./hel
 export class SLCRZ {
   public settings: CRZSETTINGS;
   public isFreeSpin: boolean = false;
+  public freeSpinCount : number =0;
   playerData = {
     haveWon: 0,
     currentWining: 0,
@@ -62,7 +63,6 @@ export class SLCRZ {
         break;
     }
   }
-
   private prepareSpin(data: any) {
     this.settings.matrix.x;
     this.settings.matrix.y;
@@ -95,19 +95,17 @@ export class SLCRZ {
     const resultmatrix = this.settings.resultSymbolMatrix;
     const checkMatrix = resultmatrix.map(row => row.slice(0, 3)); 
     const specialMatrix = resultmatrix.map(row => row[3]); 
-    this.printMatrix(resultmatrix);
-
+    console.log("Result Matrix",resultmatrix);
+    
     const middleRow = checkMatrix[1]; 
     const extrasymbol = specialMatrix[1]; 
     
     console.log("Middle row:", middleRow);
     console.log("Special element:", extrasymbol);
-
     if (middleRow.includes(0)) {
         console.log("No win: '0' present in the middle row.");
         return; 
     }
-
     // Check if all symbols are the same or if they match the mixed condition
     const isWinning = this.checkWinningCondition(middleRow);
 
@@ -130,8 +128,18 @@ export class SLCRZ {
     if (payout > 0 && !this.isFreeSpin) {
         payout = this.applyExtraSymbolEffect(payout, extrasymbol);
     }
-
     console.log("Total Payout:", payout);
+    console.log("Total Free");
+    if (this.isFreeSpin )
+      { 
+        this.spinResult()
+        this.freeSpinCount --;
+      
+      }
+    if(this.freeSpinCount == 0)
+    {
+      this.isFreeSpin =false; 
+    }
 }
 
 private checkWinningCondition(row: any[]): { winType: string, symbolId?: number } {
@@ -174,51 +182,17 @@ private applyExtraSymbolEffect(payout: number, extraSymbolId: number): number {
       } else if (extraSymbol.SpecialType === "ADD") {
           console.log(`Special ADD: Adding extra payout based on bet.`);
           const additionalPayout = extraSymbol.payout * this.settings.currentBet;
-          // console.log("extraSymbol.payout",extraSymbol.payout);
-          // console.log("this.settings.currentBet",this.settings.currentBet);
-          // console.log("additionalPayout",additionalPayout);
           return payout + additionalPayout;
       }
       else if (extraSymbol.SpecialType === "RESPIN") {
-        if (this.isFreeSpin) {
-            console.log("Free Spins are already active. Cannot trigger another free spin.");
-            return payout; 
-        }
+        // const freespinpayout = payout
+        this.isFreeSpin = true
+        const freeSpinCount = Math.floor(Math.random() * 3) + 3;
         console.log("Free spin started");
-        
-        return this.triggerFreeSpins(payout);
+        return payout    
     }
   }
-
   console.log("No special effect from the extra symbol.");
   return payout;
-}
-private triggerFreeSpins(initialPayout: number): number {
-  let totalPayout = initialPayout; 
-  const freeSpinCount = Math.floor(Math.random() * 3) + 3; 
-  console.log(`Free Spins awarded: ${freeSpinCount}`);
-
-  for (let i = 0; i < freeSpinCount; i++) {
-      console.log(`Free Spin ${i + 1} / ${freeSpinCount}`);
-      this.isFreeSpin = true;
-      this.spinResult(); 
-
-  }
-  this.isFreeSpin = false;
-  return totalPayout; 
-}
-
-
-
-  private printMatrix(matrix: any[][] | any[], isSingleColumn: boolean = false) {
-    if (isSingleColumn) {
-        matrix.forEach((item: any) => {
-            console.log(`[ '${item}' ]`);
-        });
-    } else {
-        matrix.forEach((row: any[]) => {
-            console.log(`[ '${row.join("', '")}' ]`);
-        });
-    }
 }
 }
