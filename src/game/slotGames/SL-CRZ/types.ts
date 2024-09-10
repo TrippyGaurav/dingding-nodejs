@@ -10,6 +10,7 @@ export interface Symbol {
     SpecialType : string;
     isSpecial: boolean;
     reelInstance: { [key: string]: number };
+    isSpecialCrz: boolean;
 }
 
 export interface CRZSETTINGS {
@@ -29,4 +30,6 @@ export interface CRZSETTINGS {
     bets: number[];
     reels: any[][];
     Symbols: Symbol[];
+    freeSpinCount : number;
+    isFreeSpin : boolean;
 }

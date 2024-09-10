@@ -20,6 +20,10 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCRZ) {
         reels: [],
         defaultPayout: gameData.gameSettings.defaultPayout,
         SpecialType : gameData.gameSettings.SpecialType,
+        isSpecialCrz : gameData.gameSettings.isSpecialCrz,
+        freeSpinCount : 0,
+        isFreeSpin: false,
+        
     };
 }
 

@@ -6,8 +6,6 @@ import { initializeGameSettings, generateInitialReel, sendInitData } from "./hel
 
 export class SLCRZ {
   public settings: CRZSETTINGS;
-  public isFreeSpin: boolean = false;
-  public freeSpinCount : number =0;
   playerData = {
     haveWon: 0,
     currentWining: 0,
@@ -74,12 +72,12 @@ export class SLCRZ {
   private async spinResult() {
     try {
       const playerData = this.getPlayerData();
-      if (!this.isFreeSpin && this.settings.currentBet > playerData.credits) {
+      if (!this.settings.isFreeSpin && this.settings.currentBet > playerData.credits) {
         this.sendError("Low Balance");
         return;
     }
 
-    if (!this.isFreeSpin) {
+    if (!this.settings.isFreeSpin) {
       await this.deductPlayerBalance(this.settings.currentBet);
       this.playerData.totalbet += this.settings.currentBet;
     }
@@ -125,20 +123,20 @@ export class SLCRZ {
         console.log("Default Payout:", payout);
     }
 
-    if (payout > 0 && !this.isFreeSpin) {
+    if (payout > 0 && !this.settings.isFreeSpin) {
         payout = this.applyExtraSymbolEffect(payout, extrasymbol);
     }
     console.log("Total Payout:", payout);
     console.log("Total Free");
-    if (this.isFreeSpin )
+    if (this.settings.isFreeSpin )
       { 
         this.spinResult()
-        this.freeSpinCount --;
+        this.settings.freeSpinCount --;
       
       }
-    if(this.freeSpinCount == 0)
+    if(this.settings.freeSpinCount == 0)
     {
-      this.isFreeSpin =false; 
+      this.settings.isFreeSpin =false; 
     }
 }
 
@@ -175,7 +173,7 @@ private calculatePayout(symbols: any[], symbolId: number, winType: string): numb
 private applyExtraSymbolEffect(payout: number, extraSymbolId: number): number {
   const extraSymbol = this.settings.Symbols.find(sym => sym.Id === extraSymbolId);
 
-  if (extraSymbol && extraSymbol.isSpecial) {
+  if (extraSymbol && extraSymbol.isSpecialCrz) {
       if (extraSymbol.SpecialType === "MULTIPLY") {
           console.log(`Special MULTIPLY: Multiplying payout by ${extraSymbol.payout}`);
           return payout * extraSymbol.payout;  
@@ -186,7 +184,7 @@ private applyExtraSymbolEffect(payout: number, extraSymbolId: number): number {
       }
       else if (extraSymbol.SpecialType === "RESPIN") {
         // const freespinpayout = payout
-        this.isFreeSpin = true
+        this.settings.isFreeSpin = true
         const freeSpinCount = Math.floor(Math.random() * 3) + 3;
         console.log("Free spin started");
         return payout    

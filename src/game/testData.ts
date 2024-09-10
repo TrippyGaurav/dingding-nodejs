@@ -3,6 +3,7 @@ export const gameData = [
 
     {
         "id": "SL-CRZ",
+        "isSpecial": true,
         "matrix": {
             "x": 4,
             "y": 3
@@ -16,7 +17,7 @@ export const gameData = [
             {
                 "Name": "Blank",
                 "Id": 0,
-                "isSpecial" : false,
+                "isSpecialCrz" : false,
                 "payout": 0,
                 "SpecialType": "",
                 "mixedPayout": 0,
@@ -33,7 +34,7 @@ export const gameData = [
                 "Id": 1,
                 "payout": 1000,
                 "mixedPayout": 50,
-                "isSpecial" : false,
+                "isSpecialCrz" : false,
                 "SpecialType": "",
                 "canmatch": ["1","2", "3"],
                 "reelInstance": {
@@ -48,7 +49,7 @@ export const gameData = [
                 "Id": 2,
                 "payout": 300,
                 "mixedPayout": 50,
-                "isSpecial" : false,
+                "isSpecialCrz" : false,
                 "SpecialType": "",
                 "canmatch": ["1","2", "3"],
                 "reelInstance": {
@@ -63,7 +64,7 @@ export const gameData = [
                 "Id": 3,
                 "payout": 100,
                 "mixedPayout": 50,
-                "isSpecial" : false,
+                "isSpecialCrz" : false,
                 "SpecialType": "",
                 "canmatch": ["1", "2","3"],
                 "reelInstance": {
@@ -78,7 +79,7 @@ export const gameData = [
                 "Id": 4,
                 "payout": 200,
                 "mixedPayout": 30,
-                "isSpecial" : false,
+                "isSpecialCrz" : false,
                 "SpecialType": "",
                 "canmatch": ["4","5"],
                 "reelInstance": {
@@ -93,7 +94,7 @@ export const gameData = [
                 "Id": 5,
                 "payout": 100,
                 "mixedPayout": 30,
-                "isSpecial" : false,
+                "isSpecialCrz" : false,
                 "SpecialType": "",
                 "canmatch": ["4","5"],
                 "reelInstance": {
@@ -108,7 +109,7 @@ export const gameData = [
                 "Id": 6,
                 "payout": 10,
                 "mixedPayout": 0,
-                "isSpecial" : true,
+                "isSpecialCrz" : true,
                 "canmatch": [],
                 "SpecialType": "MULTIPLY",
                 "reelInstance": {
@@ -124,7 +125,7 @@ export const gameData = [
                 "payout": 5,
                 "mixedPayout": 0,
                 "SpecialType": "MULTIPLY",
-                "isSpecial" : true,
+                "isSpecialCrz" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
@@ -139,7 +140,7 @@ export const gameData = [
                 "payout": 2,
                 "mixedPayout": 0,
                 "SpecialType": "MULTIPLY",
-                "isSpecial" : true,
+                "isSpecialCrz" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
@@ -154,7 +155,7 @@ export const gameData = [
                 "payout": 100,
                 "mixedPayout": 0,
                 "SpecialType": "ADD",
-                "isSpecial" : true,
+                "isSpecialCrz" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
@@ -170,7 +171,7 @@ export const gameData = [
                 "payout": 10,
                 "mixedPayout": 0,
                 "SpecialType": "ADD",
-                "isSpecial" : true,
+                "isSpecialCrz" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
@@ -184,7 +185,7 @@ export const gameData = [
                 "Id": 11,
                 "payout": 0,
                 "mixedPayout": 0,
-                "isSpecial" : true,
+                "isSpecialCrz" : true,
                 "SpecialType": "RESPIN",
                 "canmatch": [],
                 "reelInstance": {
