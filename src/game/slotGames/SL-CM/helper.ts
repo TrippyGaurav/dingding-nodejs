@@ -25,7 +25,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCM) {
         lastRedSpin: [],
         lastReSpin: [],
         hasRespin: false,
-        hasRedrespin: { initialpay: 0, state: false, freezeIndex: [] },
+        hasRedrespin: { initialpay: 0, state: false, RedFreezeIndex: [] },
         freezeIndex: [],
         reSpinWinIndex: [],
         newMatrix: []
@@ -142,26 +142,26 @@ export async function initiateRespin(gameInstance: SLCM, currentArr: any[]): Pro
  * @param currentArr - The array of current result symbols.
  */
 export async function initiateRedRespin(gameInstance: SLCM, currentArr: any[]): Promise<void> {
-    const { settings } = gameInstance;
-    settings.hasRedrespin.state = true;
-    settings.hasRedrespin.freezeIndex = [];
-    Object.assign(settings, {
-        lastReSpin: currentArr.map(({ Id }) => Id),
-        freezeIndex: currentArr.reduce<number[]>((acc, { Name }, index) => {
-            if (["1", "2", "5"].includes(Name)) {
-                acc.push(index);
-                settings.hasRedrespin.freezeIndex.push(index);
-            }
-            return acc;
-        }, [])
-    });
-    if (settings.freezeIndex.length > 0 && settings.hasRedrespin.state) {
-        try {
-            await gameInstance.spinResult();
-        } catch (error) {
-            console.error('Spin result error:', error);
-        }
-    }
+    // const { settings } = gameInstance;
+    // settings.hasRedrespin.state = true;
+    // settings.hasRedrespin.RedFreezeIndex = [];
+    // Object.assign(settings, {
+    //     lastReSpin: currentArr.map(({ Id }) => Id),
+    //     freezeIndex: currentArr.reduce<number[]>((acc, { Name }, index) => {
+    //         if (["1", "2", "5"].includes(Name)) {
+    //             acc.push(index);
+    //             settings.hasRedrespin.RedFreezeIndex.push(index);
+    //         }
+    //         return acc;
+    //     }, [])
+    // });
+    // if (settings.freezeIndex.length > 0 && settings.hasRedrespin.state) {
+    //     try {
+    //         await gameInstance.spinResult();
+    //     } catch (error) {
+    //         console.error('Spin result error:', error);
+    //     }
+    // }
 
 }
 

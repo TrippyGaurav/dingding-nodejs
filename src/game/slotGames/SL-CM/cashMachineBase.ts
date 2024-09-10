@@ -136,24 +136,91 @@ export class SLCM {
    * Checks the result of the spin, handles respins, and calculates payouts.
    * Updates game settings and triggers additional respin checks if needed.
    */
-  private checkResult() {
-    const currentArr = this.settings.lastReSpin;
-    const freezeIndex = this.settings.freezeIndex;
-    const redSpinFreezeIndex = this.settings.hasRedrespin.freezeIndex
-    // Check for active Respin
-    if (this.settings.hasRespin) {
-      let newMatrix = this.settings.resultSymbolMatrix[0].map((item, index) => {
+
+
+  private resultRow(matrix: any[]): any[] {
+    return matrix.map(element => {
+      const symbol = this.settings.Symbols.find(sym => sym.Id === element);
+      return symbol;
+    });
+  }
+  private checkPayout(preProcessedResult: any[]): number {
+    let payoutString = '';
+    preProcessedResult.forEach(symbol => {
+      if (symbol?.Name !== undefined) {
+        if (symbol.payout && symbol.Name !== '00') {
+          payoutString += symbol.payout.toString();
+        }
+        if (symbol.Name === 'doubleZero') {
+          payoutString;
+        }
+      }
+    });
+
+    // Convert the payout string to an integer value
+    const totalPayout = payoutString ? parseInt(payoutString, 10) : 0;
+    return totalPayout;
+  }
+
+  private newMatrix(matrix: any[], type: string): any[] {
+    const { lastReSpin, freezeIndex } = this.settings
+    const { RedFreezeIndex } = this.settings.hasRedrespin
+    return matrix.map((item, index) => {
+      if (type === 'reSpin') {
         if (freezeIndex.includes(index)) {
-          return currentArr[index]?.Symbol?.Id ?? currentArr[index];
+          return lastReSpin[index]?.Symbol?.Id ?? lastReSpin[index];
         }
         return item;
-      });
+      } else if (type === 'redReSpin') {
+        if (RedFreezeIndex.includes(index)) {
+          return lastReSpin[index]?.Symbol?.Id ?? lastReSpin[index];
+        }
+        return item;
+      }
+    });
+
+  }
+
+  private checkSameMatrix(matrix: any[]): boolean {
+    const { lastReSpin } = this.settings;
+    return lastReSpin.every((item, index) => {
+      return JSON.stringify(item) === JSON.stringify(matrix[index]);
+    });
+  }
+
+  //
+  private checkResult() {
+
+    const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+    const shouldRedRespin = hasRedspinPattern(preProcessedResult);
+    const shouldRespin = hasRespinPattern(preProcessedResult);
+
+    // Calculate the payout
+    const totalPayout = this.checkPayout(preProcessedResult);
+    const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
+    this.playerData.currentWining = finalPayout;
+
+    // If we have a respin pattern and payout is zero, initiate a respin
+    if (shouldRespin && finalPayout === 0 && !this.settings.hasRedrespin.state) {
+
+      initiateRespin(this, preProcessedResult);
+
+    } else if (finalPayout <= 5 && shouldRedRespin && !this.settings.hasRespin) {
+      // Initiate red respin if applicable
+      this.settings.hasRedrespin.initialpay = this.playerData.currentWining;
+      initiateRedRespin(this, preProcessedResult);
+
+    }
+
+
+
+    // Check for active Respin
+    if (this.settings.hasRespin) {
+      let newMatrix = this.newMatrix(this.settings.resultSymbolMatrix[0], 'reSpin')
 
       console.log(newMatrix, 'New Matrix after Replacement');
 
-      const allValuesSame = currentArr.every((item, index) => {
-        return JSON.stringify(item) === JSON.stringify(newMatrix[index]);
-      });
+      const allValuesSame = this.checkSameMatrix(newMatrix)
 
       // Stop the respin if the matrix remains the same
       if (allValuesSame) {
@@ -165,20 +232,17 @@ export class SLCM {
         this.settings.resultSymbolMatrix[0] = newMatrix;
         this.settings.freezeIndex = [];
         this.settings.hasRespin = false;
-
+        const preProcessedResult = this.resultRow(newMatrix)
         // Check if respin pattern exists in the new matrix
-        const shouldRespin = hasRespinPattern(newMatrix);
-        if (shouldRespin) {
+        const shouldRespin = hasRespinPattern(preProcessedResult);
+        if (shouldRespin && this.playerData.currentWining === 0) {
           this.settings.hasRedrespin.state = false
           console.log('RESPIN: Respin pattern found, initiating respin');
-          initiateRespin(this, newMatrix);
-        } else {
-          const shouldRespin = hasRespinPattern(newMatrix)
-          if (shouldRespin && this.playerData.currentWining != 0) {
-            initiateRespin(this, newMatrix);
-          } else {
-            console.log('RESPIN: No respin pattern found, continuing normally.');
-          }
+          initiateRespin(this, preProcessedResult);
+        }
+        else {
+          console.log('RESPIN: No respin pattern found, continuing normally.');
+
         }
       }
 
@@ -186,42 +250,19 @@ export class SLCM {
     // Check for active Red Respin
     if (this.settings.hasRedrespin.state) {
       this.settings.hasRespin = false
-      let newMatrix = this.settings.resultSymbolMatrix[0].map((item, index) => {
-        if (redSpinFreezeIndex.includes(index)) {
-          return currentArr[index]?.Symbol?.Id ?? currentArr[index];
-        }
-        return item;
-      });
-
+      let newMatrix = this.newMatrix(this.settings.resultSymbolMatrix[0], 'redReSpin')
       console.log(newMatrix, 'New Matrix after Replacement (Red Respin)');
-
-      const allValuesSame = currentArr.every((item, index) => {
-        return JSON.stringify(item) === JSON.stringify(newMatrix[index]);
-      });
+      const allValuesSame = this.checkSameMatrix(newMatrix)
+      const preProcessedResult = this.resultRow(newMatrix)
 
       if (allValuesSame) {
         // If the matrix is the same in red respin, trigger another red respin
         console.log('RED RESPIN: Matrix is the same, initiating another red respin');
-        initiateRedRespin(this, newMatrix);
+        initiateRedRespin(this, preProcessedResult);
 
       } else {
         this.settings.resultSymbolMatrix[0] = newMatrix;
-
-        // Calculate payout
-        const resultRow = newMatrix;
-        const preProcessedResult = resultRow.map(element => {
-          const symbol = this.settings.Symbols.find(sym => sym.Id === element);
-          return symbol;
-        });
-        const totalPayout = preProcessedResult
-          .reduce((acc, symbol) => {
-            if (symbol.Name !== undefined) {
-              const newPayout = acc + symbol.payout;
-              return newPayout;
-            }
-            return acc;
-          }, '')
-          .trim();
+        const totalPayout = this.checkPayout(newMatrix)
         this.playerData.currentWining = totalPayout;
 
         // If payout is more than 5, stop the red respin
@@ -229,56 +270,21 @@ export class SLCM {
         if (this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
           console.log(`RED RESPIN: Payout is greater than ${this.settings.hasRedrespin.initialpay} , stopping red respin`);
           this.settings.hasRedrespin.state = false;
-          this.settings.hasRedrespin.freezeIndex = [];
+          this.settings.hasRedrespin.RedFreezeIndex = [];
+          return
         } else {
           // Otherwise, continue with the red respin
           console.log('RED RESPIN: Payout is not sufficient, continuing red respin');
-          initiateRedRespin(this, newMatrix);
+          initiateRedRespin(this, preProcessedResult);
         }
       }
 
     }
 
-    // Final payout and logging if neither respin nor redrespin is active
-    const resultRow = this.settings.resultSymbolMatrix[0];
-    const preProcessedResult = resultRow.map(element => {
-      const symbol = this.settings.Symbols.find(sym => sym.Id === element);
-      return symbol;
-    });
-
-    const shouldRespin = hasRespinPattern(preProcessedResult);
-    const shouldRedRespin = hasRedspinPattern(preProcessedResult)
-    this.settings.resultSymbolMatrix = preProcessedResult;
-
-    const totalPayout = preProcessedResult
-      .reduce((acc, symbol) => {
-        if (symbol.Name !== undefined) {
-          const newPayout = acc + symbol.payout;
-          return newPayout;
-        }
-        return acc;
-      }, '')
-      .trim();
-
-    const finalPayout = totalPayout ? parseInt(totalPayout, 10) : 0;
     this.playerData.currentWining = finalPayout;
-    if (shouldRespin && finalPayout === 0) {
-      initiateRespin(this, this.settings.resultSymbolMatrix);
-    } else if (finalPayout <= 5 && shouldRedRespin) {
-      this.settings.hasRedrespin.initialpay = this.playerData.currentWining
-      initiateRedRespin(this, this.settings.resultSymbolMatrix)
-    }
-    console.log('SYMBOLS:', this.settings.resultSymbolMatrix);
+    console.log('SYMBOLS:', preProcessedResult);
     console.log('FINALPAY:', finalPayout);
   }
-
-
-
-
-
-
-
-
 
 }
 

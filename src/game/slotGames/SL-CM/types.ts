@@ -27,7 +27,7 @@ export interface CMSettings {
     hasRespin: boolean
     hasRedrespin: {
         initialpay: number
-        , state: boolean, freezeIndex: any[]
+        , state: boolean, RedFreezeIndex: any[]
     }
     freezeIndex: any[],
     reSpinWinIndex: any[],
