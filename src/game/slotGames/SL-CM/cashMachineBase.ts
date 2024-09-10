@@ -1,291 +1,291 @@
-import { log } from "console";
-import { currentGamedata } from "../../../Player";
-import { gameData } from "../../testData";
-import { betMultiplier, convertSymbols, shuffleArray, UiInitData } from "../../Utils/gameUtils";
-import { GameData } from "../BaseSlotGame/gameType";
 import { WinData } from "../BaseSlotGame/WinData";
 import { RandomResultGenerator } from "../RandomResultGenerator";
-import { int } from "aws-sdk/clients/datapipeline";
+import { CMSettings } from "./types";
+import { initializeGameSettings, generateInitialReel, sendInitData, hasRespinPattern, initiateRedRespin, initiateRespin, hasRedspinPattern } from "./helper";
+import { currentGamedata } from "../../../Player";
 
-
+/**
+ * Represents the Slot Machine Game Class for handling slot machine operations.
+ */
 export class SLCM {
-    public settings: CMSettings ;
-    playerData = {
-      haveWon: 0,
-      currentWining: 0,
-      totalbet: 0,
-      rtpSpinCount: 0,
-      totalSpin: 0,
-    };
+  public settings: CMSettings;
+  playerData = {
+    haveWon: 0,
+    currentWining: 0,
+    totalbet: 0,
+    rtpSpinCount: 0,
+    totalSpin: 0,
+    currentPayout: 0
+  };
 
-    constructor(public currentGameData : currentGamedata)
-    {
-      this.settings = {
-        id: currentGameData.gameSettings.id,
-        isSpecial: currentGameData.gameSettings.isSpecial,
-        matrix: currentGameData.gameSettings.matrix,
-        bets: currentGameData.gameSettings.bets,
-        Symbols: this.initSymbols,
-        resultSymbolMatrix: [],
-        currentGamedata: currentGameData.gameSettings,
-        _winData: new WinData(this),
-        currentBet: 0, // Set initial value
-        currentLines: 0, // Set initial value
-        BetPerLines: 0, // Set initial value
-        reels: [], // Initialize reels array
-        lastRedSpin : {Index : -1, Symbol : -1},
-        lastReSpin : {Index : -1, Symbol : -1},
+  /**
+   * Initializes a new instance of the SLCM class.
+   * @param currentGameData - The data related to the current game.
+   */
+  constructor(public currentGameData: currentGamedata) {
+    this.settings = initializeGameSettings(currentGameData, this);
+    this.settings.reels = generateInitialReel(this.settings);
+    sendInitData(this);
+  }
 
-    };
-   console.log(this.settings.Symbols[0]);
+  /**
+   * Retrieves the initial symbols for the game.
+   * @returns An array of symbols used in the game.
+   */
+  get initSymbols() {
+    return this.currentGameData.gameSettings.Symbols;
+  }
 
-        this.initialize(currentGameData.gameSettings);
-        
-            
-    }
-    
+  /**
+   * Sends a message with a specific action and data.
+   * @param action - The action type for the message.
+   * @param message - The data to be sent with the message.
+   */
   sendMessage(action: string, message: any) {
     this.currentGameData.sendMessage(action, message);
   }
+
+  /**
+   * Sends an error message.
+   * @param message - The error message to be sent.
+   */
   sendError(message: string) {
     this.currentGameData.sendError(message);
   }
+
+  /**
+   * Sends an alert message.
+   * @param message - The alert message to be sent.
+   */
   sendAlert(message: string) {
     this.currentGameData.sendAlert(message);
   }
-  updatePlayerBalance(message: number) {
-    this.currentGameData.updatePlayerBalance(message);
+
+  /**
+   * Updates the player's balance by a specified amount.
+   * @param amount - The amount to be added to the player's balance.
+   */
+  updatePlayerBalance(amount: number) {
+    this.currentGameData.updatePlayerBalance(amount);
   }
-  deductPlayerBalance(message: number) {
-    this.currentGameData.deductPlayerBalance(message);
+
+  /**
+   * Deducts a specified amount from the player's balance.
+   * @param amount - The amount to be deducted from the player's balance.
+   */
+  deductPlayerBalance(amount: number) {
+    this.currentGameData.deductPlayerBalance(amount);
   }
+
+  /**
+   * Retrieves the current player data.
+   * @returns The player data object.
+   */
   getPlayerData() {
     return this.currentGameData.getPlayerData();
   }
 
+  /**
+   * Handles incoming messages and performs actions based on the message id.
+   * @param response - The message response containing id and data.
+   */
   messageHandler(response: any) {
     switch (response.id) {
-        case "SPIN":
-            this.settings.matrix.x = 3;
-                this.settings.currentLines = response.data.currentLines;
-                this.settings.BetPerLines = betMultiplier[response.data.currentBet];
-                this.settings.currentBet =
-                  betMultiplier[response.data.currentBet] *
-                  this.settings.currentLines;
-                this.spinResult();
+      case "SPIN":
+        this.prepareSpin(response.data);
+        this.spinResult();
         break;
-
     }
   }
-  private async spinResult() {
+
+  /**
+   * Prepares the game settings for a new spin based on provided data.
+   * @param data - The data related to the spin configuration.
+   */
+  private prepareSpin(data: any) {
+    this.settings.matrix.x = data.matrixX;
+    this.settings.currentLines = data.currentLines;
+    this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
+    this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
+
+  }
+
+  /**
+   * Executes the spin operation, deducts the player's balance, and generates spin results.
+   * Handles errors and logs them if the spin fails.
+   */
+
+  public async spinResult() {
     try {
       const playerData = this.getPlayerData();
       if (this.settings.currentBet > playerData.credits) {
-        console.log("Low Balance : ", playerData.credits);
-        console.log("Current Bet : ", this.settings.currentBet);
         this.sendError("Low Balance");
         return;
       }
-        await this.deductPlayerBalance(this.settings.currentBet);
-        this.playerData.totalbet += this.settings.currentBet;
+      await this.deductPlayerBalance(this.settings.currentBet);
+      this.playerData.totalbet += this.settings.currentBet;
       new RandomResultGenerator(this);
       this.checkResult();
     } catch (error) {
-      console.error("Failed to generate spin results:", error);
       this.sendError("Spin error");
+      console.error("Failed to generate spin results:", error);
     }
   }
 
-    private checkResult()
-    {
-      
-      const payoutSheet = [];
-   
-      
-      console.log(this.settings.resultSymbolMatrix)
-      const blankSymbol = this.settings.Symbols.filter(symbol => symbol.Name === 'Blank');
-      // Filter out symbols with Id of 0
-
-      
-      const filteredSymbols = this.settings.resultSymbolMatrix[0].filter(symbol => symbol !== blankSymbol[0].Id);
-      filteredSymbols.forEach((element, index)  => { 
-        console.log(index);
-        
-       const symbolPayout =  this.settings.Symbols.filter(symbol => symbol.Id === element);
-       payoutSheet.push(symbolPayout[0].payout)
-       console.log("symbolPayout[0].canCallRespin",symbolPayout[0].canCallRespin," INDEX" ,index," LAST INDEX ",this.settings.lastReSpin.Index , element);
-      //  if(symbolPayout[0].canCallRespin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol)
-      //  {
-  
-        
-      //    this.settings.resultSymbolMatrix[0][index] = element;
-      //   console.log("CALLLEDD FREE SPIN");
-      //   this.settings.lastReSpin  = {Index :index, Symbol : element};
-      //   this.checkResult();
-
- 
-      //   }
-      // if(this.settings.matrix.x >= 2 && symbolPayout[0].canCallRedSpin  && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol)
-      // {
-      //   const canCallRedSpin = this.isRandomNumberGreaterThan(90);
-      //   if(canCallRedSpin)
-      //   {
-      //     new RandomResultGenerator(this);
-      //     this.settings.resultSymbolMatrix[0][index] = element;
-      //     console.log("CALLLEDD RED SPIN");
-      //     this.settings.lastRedSpin  = {Index :index, Symbol : element};
-      //     this.checkResult();
-      //   }
-
-      // }
+  /**
+   * Checks the result of the spin, handles respins, and calculates payouts.
+   * Updates game settings and triggers additional respin checks if needed.
+   */
 
 
+  private resultRow(matrix: any[]): any[] {
+    return matrix.map(element => {
+      const symbol = this.settings.Symbols.find(sym => sym.Id === element);
+      return symbol;
     });
-    
-      const payout : number = parseInt(payoutSheet.map(num => num.toString()).join(''));
-      console.log("Payout : ", payout || 0);
-      // Convert the sum to a string and return it
-
-    //REDSPINNNNN
-      if(payout > 0 && payout <=5 && this.settings.matrix.x >=2) 
-        {
-          payoutSheet.forEach((payoutSymbol , index)=>{
-            const symbolPayout = this.settings.Symbols.find(symbol => symbol.Id === payoutSymbol);
-            if(symbolPayout[0].canCallRedSpin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol)
-              {
-                this.settings.resultSymbolMatrix[0][index] = payoutSymbol;
-                console.log("CALLLEDD FREE SPIN");
-                this.settings.lastRedSpin  = {Index :index, Symbol : payoutSymbol};
-                this.checkResult();
-               }
-             });
-          }
-
-          //RESPINNNNN
-      if(payout == 0)
-      {
-        payoutSheet.forEach((payoutSymbol , index)=>{
-          const symbolPayout = this.settings.Symbols.find(symbol => symbol.Id === payoutSymbol);
-          if(symbolPayout[0].canCallRespin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol)
-            {
-              this.settings.resultSymbolMatrix[0][index] = payoutSymbol;
-              console.log("CALLLEDD FREE SPIN");
-              this.settings.lastReSpin  = {Index :index, Symbol : payoutSymbol};
-              this.checkResult();
-             }
-           });
+  }
+  private checkPayout(preProcessedResult: any[]): number {
+    let payoutString = '';
+    preProcessedResult.forEach(symbol => {
+      if (symbol?.Name !== undefined) {
+        if (symbol.payout && symbol.Name !== '00') {
+          payoutString += symbol.payout.toString();
         }
-      
-      
-      
-      // console.log("Result : ", result);
-    // console.log( this.settings.currentGamedata.Symbols)
-    
-      
-    }
-    private initialize(gameData : any) {
-      this.settings.currentGamedata = gameData;
-        this.settings._winData = new WinData(this);
-        UiInitData.paylines = convertSymbols(this.settings.currentGamedata.Symbols);
-        this.sendInitdata();
+        if (symbol.Name === 'doubleZero') {
+          payoutString;
+        }
       }
-    
-  public sendInitdata() {
-    this.settings.reels = this.generateInitialreel();
-    const dataToSend = {
-      GameData: {
-        Reel: this.settings.reels,
-        Bets: this.settings.currentGamedata.bets,
-        autoSpin: [1, 5, 10, 20],
-      },
-      UIData: UiInitData,
-      PlayerData: {
-        Balance: this.getPlayerData().credits,
-        haveWon: this.playerData.haveWon,
-        currentWining: this.playerData.currentWining,
-        totalbet: this.playerData.totalbet,
-      },
-    };
-
-    this.sendMessage("InitData", dataToSend);
-  }
-
-  private generateInitialreel(): string[][] {
-    const reels = [[], [], []]; // Initialize three empty reels
-    
-    this.settings.currentGamedata.Symbols.forEach(symbol => {
-            for (let i = 0; i < 3; i++) {
-                const count = symbol.reelInstance[i] || 0;
-                for (let j = 0; j < count; j++) {
-                    reels[i].push(symbol.Id); // Add the symbol's name to the specific reel
-                }
-            }
-        });
-// 
-    // Shuffle each reel individually
-     reels.forEach(reel => {
-      for (let i = reel.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [reel[i], reel[j]] = [reel[j], reel[i]]; // Swap elements within the same reel
-      }
-  });
-   return reels;
-  }
-
-  get initSymbols() {
-    const Symbols  = []; // Explicitly declare Symbols as an array of Symbol objects
-    this.currentGameData.gameSettings.Symbols.forEach((Element: Symbol) => {
-        // const element : Symbol = { 
-        //   Element.Name.toString(),
-        //   Element.Id,
-        //   Element.payout,
-        //   Element.canCallRedSpin,
-        //   Element.canCallRespin,
-        //   Element.reelInstance
-        // };
-        // Symbols.push(
-          
-        // );
     });
-    return Symbols;
+
+    // Convert the payout string to an integer value
+    const totalPayout = payoutString ? parseInt(payoutString, 10) : 0;
+    return totalPayout;
   }
 
-  isRandomNumberGreaterThan(percentage: number): boolean {
-    // Generate a random number, either 0 or 1
-    const randomNumber = Math.floor(Math.random() * 2);
-  
-    // Compare the random number with the threshold and return the result
-    return randomNumber > percentage/100;
+  private newMatrix(matrix: any[], type: string): any[] {
+    const { lastReSpin, freezeIndex } = this.settings
+    const { RedFreezeIndex } = this.settings.hasRedrespin
+    return matrix.map((item, index) => {
+      if (type === 'reSpin') {
+        if (freezeIndex.includes(index)) {
+          return lastReSpin[index]?.Symbol?.Id ?? lastReSpin[index];
+        }
+        return item;
+      } else if (type === 'redReSpin') {
+        if (RedFreezeIndex.includes(index)) {
+          return lastReSpin[index]?.Symbol?.Id ?? lastReSpin[index];
+        }
+        return item;
+      }
+    });
+
   }
+
+  private checkSameMatrix(matrix: any[]): boolean {
+    const { lastReSpin } = this.settings;
+    return lastReSpin.every((item, index) => {
+      return JSON.stringify(item) === JSON.stringify(matrix[index]);
+    });
+  }
+
+  //
+  private checkResult() {
+
+    const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+    const shouldRedRespin = hasRedspinPattern(preProcessedResult);
+    const shouldRespin = hasRespinPattern(preProcessedResult);
+
+    // Calculate the payout
+    const totalPayout = this.checkPayout(preProcessedResult);
+    const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
+    this.playerData.currentWining = finalPayout;
+
+    // If we have a respin pattern and payout is zero, initiate a respin
+    if (shouldRespin && finalPayout === 0 && !this.settings.hasRedrespin.state) {
+
+      initiateRespin(this, preProcessedResult);
+
+    } else if (finalPayout <= 5 && shouldRedRespin && !this.settings.hasRespin) {
+      // Initiate red respin if applicable
+      this.settings.hasRedrespin.initialpay = this.playerData.currentWining;
+      initiateRedRespin(this, preProcessedResult);
+
+    }
+
+
+
+    // Check for active Respin
+    if (this.settings.hasRespin) {
+      let newMatrix = this.newMatrix(this.settings.resultSymbolMatrix[0], 'reSpin')
+
+      console.log(newMatrix, 'New Matrix after Replacement');
+
+      const allValuesSame = this.checkSameMatrix(newMatrix)
+
+      // Stop the respin if the matrix remains the same
+      if (allValuesSame) {
+        console.log('RESPIN: All values are the same. Respin stopped.');
+        this.settings.hasRespin = false;
+        this.settings.freezeIndex = [];
+        return;
+      } else {
+        this.settings.resultSymbolMatrix[0] = newMatrix;
+        this.settings.freezeIndex = [];
+        this.settings.hasRespin = false;
+        const preProcessedResult = this.resultRow(newMatrix)
+        // Check if respin pattern exists in the new matrix
+        const shouldRespin = hasRespinPattern(preProcessedResult);
+        if (shouldRespin && this.playerData.currentWining === 0) {
+          this.settings.hasRedrespin.state = false
+          console.log('RESPIN: Respin pattern found, initiating respin');
+          initiateRespin(this, preProcessedResult);
+        }
+        else {
+          console.log('RESPIN: No respin pattern found, continuing normally.');
+
+        }
+      }
+
+    }
+    // Check for active Red Respin
+    if (this.settings.hasRedrespin.state) {
+      this.settings.hasRespin = false
+      let newMatrix = this.newMatrix(this.settings.resultSymbolMatrix[0], 'redReSpin')
+      console.log(newMatrix, 'New Matrix after Replacement (Red Respin)');
+      const allValuesSame = this.checkSameMatrix(newMatrix)
+      const preProcessedResult = this.resultRow(newMatrix)
+
+      if (allValuesSame) {
+        // If the matrix is the same in red respin, trigger another red respin
+        console.log('RED RESPIN: Matrix is the same, initiating another red respin');
+        initiateRedRespin(this, preProcessedResult);
+
+      } else {
+        this.settings.resultSymbolMatrix[0] = newMatrix;
+        const totalPayout = this.checkPayout(newMatrix)
+        this.playerData.currentWining = totalPayout;
+
+        // If payout is more than 5, stop the red respin
+        console.log(`RED RESPIN: Payout is greater than ${this.settings.hasRedrespin.initialpay} , stopping red respin ${this.playerData.currentWining}`);
+        if (this.playerData.currentWining > this.settings.hasRedrespin.initialpay) {
+          console.log(`RED RESPIN: Payout is greater than ${this.settings.hasRedrespin.initialpay} , stopping red respin`);
+          this.settings.hasRedrespin.state = false;
+          this.settings.hasRedrespin.RedFreezeIndex = [];
+          return
+        } else {
+          // Otherwise, continue with the red respin
+          console.log('RED RESPIN: Payout is not sufficient, continuing red respin');
+          initiateRedRespin(this, preProcessedResult);
+        }
+      }
+
+    }
+
+    this.playerData.currentWining = finalPayout;
+    console.log('SYMBOLS:', preProcessedResult);
+    console.log('FINALPAY:', finalPayout);
+  }
+
 }
 
 
-
-
-interface Symbol {
-  Name: string;
-  Id: number;
-  payout: number;
-  canCallRedSpin: boolean;
-  canCallRespin: boolean;
-  reelInstance: { [key: string]: number };
-}
-
- interface CMSettings {
-  id : string;
-  isSpecial : boolean;
-  matrix : {x : number, y: number};
-  currentGamedata: GameData;
-  resultSymbolMatrix: any[];
-  _winData: WinData | undefined;
-  currentBet: number;
-  currentLines: number;
-  BetPerLines: number;
-  bets: number[];
-  reels: any[][];
-  Symbols : any[];
-  lastRedSpin : {Index : number, Symbol : number},
-  lastReSpin : {Index : number, Symbol : number},
-
-
-}

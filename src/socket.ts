@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { Player as PlayerModel } from "./dashboard/users/userModel";
 import { config } from "./config/config";
 import Player from "./Player";
+import createHttpError from "http-errors";
 
 
 interface DecodedToken {
@@ -79,7 +80,7 @@ const socketController = (io: Server) => {
             if (existingUser.playerData.userAgent !== userAgent) {
                 socket.emit("AnotherDevice", "You are already playing on another browser.");
                 socket.disconnect(true);
-                return;
+                throw createHttpError(403, "Please wait to disconnect")
             }
 
             await existingUser.updateGameSocket(socket);
@@ -91,7 +92,7 @@ const socketController = (io: Server) => {
         // This is a new user connecting
         const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket, gameTag);
         users.set(username, newUser);
-        
+
         newUser.sendAlert(`Welcome, ${newUser.playerData.username}!`);
     });
 

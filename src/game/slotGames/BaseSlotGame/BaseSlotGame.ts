@@ -1,6 +1,6 @@
 
 import { currentGamedata } from "../../../Player";
-import { betMultiplier, UiInitData, convertSymbols, specialIcons, bonusGameType, shuffleArray, ResultType, RequiredSocketMethods } from "../../Utils/gameUtils";
+import {  UiInitData, convertSymbols, specialIcons, bonusGameType, shuffleArray, ResultType, RequiredSocketMethods } from "../../Utils/gameUtils";
 import { combineUniqueSymbols, removeRecurringIndexSymbols, cascadeMoveTowardsNull, transposeMatrix } from "../../Utils/SlotUtils";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { BonusGame } from "./BonusGame";
@@ -135,9 +135,9 @@ export default class BaseSlotGame implements RequiredSocketMethods {
       case "SPIN":
         if (this.settings.startGame) {
           this.settings.currentLines = response.data.currentLines;
-          this.settings.BetPerLines = betMultiplier[response.data.currentBet];
+          this.settings.BetPerLines = this.settings.currentGamedata.bets[response.data.currentBet];
           this.settings.currentBet =
-            betMultiplier[response.data.currentBet] *
+            this.settings.currentGamedata.bets[response.data.currentBet] *
             this.settings.currentLines;
 
           this.spinResult();
@@ -146,9 +146,9 @@ export default class BaseSlotGame implements RequiredSocketMethods {
 
       case "GENRTP":
         this.settings.currentLines = response.data.currentLines;
-        this.settings.BetPerLines = betMultiplier[response.data.currentBet];
+        this.settings.BetPerLines = this.settings.currentGamedata.bets[response.data.currentBet];
         this.settings.currentBet =
-          betMultiplier[response.data.currentBet] * this.settings.currentLines;
+          this.settings.currentGamedata.bets[response.data.currentBet] * this.settings.currentLines;
 
         this.getRTP(response.data.spins);
         break;
@@ -163,7 +163,6 @@ export default class BaseSlotGame implements RequiredSocketMethods {
         const sendData = this.settings.gamble.sendInitGambleData(
           response.data.GAMBLETYPE
         );
-        console.log(sendData);
 
         this.sendMessage("gambleInitData", sendData);
         break;
@@ -203,7 +202,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
         this.settings.currentGamedata.Symbols[i]?.weightedRandomness
       );
     }
-    
+
   }
 
   private makePayLines() {

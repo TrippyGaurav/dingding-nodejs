@@ -1,12 +1,13 @@
 import { currentGamedata } from "../../Player";
 import BaseSlotGame from "./BaseSlotGame/BaseSlotGame";
 import { SLCM } from "./SL-CM/cashMachineBase";
+import { SLCRZ } from "./SL-CRZ/crazy777Base";
 
 export default class SlotGameManager {
   public currentGame: any;
 
   gameClassMapping: { [key: string]: any } = {
-    "SL-CM": SLCM,
+    "SL-CM": SLCM,"SL-CRZ": SLCRZ,
   };
 
   constructor(public currentGameData: currentGamedata) {
