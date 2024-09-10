@@ -1,5 +1,6 @@
 import { GameData } from "../BaseSlotGame/gameType";
 import { WinData } from "../BaseSlotGame/WinData";
+
 export interface Symbol {
     Name: string;
     Id: number;
@@ -22,14 +23,8 @@ export interface CMSettings {
     bets: number[];
     reels: any[][];
     Symbols: Symbol[];
-    lastRedSpin: { Index: number, Symbol: Symbol }[],
-    lastReSpin: { Index: number, Symbol: Symbol }[]
-    hasRespin: boolean
-    hasRedrespin: {
-        initialpay: number
-        , state: boolean, RedFreezeIndex: any[]
-    }
-    freezeIndex: any[],
-    reSpinWinIndex: any[],
-    newMatrix: any[]
+    lastReSpin: any[];    // To store the matrix before respin
+    freezeIndex: number[]; // Indexes where 0 and 00 are found
+    newMatrix: any[];     // To store the matrix after replacement of frozen indexes
+    initialRedRespinMatrix?: any[];
 }
