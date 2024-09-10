@@ -43,7 +43,7 @@ app.use((req, res, next) => {
     next();
 });
 app.use((0, cors_1.default)({
-    origin: [`*.${config_1.config.hosted_url_cors}`]
+    origin: [`*.${config_1.config.hosted_url_cors}`, 'https://game-crm-rtp-backend.onrender.com']
 }));
 const server = (0, http_1.createServer)(app);
 // HEALTH ROUTES
