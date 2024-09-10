@@ -137,18 +137,18 @@ class BaseSlotGame {
             case "SPIN":
                 if (this.settings.startGame) {
                     this.settings.currentLines = response.data.currentLines;
-                    this.settings.BetPerLines = gameUtils_1.betMultiplier[response.data.currentBet];
+                    this.settings.BetPerLines = this.settings.currentGamedata.bets[response.data.currentBet];
                     this.settings.currentBet =
-                        gameUtils_1.betMultiplier[response.data.currentBet] *
+                        this.settings.currentGamedata.bets[response.data.currentBet] *
                             this.settings.currentLines;
                     this.spinResult();
                 }
                 break;
             case "GENRTP":
                 this.settings.currentLines = response.data.currentLines;
-                this.settings.BetPerLines = gameUtils_1.betMultiplier[response.data.currentBet];
+                this.settings.BetPerLines = this.settings.currentGamedata.bets[response.data.currentBet];
                 this.settings.currentBet =
-                    gameUtils_1.betMultiplier[response.data.currentBet] * this.settings.currentLines;
+                    this.settings.currentGamedata.bets[response.data.currentBet] * this.settings.currentLines;
                 this.getRTP(response.data.spins);
                 break;
             case "checkMoolah":
@@ -157,7 +157,6 @@ class BaseSlotGame {
             case "GambleInit":
                 this.settings.gamble.resetGamble();
                 const sendData = this.settings.gamble.sendInitGambleData(response.data.GAMBLETYPE);
-                console.log(sendData);
                 this.sendMessage("gambleInitData", sendData);
                 break;
             case "GambleResultData":
