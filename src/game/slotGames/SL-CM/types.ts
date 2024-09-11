@@ -28,3 +28,8 @@ export interface CMSettings {
     newMatrix: any[];     // To store the matrix after replacement of frozen indexes
     initialRedRespinMatrix?: any[];
 }
+
+export enum SPINTYPES {
+    RESPIN = 'reSpin',
+    REDRESPIN = 'redReSpin'
+}
