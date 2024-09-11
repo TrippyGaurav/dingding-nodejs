@@ -156,7 +156,7 @@ class GameController {
                 }
                 const existingUser = socket_1.users.get(username);
                 if (existingUser && existingUser.socketData.gameSocket) {
-                    throw (0, http_errors_1.default)(403, "You already have an active game session.");
+                    throw (0, http_errors_1.default)(403, "You already have an active game session. Please wait for a while before disconnecting");
                 }
                 const platform = yield gameModel_1.Platform.aggregate([
                     { $unwind: "$games" },
@@ -174,12 +174,23 @@ class GameController {
                 const mainDomain = config_1.config.hosted_url_cors.replace(/^[^.]+\./, '');
                 const hostPattern = new RegExp(`(^|\\.)${mainDomain.replace('.', '\\.')}$`);
                 // Check if the game URL exists and matches the pattern
-                if (game && hostPattern.test(game.url)) {
-                    res.status(200).json({ url: game.url });
+                if (config_1.config.env === 'development') {
+                    if (game) {
+                        res.status(200).json({ url: game.url });
+                    }
+                    else {
+                        console.log('Unauthorized request');
+                        throw (0, http_errors_1.default)(401, "Unauthorized request");
+                    }
                 }
                 else {
-                    console.log('Unauthorized request');
-                    throw (0, http_errors_1.default)(401, "Unauthorized request");
+                    if (game && hostPattern.test(game.url)) {
+                        res.status(200).json({ url: game.url });
+                    }
+                    else {
+                        console.log('Unauthorized request');
+                        throw (0, http_errors_1.default)(401, "Unauthorized request");
+                    }
                 }
                 if (!platform || platform.length === 0) {
                     throw (0, http_errors_1.default)(404, "Game not found");

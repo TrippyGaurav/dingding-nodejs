@@ -10,9 +10,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SLCM = void 0;
-const gameUtils_1 = require("../../Utils/gameUtils");
-const WinData_1 = require("../BaseSlotGame/WinData");
 const RandomResultGenerator_1 = require("../RandomResultGenerator");
+const helper_1 = require("./helper");
+/**
+ * Represents the Slot Machine Game Class for handling slot machine operations.
+ */
 class SLCM {
     constructor(currentGameData) {
         this.currentGameData = currentGameData;
@@ -22,25 +24,14 @@ class SLCM {
             totalbet: 0,
             rtpSpinCount: 0,
             totalSpin: 0,
+            currentPayout: 0
         };
-        this.settings = {
-            id: currentGameData.gameSettings.id,
-            isSpecial: currentGameData.gameSettings.isSpecial,
-            matrix: currentGameData.gameSettings.matrix,
-            bets: currentGameData.gameSettings.bets,
-            Symbols: this.initSymbols,
-            resultSymbolMatrix: [],
-            currentGamedata: currentGameData.gameSettings,
-            _winData: new WinData_1.WinData(this),
-            currentBet: 0, // Set initial value
-            currentLines: 0, // Set initial value
-            BetPerLines: 0, // Set initial value
-            reels: [], // Initialize reels array
-            lastRedSpin: { Index: -1, Symbol: -1 },
-            lastReSpin: { Index: -1, Symbol: -1 },
-        };
-        console.log(this.settings.Symbols[0]);
-        this.initialize(currentGameData.gameSettings);
+        this.settings = (0, helper_1.initializeGameSettings)(currentGameData, this);
+        this.settings.reels = (0, helper_1.generateInitialReel)(this.settings);
+        (0, helper_1.sendInitData)(this);
+    }
+    get initSymbols() {
+        return this.currentGameData.gameSettings.Symbols;
     }
     sendMessage(action, message) {
         this.currentGameData.sendMessage(action, message);
@@ -51,11 +42,11 @@ class SLCM {
     sendAlert(message) {
         this.currentGameData.sendAlert(message);
     }
-    updatePlayerBalance(message) {
-        this.currentGameData.updatePlayerBalance(message);
+    updatePlayerBalance(amount) {
+        this.currentGameData.updatePlayerBalance(amount);
     }
-    deductPlayerBalance(message) {
-        this.currentGameData.deductPlayerBalance(message);
+    deductPlayerBalance(amount) {
+        this.currentGameData.deductPlayerBalance(amount);
     }
     getPlayerData() {
         return this.currentGameData.getPlayerData();
@@ -63,23 +54,22 @@ class SLCM {
     messageHandler(response) {
         switch (response.id) {
             case "SPIN":
-                this.settings.matrix.x = 3;
-                this.settings.currentLines = response.data.currentLines;
-                this.settings.BetPerLines = gameUtils_1.betMultiplier[response.data.currentBet];
-                this.settings.currentBet =
-                    gameUtils_1.betMultiplier[response.data.currentBet] *
-                        this.settings.currentLines;
+                this.prepareSpin(response.data);
                 this.spinResult();
                 break;
         }
+    }
+    prepareSpin(data) {
+        this.settings.matrix.x = data.matrixX;
+        this.settings.currentLines = data.currentLines;
+        this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
+        this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
     }
     spinResult() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const playerData = this.getPlayerData();
                 if (this.settings.currentBet > playerData.credits) {
-                    console.log("Low Balance : ", playerData.credits);
-                    console.log("Current Bet : ", this.settings.currentBet);
                     this.sendError("Low Balance");
                     return;
                 }
@@ -89,137 +79,124 @@ class SLCM {
                 this.checkResult();
             }
             catch (error) {
-                console.error("Failed to generate spin results:", error);
                 this.sendError("Spin error");
+                console.error("Failed to generate spin results:", error);
             }
+        });
+    }
+    resultRow(matrix) {
+        return matrix.map(element => {
+            const symbol = this.settings.Symbols.find(sym => sym.Id === element);
+            return symbol;
+        });
+    }
+    checkPayout(preProcessedResult) {
+        let payoutString = '';
+        preProcessedResult.forEach(symbol => {
+            if ((symbol === null || symbol === void 0 ? void 0 : symbol.Name) !== undefined && symbol.payout && symbol.Name !== '00') {
+                payoutString += symbol.payout.toString();
+            }
+        });
+        const totalPayout = payoutString ? parseInt(payoutString, 10) : 0;
+        return totalPayout;
+    }
+    newMatrix(matrix) {
+        return matrix.map((item, index) => {
+            if (this.settings.freezeIndex.includes(index)) {
+                return this.settings.lastReSpin[index];
+            }
+            return item;
+        });
+    }
+    checkSameMatrix(matrix1, matrix2) {
+        return matrix1.every((item, index) => {
+            return JSON.stringify(item) === JSON.stringify(matrix2[index]);
         });
     }
     checkResult() {
-        const payoutSheet = [];
-        console.log(this.settings.resultSymbolMatrix);
-        const blankSymbol = this.settings.Symbols.filter(symbol => symbol.Name === 'Blank');
-        // Filter out symbols with Id of 0
-        const filteredSymbols = this.settings.resultSymbolMatrix[0].filter(symbol => symbol !== blankSymbol[0].Id);
-        filteredSymbols.forEach((element, index) => {
-            console.log(index);
-            const symbolPayout = this.settings.Symbols.filter(symbol => symbol.Id === element);
-            payoutSheet.push(symbolPayout[0].payout);
-            console.log("symbolPayout[0].canCallRespin", symbolPayout[0].canCallRespin, " INDEX", index, " LAST INDEX ", this.settings.lastReSpin.Index, element);
-            //  if(symbolPayout[0].canCallRespin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol)
-            //  {
-            //    this.settings.resultSymbolMatrix[0][index] = element;
-            //   console.log("CALLLEDD FREE SPIN");
-            //   this.settings.lastReSpin  = {Index :index, Symbol : element};
-            //   this.checkResult();
-            //   }
-            // if(this.settings.matrix.x >= 2 && symbolPayout[0].canCallRedSpin  && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] !=  this.settings.lastReSpin.Symbol)
-            // {
-            //   const canCallRedSpin = this.isRandomNumberGreaterThan(90);
-            //   if(canCallRedSpin)
-            //   {
-            //     new RandomResultGenerator(this);
-            //     this.settings.resultSymbolMatrix[0][index] = element;
-            //     console.log("CALLLEDD RED SPIN");
-            //     this.settings.lastRedSpin  = {Index :index, Symbol : element};
-            //     this.checkResult();
-            //   }
-            // }
-        });
-        const payout = parseInt(payoutSheet.map(num => num.toString()).join(''));
-        console.log("Payout : ", payout || 0);
-        // Convert the sum to a string and return it
-        //REDSPINNNNN
-        if (payout > 0 && payout <= 5 && this.settings.matrix.x >= 2) {
-            payoutSheet.forEach((payoutSymbol, index) => {
-                const symbolPayout = this.settings.Symbols.find(symbol => symbol.Id === payoutSymbol);
-                if (symbolPayout[0].canCallRedSpin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] != this.settings.lastReSpin.Symbol) {
-                    this.settings.resultSymbolMatrix[0][index] = payoutSymbol;
-                    console.log("CALLLEDD FREE SPIN");
-                    this.settings.lastRedSpin = { Index: index, Symbol: payoutSymbol };
-                    this.checkResult();
-                }
-            });
+        const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+        const totalPayout = this.checkPayout(preProcessedResult);
+        const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
+        if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === '0' || symbol.Name === 'doubleZero')) {
+            this.handleZeroRespin();
         }
-        //RESPINNNNN
-        if (payout == 0) {
-            payoutSheet.forEach((payoutSymbol, index) => {
-                const symbolPayout = this.settings.Symbols.find(symbol => symbol.Id === payoutSymbol);
-                if (symbolPayout[0].canCallRespin && this.settings.resultSymbolMatrix[0][this.settings.lastReSpin.Index] != this.settings.lastReSpin.Symbol) {
-                    this.settings.resultSymbolMatrix[0][index] = payoutSymbol;
-                    console.log("CALLLEDD FREE SPIN");
-                    this.settings.lastReSpin = { Index: index, Symbol: payoutSymbol };
-                    this.checkResult();
-                }
-            });
+        else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin()) {
+            console.log('Red Respin triggered.');
+            this.handleRedRespin();
         }
-        // console.log("Result : ", result);
-        // console.log( this.settings.currentGamedata.Symbols)
+        else {
+            this.playerData.currentWining = finalPayout;
+            console.log('SYMBOLS:', preProcessedResult);
+            console.log('FINALPAY:', finalPayout);
+        }
     }
-    initialize(gameData) {
-        this.settings.currentGamedata = gameData;
-        this.settings._winData = new WinData_1.WinData(this);
-        gameUtils_1.UiInitData.paylines = (0, gameUtils_1.convertSymbols)(this.settings.currentGamedata.Symbols);
-        this.sendInitdata();
+    shouldTriggerRedRespin() {
+        return Math.random() < 0.9;
     }
-    sendInitdata() {
-        this.settings.reels = this.generateInitialreel();
-        const dataToSend = {
-            GameData: {
-                Reel: this.settings.reels,
-                Bets: this.settings.currentGamedata.bets,
-                autoSpin: [1, 5, 10, 20],
-            },
-            UIData: gameUtils_1.UiInitData,
-            PlayerData: {
-                Balance: this.getPlayerData().credits,
-                haveWon: this.playerData.haveWon,
-                currentWining: this.playerData.currentWining,
-                totalbet: this.playerData.totalbet,
-            },
-        };
-        this.sendMessage("InitData", dataToSend);
-    }
-    generateInitialreel() {
-        const reels = [[], [], []]; // Initialize three empty reels
-        this.settings.currentGamedata.Symbols.forEach(symbol => {
-            for (let i = 0; i < 3; i++) {
-                const count = symbol.reelInstance[i] || 0;
-                for (let j = 0; j < count; j++) {
-                    reels[i].push(symbol.Id); // Add the symbol's name to the specific reel
-                }
+    handleZeroRespin() {
+        console.log('Zero Respin triggered due to 0 or 00 in the matrix.');
+        const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+        this.settings.freezeIndex = preProcessedResult
+            .map((symbol, index) => (symbol.Name === '0' || symbol.Name === 'doubleZero') ? index : null)
+            .filter(index => index !== null);
+        this.settings.lastReSpin = this.settings.resultSymbolMatrix[0].slice();
+        new RandomResultGenerator_1.RandomResultGenerator(this);
+        let newMatrix = this.settings.resultSymbolMatrix[0];
+        this.settings.resultSymbolMatrix[0] = newMatrix.map((item, index) => {
+            if (this.settings.freezeIndex.includes(index)) {
+                return this.settings.lastReSpin[index];
             }
+            return item;
         });
-        // 
-        // Shuffle each reel individually
-        reels.forEach(reel => {
-            for (let i = reel.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [reel[i], reel[j]] = [reel[j], reel[i]]; // Swap elements within the same reel
+        console.log('New Matrix after Zero Respin: ', this.settings.resultSymbolMatrix[0]);
+        const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+        const newTotalPayout = this.checkPayout(updatedPreProcessedResult);
+        const newFinalPayout = newTotalPayout ? parseInt(newTotalPayout.toString(), 10) : 0;
+        const matricesAreSame = this.checkSameMatrix(this.settings.lastReSpin, this.settings.resultSymbolMatrix[0]);
+        if (newFinalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === '0' || symbol.Name === 'doubleZero')) {
+            console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
+            this.handleZeroRespin();
+        }
+        else if (matricesAreSame || newFinalPayout > 0) {
+            console.log('Zero Respin stopped as matrix is the same or payout is greater than zero.');
+            console.log('Final Payout:', newFinalPayout);
+            this.playerData.currentWining = newFinalPayout;
+        }
+        this.settings.freezeIndex = [];
+        return;
+    }
+    handleRedRespin() {
+        console.log('Red Respin triggered due to payout being > 0 and <= 5.');
+        const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+        this.settings.freezeIndex = preProcessedResult
+            .map((symbol, index) => (symbol.Name === '1' || symbol.Name === '2' || symbol.Name === '5') ? index : null)
+            .filter(index => index !== null);
+        if (!this.settings.initialRedRespinMatrix) {
+            this.settings.initialRedRespinMatrix = this.settings.resultSymbolMatrix[0].slice();
+        }
+        new RandomResultGenerator_1.RandomResultGenerator(this);
+        let newMatrix = this.settings.resultSymbolMatrix[0];
+        this.settings.resultSymbolMatrix[0] = newMatrix.map((item, index) => {
+            if (this.settings.freezeIndex.includes(index)) {
+                return this.settings.initialRedRespinMatrix[index];
             }
+            return item;
         });
-        return reels;
-    }
-    get initSymbols() {
-        const Symbols = []; // Explicitly declare Symbols as an array of Symbol objects
-        this.currentGameData.gameSettings.Symbols.forEach((Element) => {
-            // const element : Symbol = { 
-            //   Element.Name.toString(),
-            //   Element.Id,
-            //   Element.payout,
-            //   Element.canCallRedSpin,
-            //   Element.canCallRespin,
-            //   Element.reelInstance
-            // };
-            // Symbols.push(
-            // );
-        });
-        return Symbols;
-    }
-    isRandomNumberGreaterThan(percentage) {
-        // Generate a random number, either 0 or 1
-        const randomNumber = Math.floor(Math.random() * 2);
-        // Compare the random number with the threshold and return the result
-        return randomNumber > percentage / 100;
+        console.log('New Matrix after Red Respin:', this.settings.resultSymbolMatrix[0]);
+        const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+        const newTotalPayout = this.checkPayout(updatedPreProcessedResult);
+        const newFinalPayout = newTotalPayout ? parseInt(newTotalPayout.toString(), 10) : 0;
+        console.log('Payout after Red Respin:', newFinalPayout);
+        if (newFinalPayout <= 5) {
+            console.log('Payout is still <= 5. Triggering another red respin.');
+            this.handleRedRespin();
+        }
+        else {
+            console.log('Red Respin stopped. Final Payout:', newFinalPayout);
+            this.playerData.currentWining = newFinalPayout;
+            this.settings.initialRedRespinMatrix = null;
+            return;
+        }
     }
 }
 exports.SLCM = SLCM;

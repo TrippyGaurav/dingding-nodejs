@@ -128,6 +128,10 @@ class UserController {
                     httpOnly: true,
                     sameSite: "none",
                 });
+                const socketUser = socket_1.users.get(username);
+                if (socketUser === null || socketUser === void 0 ? void 0 : socketUser.socketData.gameSocket) {
+                    throw (0, http_errors_1.default)(403, "You Are Already Playing on another browser or tab");
+                }
                 res.status(200).json({
                     message: "Login successful",
                     token: token,

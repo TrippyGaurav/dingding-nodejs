@@ -20,6 +20,7 @@ const gameUtils_1 = require("./game/Utils/gameUtils");
 const testData_1 = require("./game/testData");
 const socket_1 = require("./socket");
 const GameManager_1 = __importDefault(require("./game/GameManager"));
+const http_errors_1 = __importDefault(require("http-errors"));
 class PlayerSocket {
     constructor(username, role, credits, userAgent, gameSocket, gameId) {
         this.gameId = gameId;
@@ -27,8 +28,8 @@ class PlayerSocket {
             gameSocket: null,
             heartbeatInterval: setInterval(() => { }, 0),
             reconnectionAttempts: 0,
-            maxReconnectionAttempts: 5,
-            reconnectionTimeout: 5000,
+            maxReconnectionAttempts: 1,
+            reconnectionTimeout: 10,
             cleanedUp: false,
         };
         this.playerData = {
@@ -148,6 +149,7 @@ class PlayerSocket {
                 }
                 socket_1.users.delete(this.playerData.username);
                 this.cleanup();
+                throw (0, http_errors_1.default)(403, "Please wait to disconnect");
             }
             catch (error) {
                 console.error("Reconnection attempt failed:", error);
@@ -190,6 +192,8 @@ class PlayerSocket {
     onExit() {
         var _a;
         (_a = this.socketData.gameSocket) === null || _a === void 0 ? void 0 : _a.on("EXIT", () => {
+            console.log(this.playerData.username, "EXITS FROM", this.gameId);
+            this.sendMessage('ExitUser', '');
             socket_1.users.delete(this.playerData.username);
             this.cleanup();
         });
@@ -207,7 +211,7 @@ class PlayerSocket {
                     message: "You are already playing on another browser",
                 });
                 socket.disconnect(true);
-                return;
+                throw (0, http_errors_1.default)(403, "You are already playing on another browser");
             }
             this.initializeGameSocket(socket);
             const credits = yield (0, gameUtils_1.getPlayerCredits)(this.playerData.username);

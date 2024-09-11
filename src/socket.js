@@ -17,6 +17,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userModel_1 = require("./dashboard/users/userModel");
 const config_1 = require("./config/config");
 const Player_1 = __importDefault(require("./Player"));
+const http_errors_1 = __importDefault(require("http-errors"));
 exports.users = new Map();
 const verifySocketToken = (socket) => {
     return new Promise((resolve, reject) => {
@@ -78,7 +79,7 @@ const socketController = (io) => {
             if (existingUser.playerData.userAgent !== userAgent) {
                 socket.emit("AnotherDevice", "You are already playing on another browser.");
                 socket.disconnect(true);
-                return;
+                throw (0, http_errors_1.default)(403, "Please wait to disconnect");
             }
             yield existingUser.updateGameSocket(socket);
             existingUser.sendAlert(`Game socket created for ${username}`);
