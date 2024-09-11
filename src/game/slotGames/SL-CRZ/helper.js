@@ -15,10 +15,17 @@ function initializeGameSettings(gameData, gameInstance) {
         resultSymbolMatrix: [],
         currentGamedata: gameData.gameSettings,
         _winData: new WinData_1.WinData(gameInstance),
+        canmatch: [],
+        mixedPayout: 0,
         currentBet: 0,
         currentLines: 0,
         BetPerLines: 0,
         reels: [],
+        defaultPayout: gameData.gameSettings.defaultPayout,
+        SpecialType: gameData.gameSettings.SpecialType,
+        isSpecialCrz: gameData.gameSettings.isSpecialCrz,
+        freeSpinCount: 0,
+        isFreeSpin: false,
     };
 }
 function generateInitialReel(gameSettings) {

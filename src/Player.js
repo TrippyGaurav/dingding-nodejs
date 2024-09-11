@@ -28,8 +28,8 @@ class PlayerSocket {
             gameSocket: null,
             heartbeatInterval: setInterval(() => { }, 0),
             reconnectionAttempts: 0,
-            maxReconnectionAttempts: 5,
-            reconnectionTimeout: 5000,
+            maxReconnectionAttempts: 1,
+            reconnectionTimeout: 10,
             cleanedUp: false,
         };
         this.playerData = {
