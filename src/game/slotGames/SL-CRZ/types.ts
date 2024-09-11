@@ -3,8 +3,14 @@ import { WinData } from "../BaseSlotGame/WinData";
 export interface Symbol {
     Name: string;
     Id: number;
-    payout: string;
+    payout: number;
+    canmatch : string[];
+    mixedPayout : number;
+    defaultPayout : number;
+    SpecialType : string;
+    isSpecial: boolean;
     reelInstance: { [key: string]: number };
+    isSpecialCrz: boolean;
 }
 
 export interface CRZSETTINGS {
@@ -14,10 +20,16 @@ export interface CRZSETTINGS {
     currentGamedata: GameData;
     resultSymbolMatrix: any[];
     _winData: WinData | undefined;
+    canmatch : string[];
+    mixedPayout : number;
+    defaultPayout : number;
+    SpecialType : string[];
     currentBet: number;
     currentLines: number;
     BetPerLines: number;
     bets: number[];
     reels: any[][];
     Symbols: Symbol[];
+    freeSpinCount : number;
+    isFreeSpin : boolean;
 }

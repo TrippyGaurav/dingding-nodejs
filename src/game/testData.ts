@@ -45,7 +45,7 @@ export const gameData = [
                 "canCallRedSpin": true,
                 "canCallRespin": false,
                 "reelInstance": {
-                    "0": 4,
+                    "0": 35,
                     "1": 0,
                     "2": 0
                 }
@@ -82,7 +82,7 @@ export const gameData = [
                 "canCallRespin": true,
                 "reelInstance": {
                     "0": 0,
-                    "1": 3,
+                    "1": 20,
                     "2": 0
                 }
             },
@@ -94,8 +94,8 @@ export const gameData = [
                 "canCallRespin": true,
                 "reelInstance": {
                     "0": 0,
-                    "1": 40,
-                    "2": 0
+                    "1": 0,
+                    "2": 40
                 }
             }
         ]
