@@ -1,6 +1,7 @@
 import { WinData } from "../BaseSlotGame/WinData";
 import { convertSymbols, UiInitData } from "../../Utils/gameUtils";
 import { SLCM } from "./cashMachineBase";
+import { SPINTYPES } from "./types";
 
 /**
  * Initializes the game settings using the provided game data and game instance.
@@ -82,4 +83,20 @@ export function sendInitData(gameInstance: SLCM) {
         },
     };
     gameInstance.sendMessage("InitData", dataToSend);
+}
+
+
+
+export function freezeIndex(gameInstance: SLCM, type: string, matrix: any[]) {
+
+    const { settings } = gameInstance
+
+    if (type === SPINTYPES.RESPIN) {
+        settings.resultSymbolMatrix[0] = matrix.map((item, index) => {
+            if (settings.freezeIndex.includes(index)) {
+                return this.settings.lastReSpin[index];
+            }
+            return item;
+        });
+    }
 }
