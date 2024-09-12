@@ -69,3 +69,56 @@ export function sendInitData(gameInstance: SLCRZ) {
     };
     gameInstance.sendMessage("InitData", dataToSend);
 }
+export function calculatePayout(gameInstance: any, symbols: any[], symbolId: number, winType: string): number {
+    const symbol = gameInstance.settings.Symbols.find(sym => sym.Id === symbolId);
+    let payout = 0;
+
+    if (winType === 'regular') {
+        payout = symbol.payout * gameInstance.settings.currentBet; 
+    } else if (winType === 'mixed') {
+        payout = symbol.mixedPayout * gameInstance.settings.currentBet;
+    }
+
+    return payout;
+}
+
+export function applyExtraSymbolEffect(gameInstance: any, payout: number, extraSymbolId: number): number {
+    const extraSymbol = gameInstance.settings.Symbols.find(sym => sym.Id === extraSymbolId);
+
+    if (extraSymbol && extraSymbol.isSpecialCrz) {
+        if (extraSymbol.SpecialType === "MULTIPLY") {
+            console.log(`Special MULTIPLY: Multiplying payout by ${extraSymbol.payout}`);
+            return payout * extraSymbol.payout;  
+        } else if (extraSymbol.SpecialType === "ADD") {
+            console.log(`Special ADD: Adding extra payout based on bet.`);
+            const additionalPayout = extraSymbol.payout * gameInstance.settings.currentBet;
+            return payout + additionalPayout;
+        } else if (extraSymbol.SpecialType === "RESPIN") {
+            gameInstance.settings.isFreeSpin = true;
+            const freeSpinCount = Math.floor(Math.random() * 3) + 3;
+            console.log("Free spin started");
+            return payout;
+        }
+    }
+
+    console.log("No special effect from the extra symbol.");
+    return payout;
+}
+export function checkWinningCondition(gameInstance: any, row: any[]): { winType: string, symbolId?: number } {
+    const firstSymbolId = row[0];
+
+    const allSame = row.every(symbol => symbol === firstSymbolId);
+    if (allSame) {
+        return { winType: 'regular', symbolId: firstSymbolId };
+    }
+
+    const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id === firstSymbolId);  // Access through gameInstance
+    const canMatch = firstSymbol.canmatch;
+    const isMixedWin = row.slice(1).every(symbol => canMatch.includes(symbol.toString()));
+
+    if (isMixedWin) {
+        return { winType: 'mixed', symbolId: firstSymbolId };
+    }
+
+    return { winType: 'default' };
+}
