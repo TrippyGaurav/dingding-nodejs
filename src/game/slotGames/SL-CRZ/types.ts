@@ -4,10 +4,10 @@ export interface Symbol {
     Name: string;
     Id: number;
     payout: number;
-    canmatch : string[];
-    mixedPayout : number;
-    defaultPayout : number;
-    SpecialType : string;
+    canmatch: string[];
+    mixedPayout: number;
+    defaultPayout: number;
+    SpecialType: string;
     isSpecial: boolean;
     reelInstance: { [key: string]: number };
     isSpecialCrz: boolean;
@@ -20,16 +20,28 @@ export interface CRZSETTINGS {
     currentGamedata: GameData;
     resultSymbolMatrix: any[];
     _winData: WinData | undefined;
-    canmatch : string[];
-    mixedPayout : number;
-    defaultPayout : number;
-    SpecialType : string[];
+    canmatch: string[];
+    mixedPayout: number;
+    defaultPayout: number;
+    SpecialType: string[];
     currentBet: number;
     currentLines: number;
     BetPerLines: number;
     bets: number[];
     reels: any[][];
     Symbols: Symbol[];
-    freeSpinCount : number;
-    isFreeSpin : boolean;
+    freeSpinCount: number;
+    isFreeSpin: boolean;
+}
+
+export enum WINNINGTYPE {
+    REGULAR = 'regular',
+    MIXED = 'mixed',
+    DEFAULT = 'default'
+}
+
+export enum EXTRASYMBOL {
+    MULTIPLY = 'MULTIPLY',
+    ADD = 'ADD',
+    RESPIN = 'RESPIN'
 }

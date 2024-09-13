@@ -207,17 +207,21 @@ export function checkPayout(preProcessedResult: any[]): number {
 
 //
 export function makeResultJson(gameInstance: SLCM) {
-    const { settings } = gameInstance
-    const sendData = {
-        gameData: {
-            resultSymbols: settings.resultSymbolMatrix[0],
-            hasReSpin: settings.hasreSpin
-        },
-        PlayerData: {
-            Balance: gameInstance.getPlayerData().credits,
-            currentWining: gameInstance.playerData.currentWining
-        }
-    }
+    try {
+        const { settings } = gameInstance;
+        const sendData = {
+            gameData: {
+                resultSymbols: settings.resultSymbolMatrix[0],
+                hasReSpin: settings.hasreSpin
+            },
+            PlayerData: {
+                Balance: gameInstance.getPlayerData().credits,
+                currentWining: gameInstance.playerData.currentWining
+            }
+        };
 
-    gameInstance.sendMessage('ResultData', sendData)
+        gameInstance.sendMessage('ResultData', sendData);
+    } catch (error) {
+        console.error("Error generating result JSON or sending message:", error);
+    }
 }
