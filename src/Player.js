@@ -29,7 +29,7 @@ class PlayerSocket {
             heartbeatInterval: setInterval(() => { }, 0),
             reconnectionAttempts: 0,
             maxReconnectionAttempts: 1,
-            reconnectionTimeout: 10,
+            reconnectionTimeout: 1000,
             cleanedUp: false,
         };
         this.playerData = {
@@ -131,7 +131,7 @@ class PlayerSocket {
         return __awaiter(this, void 0, void 0, function* () {
             this.checkPlayerBalance(currentBet);
             this.playerData.credits -= currentBet;
-            // await this.updateDatabase();
+            yield this.updateDatabase();
         });
     }
     attemptReconnection() {
