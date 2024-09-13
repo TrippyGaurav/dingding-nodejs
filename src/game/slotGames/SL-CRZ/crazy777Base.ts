@@ -92,19 +92,18 @@ export class SLCRZ {
       const resultmatrix = this.settings.resultSymbolMatrix;
       const checkMatrix = resultmatrix.map(row => row.slice(0, 3));
       const specialMatrix = resultmatrix.map(row => row[3]);
-      // console.log("Result Matrix:", resultmatrix);
+      console.log("Result Matrix:", resultmatrix);
 
       const middleRow = checkMatrix[1];
       const extrasymbol = specialMatrix[1];
 
-      // console.log("Middle row:", middleRow);
-      // console.log("Special element:", extrasymbol);
+      console.log("Middle row:", middleRow);
+      console.log("Special element:", extrasymbol);
 
       if (middleRow.includes(0)) {
         this.playerData.currentWining = 0
         makeResultJson(this)
-        // console.log("No win: '0' present in the middle row.");
-        return;
+        console.log("No win: '0' present in the middle row.");
       }
 
       const isWinning = await checkWinningCondition(this, middleRow);
@@ -113,34 +112,35 @@ export class SLCRZ {
 
       switch (isWinning.winType) {
         case WINNINGTYPE.REGULAR:
-          // console.log("Regular Win! Calculating payout...");
+          console.log("Regular Win! Calculating payout...");
           payout = await calculatePayout(this, middleRow, isWinning.symbolId, WINNINGTYPE.REGULAR);
-          this.playerData.currentWining = payout
+         
           console.log("Payout:", payout);
           break;
 
         case WINNINGTYPE.MIXED:
-          // console.log("Mixed Win! Calculating mixed payout...");
+          console.log("Mixed Win! Calculating mixed payout...");
           payout = await calculatePayout(this, middleRow, isWinning.symbolId, WINNINGTYPE.MIXED);
-          this.playerData.currentWining = payout
-          // console.log("Mixed Payout:", payout);
+          console.log("Mixed Payout:", payout);
           break;
 
         default:
-          // console.log("No specific win condition met. Applying default payout.");
-          payout = this.settings.defaultPayout * this.settings.currentBet;
+          console.log("No specific win condition met. Applying default payout.");
+          payout = this.settings.defaultPayout * this.settings.BetPerLines;
           this.playerData.currentWining = payout
-          // console.log("Default Payout:", payout);
+          console.log("Default Payout:", payout);
           break;
       }
 
       if (payout > 0 && !this.settings.isFreeSpin) {
         payout = await applyExtraSymbolEffect(this, payout, extrasymbol);
+        this.playerData.currentWining=payout
+        makeResultJson(this)
       }
-      makeResultJson(this)
-      this.playerData.currentWining = payout
-      // console.log("Total Payout for:", this.getPlayerData().username, "" + payout);
-      // console.log("Total Free Spins Remaining:", this.settings.freeSpinCount);
+    
+     
+      console.log("Total Payout for:", this.getPlayerData().username, "" + payout);
+      console.log("Total Free Spins Remaining:", this.settings.freeSpinCount);
 
       if (this.settings.isFreeSpin) {
         this.settings.freeSpinCount--;

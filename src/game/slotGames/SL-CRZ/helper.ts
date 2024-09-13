@@ -86,11 +86,13 @@ export function calculatePayout(gameInstance: SLCRZ, symbols: any[], symbolId: n
         let payout = 0;
         switch (winType) {
             case WINNINGTYPE.REGULAR:
-                payout = symbol.payout * gameInstance.settings.currentBet;
+                payout = symbol.payout * gameInstance.settings.BetPerLines;
+                gameInstance.playerData.currentWining=payout
                 break;
 
             case WINNINGTYPE.MIXED:
-                payout = symbol.mixedPayout * gameInstance.settings.currentBet;
+                payout = symbol.mixedPayout * gameInstance.settings.BetPerLines;
+                gameInstance.playerData.currentWining=payout
                 break;
 
             default:
@@ -118,25 +120,25 @@ export function applyExtraSymbolEffect(gameInstance: SLCRZ, payout: number, extr
         }
 
         if (!extraSymbol.isSpecialCrz) {
-            // console.log("No special effect from the extra symbol.");
+            console.log("No special effect from the extra symbol.");
             return payout;
         }
 
         switch (extraSymbol.SpecialType) {
             case EXTRASYMBOL.MULTIPLY:
-                // console.log(`Special MULTIPLY: Multiplying payout by ${extraSymbol.payout}`);
+                console.log(`Special MULTIPLY: Multiplying payout by ${extraSymbol.payout}`);
                 return payout * extraSymbol.payout;
 
             case EXTRASYMBOL.ADD:
-                // console.log(`Special ADD: Adding extra payout based on bet.`);
-                const additionalPayout = extraSymbol.payout * gameInstance.settings.currentBet;
+                console.log(`Special ADD: Adding extra payout based on bet.`);
+                const additionalPayout = extraSymbol.payout * gameInstance.settings.BetPerLines;
                 return payout + additionalPayout;
 
             case EXTRASYMBOL.RESPIN:
                 gameInstance.settings.isFreeSpin = true;
                 const freeSpinCount = Math.floor(Math.random() * 3) + 3;
                 gameInstance.settings.freeSpinCount = freeSpinCount;
-                // console.log("Free spin started with count:", freeSpinCount);
+                console.log("Free spin started with count:", freeSpinCount);
                 return payout;
 
             default:
