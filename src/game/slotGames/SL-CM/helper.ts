@@ -129,7 +129,6 @@ export function freezeIndex(gameInstance: SLCM, type: string, matrix: any[]) {
                 }
                 return item;
             });
-            console.log('New Matrix after Red Respin:', updatedMatrix);
             return updatedMatrix;
         }
 

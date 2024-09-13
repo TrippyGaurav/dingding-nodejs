@@ -105,7 +105,7 @@ export class SLCM {
             makeResultJson(this)
             this.handleZeroRespin();
         }
-        else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin()) {
+        else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin() && this.settings.matrix.x > 1) {
             console.log('Red Respin triggered.');
             this.handleRedRespin();
         } else {

@@ -119,6 +119,5 @@ export function checkWinningCondition(gameInstance: any, row: any[]): { winType:
     if (isMixedWin) {
         return { winType: 'mixed', symbolId: firstSymbolId };
     }
-
     return { winType: 'default' };
 }
