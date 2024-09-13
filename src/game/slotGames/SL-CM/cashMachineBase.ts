@@ -1,7 +1,7 @@
 import { WinData } from "../BaseSlotGame/WinData";
 import { RandomResultGenerator } from "../RandomResultGenerator";
-import { CMSettings } from "./types";
-import { initializeGameSettings, generateInitialReel, sendInitData } from "./helper";
+import { CMSettings, SPECIALSYMBOLS, SPINTYPES } from "./types";
+import { initializeGameSettings, generateInitialReel, sendInitData, freezeIndex, checkSameMatrix, checkPayout, makeResultJson } from "./helper";
 import { currentGamedata } from "../../../Player";
 
 /**
@@ -14,8 +14,7 @@ export class SLCM {
         currentWining: 0,
         totalbet: 0,
         rtpSpinCount: 0,
-        totalSpin: 0,
-        currentPayout: 0
+        totalSpin: 0
     };
 
     constructor(public currentGameData: currentGamedata) {
@@ -49,6 +48,7 @@ export class SLCM {
     }
 
     getPlayerData() {
+
         return this.currentGameData.getPlayerData();
     }
 
@@ -92,153 +92,144 @@ export class SLCM {
         });
     }
 
-    private checkPayout(preProcessedResult: any[]): number {
-        let payoutString = '';
-        preProcessedResult.forEach(symbol => {
-            if (symbol?.Name !== undefined && symbol.payout && symbol.Name !== '00') {
-                payoutString += symbol.payout.toString();
-            }
-        });
 
-        const totalPayout = payoutString ? parseInt(payoutString, 10) : 0;
-        return totalPayout;
-    }
 
-    private newMatrix(matrix: any[]): any[] {
-        return matrix.map((item, index) => {
-            if (this.settings.freezeIndex.includes(index)) {
-                return this.settings.lastReSpin[index]; 
-            }
-            return item;
-        });
-    }
 
-    private checkSameMatrix(matrix1: any[], matrix2: any[]): boolean {
-        return matrix1.every((item, index) => {
-            return JSON.stringify(item) === JSON.stringify(matrix2[index]);
-        });
-    }
     private checkResult() {
-      const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
-  
-      const totalPayout = this.checkPayout(preProcessedResult);
-      const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
-  
-      // If payout is 0 and 0 or 00 is present, delegate to the handleZeroRespin function
-      if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === '0' || symbol.Name === 'doubleZero')) {
-          this.handleZeroRespin();  // Call the new separate zero respin function
-      }
-      else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin()) {
-        console.log('Red Respin triggered.');
-        this.handleRedRespin();  // Call the new red respin function
-    } else {
-          // If no respin is triggered, log final payout
-          this.playerData.currentWining = finalPayout;
-          console.log('SYMBOLS:', preProcessedResult);
-          console.log('FINALPAY:', finalPayout);
-      }
-  }
-  // Helper function to simulate 1 out of 10 chance
-  private shouldTriggerRedRespin(): boolean {
-    return Math.random() < 0.9;  // 10% chance
-  }
-  private handleZeroRespin() {
-    console.log('Zero Respin triggered due to 0 or 00 in the matrix.');
+        const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+        const totalPayout = checkPayout(preProcessedResult);
+        const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
 
-    const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
-
-    // Store the indexes where 0 or 00 are found
-    this.settings.freezeIndex = preProcessedResult
-        .map((symbol, index) => (symbol.Name === '0' || symbol.Name === 'doubleZero') ? index : null)
-        .filter(index => index !== null);
-
-    // Store the current matrix before respin
-    this.settings.lastReSpin = this.settings.resultSymbolMatrix[0].slice();
-
-    // Generate new matrix after triggering respin
-    new RandomResultGenerator(this);
-    let newMatrix = this.settings.resultSymbolMatrix[0];
-
-    // Replace freeze indexes in the new matrix with original 0 or 00 from the previous matrix
-    this.settings.resultSymbolMatrix[0] = newMatrix.map((item, index) => {
-        if (this.settings.freezeIndex.includes(index)) {
-            return this.settings.lastReSpin[index]; // Replace frozen indexes with original 0 or 00
+        if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
+            this.settings.hasreSpin = true
+            makeResultJson(this)
+            this.handleZeroRespin();
         }
-        return item; // Keep the new symbol if it's not a frozen index
-    });
+        else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin()) {
+            console.log('Red Respin triggered.');
+            this.handleRedRespin();
+        } else {
 
-    console.log('New Matrix after Zero Respin: ', this.settings.resultSymbolMatrix[0]);
-
-    // Re-process the result with the updated matrix
-    const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
-
-    // Calculate payout with the new matrix
-    const newTotalPayout = this.checkPayout(updatedPreProcessedResult);
-    const newFinalPayout = newTotalPayout ? parseInt(newTotalPayout.toString(), 10) : 0;
-
-    // Check if we need to trigger another respin
-    const matricesAreSame = this.checkSameMatrix(this.settings.lastReSpin, this.settings.resultSymbolMatrix[0]);
-
-    if (newFinalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === '0' || symbol.Name === 'doubleZero')) {
-        console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
-        this.handleZeroRespin();  // Trigger another respin
-    } else if (matricesAreSame || newFinalPayout > 0) {
-        console.log('Zero Respin stopped as matrix is the same or payout is greater than zero.');
-        console.log('Final Payout:', newFinalPayout);
-         this.playerData.currentWining = newFinalPayout;
-    }
-        this.settings.freezeIndex = [];
-        return;
-  }
-  private handleRedRespin() {
-    console.log('Red Respin triggered due to payout being > 0 and <= 5.');
-
-    const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
-
-    // Store the indexes where 1, 2, or 5 are found
-    this.settings.freezeIndex = preProcessedResult
-        .map((symbol, index) => (symbol.Name === '1' || symbol.Name === '2' || symbol.Name === '5') ? index : null)
-        .filter(index => index !== null);
-
-    // Store the first matrix that triggered the red respin (if not already stored)
-    if (!this.settings.initialRedRespinMatrix) {
-        this.settings.initialRedRespinMatrix = this.settings.resultSymbolMatrix[0].slice();
-    }
-
-    // Generate new matrix after triggering red respin
-    new RandomResultGenerator(this);
-    let newMatrix = this.settings.resultSymbolMatrix[0];
-
-    // Replace freeze indexes in the new matrix with original 1, 2, or 5 from the previous matrix
-    this.settings.resultSymbolMatrix[0] = newMatrix.map((item, index) => {
-        if (this.settings.freezeIndex.includes(index)) {
-            return this.settings.initialRedRespinMatrix[index]; // Freeze 1, 2, 5
+            this.playerData.currentWining = finalPayout;
+            makeResultJson(this)
+            console.log('SYMBOLS:', preProcessedResult);
+            console.log('FINALPAY:', finalPayout);
         }
-        return item; // Keep the new symbol if it's not a frozen index
-    });
-
-    console.log('New Matrix after Red Respin:', this.settings.resultSymbolMatrix[0]);
-
-    // Re-process the result with the updated matrix
-    const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
-
-    // Calculate payout with the new matrix
-    const newTotalPayout = this.checkPayout(updatedPreProcessedResult);
-    const newFinalPayout = newTotalPayout ? parseInt(newTotalPayout.toString(), 10) : 0;
-    console.log('Payout after Red Respin:', newFinalPayout);
-
-    // If payout is still <= 5, trigger another red respin
-    if (newFinalPayout <= 5) {
-        console.log('Payout is still <= 5. Triggering another red respin.');
-        this.handleRedRespin();  // Recursive call to continue the red respin
-    } 
-    else {
-        // If payout is greater than 5, stop the respin and return the final payout
-        console.log('Red Respin stopped. Final Payout:', newFinalPayout);
-        this.playerData.currentWining = newFinalPayout;
-        this.settings.initialRedRespinMatrix = null; // Clear the stored matrix
-        return;
     }
-}
-  
+    private shouldTriggerRedRespin(): boolean {
+        return Math.random() < 0.9;
+    }
+
+
+    /**
+     * Handles the respin logic when a '0' or '00' symbol is present in the matrix.
+     * This function processes the current matrix, triggers additional respins if necessary,
+     * and updates the player's winnings based on the final payout.
+     * 
+     * The method performs the following steps:
+     * - Identifies the indices of '0' and '00' symbols and sets them as freeze indices.
+     * - Stores the current result matrix as the last respin matrix.
+     * - Generates a new matrix with frozen symbols.
+     * - Checks the payout and matrix state to determine if another respin is needed.
+     * - Stops respinning if the payout is greater than zero or the matrix remains unchanged.
+     * 
+     */
+
+    private async handleZeroRespin() {
+        try {
+            console.log('Zero Respin triggered due to 0 or 00 in the matrix.');
+
+            const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+
+            this.settings.freezeIndex = preProcessedResult
+                .map((symbol, index) => (symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO) ? index : null)
+                .filter(index => index !== null);
+
+            this.settings.lastReSpin = this.settings.resultSymbolMatrix[0].slice();
+
+            await new RandomResultGenerator(this);
+            let newMatrix = this.settings.resultSymbolMatrix[0];
+            this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.RESPIN, newMatrix);
+            console.log('New Matrix after Zero Respin: ', this.settings.resultSymbolMatrix[0]);
+
+            const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+            const newTotalPayout = checkPayout(updatedPreProcessedResult);
+            const matricesAreSame = checkSameMatrix(this.settings.lastReSpin, this.settings.resultSymbolMatrix[0]);
+
+            if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
+                console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
+                await this.handleZeroRespin();
+            } else if (matricesAreSame || newTotalPayout > 0) {
+                console.log('Zero Respin stopped as matrix is the same or payout is greater than zero.');
+                console.log('Final Payout:', newTotalPayout);
+                this.playerData.currentWining = newTotalPayout;
+                this.settings.hasreSpin = false
+                await this.updatePlayerBalance(newTotalPayout);
+                makeResultJson(this);
+                return
+            }
+
+            this.settings.freezeIndex = [];
+            return;
+        } catch (error) {
+            console.error(`ERROR ${error} WHILE CHECKING FOR ${SPINTYPES.RESPIN}`);
+            return;
+        }
+    }
+
+
+    /**
+     * Handles the respin logic when the payout is greater than 0 and less than or equal to 5.
+     * This function processes the current matrix, triggers additional respins if necessary,
+     * and updates the player's winnings based on the final payout.
+     * 
+     * The method performs the following steps:
+     * - Identifies the indices of symbols that meet specific criteria (e.g., '1', '2', '5') and sets them as freeze indices.
+     * - Stores the current result matrix as the initial red respin matrix if not already set.
+     * - Generates a new matrix with frozen symbols.
+     * - Checks the payout and matrix state to determine if another red respin is needed.
+     * - Stops respinning if the payout exceeds 5 or the matrix changes.
+     * 
+     */
+
+    private async handleRedRespin() {
+        try {
+            console.log('Red Respin triggered due to payout being > 0 and <= 5.');
+
+            const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+
+            this.settings.freezeIndex = preProcessedResult
+                .map((symbol, index) => (symbol.Name === SPECIALSYMBOLS.ONE || symbol.Name === SPECIALSYMBOLS.TWO || symbol.Name === SPECIALSYMBOLS.FIVE) ? index : null)
+                .filter(index => index !== null);
+
+            if (!this.settings.initialRedRespinMatrix) {
+                this.settings.initialRedRespinMatrix = this.settings.resultSymbolMatrix[0].slice();
+            }
+
+            await new RandomResultGenerator(this);
+            let newMatrix = this.settings.resultSymbolMatrix[0];
+            this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.REDRESPIN, newMatrix);
+            console.log('New Matrix after Red Respin:', this.settings.resultSymbolMatrix[0]);
+
+            const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+
+            const newTotalPayout = checkPayout(updatedPreProcessedResult);
+            console.log('Payout after Red Respin:', newTotalPayout);
+
+            if (newTotalPayout <= 5) {
+                console.log('Payout is still <= 5. Triggering another red respin.');
+                await this.handleRedRespin();
+            } else {
+                console.log('Red Respin stopped. Final Payout:', newTotalPayout);
+                this.playerData.currentWining = newTotalPayout;
+                this.settings.initialRedRespinMatrix = null;
+                return;
+            }
+        } catch (error) {
+            console.error(`ERROR ${error} WHILE CHECKING FOR ${SPINTYPES.REDRESPIN}`);
+            return;
+        }
+    }
+
+
 }

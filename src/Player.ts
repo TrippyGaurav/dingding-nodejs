@@ -57,8 +57,8 @@ export default class PlayerSocket {
       gameSocket: null,
       heartbeatInterval: setInterval(() => { }, 0),
       reconnectionAttempts: 0,
-      maxReconnectionAttempts: 5,
-      reconnectionTimeout: 5000,
+      maxReconnectionAttempts: 1,
+      reconnectionTimeout: 1000,
       cleanedUp: false,
     };
 
@@ -169,6 +169,7 @@ export default class PlayerSocket {
   }
 
   public async deductPlayerBalance(currentBet: number) {
+
     this.checkPlayerBalance(currentBet);
     this.playerData.credits -= currentBet;
     // await this.updateDatabase();
