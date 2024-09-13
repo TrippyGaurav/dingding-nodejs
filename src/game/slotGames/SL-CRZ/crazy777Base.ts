@@ -1,8 +1,7 @@
 import { currentGamedata } from "../../../Player";
-import { WinData } from "../BaseSlotGame/WinData";
 import { RandomResultGenerator } from "../RandomResultGenerator";
-import { CRZSETTINGS } from "./types";
-import { initializeGameSettings, generateInitialReel, sendInitData } from "./helper";
+import { CRZSETTINGS, WINNINGTYPE } from "./types";
+import { initializeGameSettings, generateInitialReel, sendInitData, calculatePayout, applyExtraSymbolEffect, checkWinningCondition, makeResultJson } from "./helper";
 
 export class SLCRZ {
   public settings: CRZSETTINGS;
@@ -20,6 +19,7 @@ export class SLCRZ {
     generateInitialReel(this.settings)
     sendInitData(this)
   }
+
   get initSymbols() {
     const Symbols = [];
     this.currentGameData.gameSettings.Symbols.forEach((Element: Symbol) => {
@@ -62,8 +62,6 @@ export class SLCRZ {
     }
   }
   private prepareSpin(data: any) {
-    this.settings.matrix.x;
-    this.settings.matrix.y;
     this.settings.currentLines = data.currentLines;
     this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
     this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
@@ -75,12 +73,12 @@ export class SLCRZ {
       if (!this.settings.isFreeSpin && this.settings.currentBet > playerData.credits) {
         this.sendError("Low Balance");
         return;
-    }
+      }
 
-    if (!this.settings.isFreeSpin) {
-      await this.deductPlayerBalance(this.settings.currentBet);
-      this.playerData.totalbet += this.settings.currentBet;
-    }
+      if (!this.settings.isFreeSpin) {
+        await this.deductPlayerBalance(this.settings.currentBet);
+        this.playerData.totalbet += this.settings.currentBet;
+      }
       new RandomResultGenerator(this);
       this.checkResult();
     } catch (error) {
@@ -89,108 +87,71 @@ export class SLCRZ {
     }
   }
 
-  private checkResult() {
-    const resultmatrix = this.settings.resultSymbolMatrix;
-    const checkMatrix = resultmatrix.map(row => row.slice(0, 3)); 
-    const specialMatrix = resultmatrix.map(row => row[3]); 
-    console.log("Result Matrix",resultmatrix);
-    
-    const middleRow = checkMatrix[1]; 
-    const extrasymbol = specialMatrix[1]; 
-    
-    console.log("Middle row:", middleRow);
-    console.log("Special element:", extrasymbol);
-    if (middleRow.includes(0)) {
+  private async checkResult() {
+    try {
+      const resultmatrix = this.settings.resultSymbolMatrix;
+      const checkMatrix = resultmatrix.map(row => row.slice(0, 3));
+      const specialMatrix = resultmatrix.map(row => row[3]);
+      console.log("Result Matrix:", resultmatrix);
+
+      const middleRow = checkMatrix[1];
+      const extrasymbol = specialMatrix[1];
+
+      console.log("Middle row:", middleRow);
+      console.log("Special element:", extrasymbol);
+
+      if (middleRow.includes(0)) {
+        this.playerData.currentWining = 0
+        makeResultJson(this)
         console.log("No win: '0' present in the middle row.");
-        return; 
-    }
-    // Check if all symbols are the same or if they match the mixed condition
-    const isWinning = this.checkWinningCondition(middleRow);
-
-    let payout = 0;
-
-    if (isWinning.winType === 'regular') {
-        console.log("Regular Win! Calculating payout...");
-        payout = this.calculatePayout(middleRow, isWinning.symbolId, 'regular');
-        console.log("Payout:", payout);
-    } else if (isWinning.winType === 'mixed') {
-        console.log("Mixed Win! Calculating mixed payout...");
-        payout = this.calculatePayout(middleRow, isWinning.symbolId, 'mixed');
-        console.log("Mixed Payout:", payout);
-    } else {
-        console.log("No specific win condition met. Applying default payout.");
-        payout = this.settings.defaultPayout; 
-        console.log("Default Payout:", payout);
-    }
-
-    if (payout > 0 && !this.settings.isFreeSpin) {
-        payout = this.applyExtraSymbolEffect(payout, extrasymbol);
-    }
-    console.log("Total Payout:", payout);
-    console.log("Total Free");
-    if (this.settings.isFreeSpin )
-      { 
-        this.spinResult()
-        this.settings.freeSpinCount --;
-      
       }
-    if(this.settings.freeSpinCount == 0)
-    {
-      this.settings.isFreeSpin =false; 
-    }
-}
 
-private checkWinningCondition(row: any[]): { winType: string, symbolId?: number } {
-  const firstSymbolId = row[0];
+      const isWinning = await checkWinningCondition(this, middleRow);
 
-  const allSame = row.every(symbol => symbol === firstSymbolId);
-  if (allSame) {
-      return { winType: 'regular', symbolId: firstSymbolId };
-  }
+      let payout = 0;
 
-  const firstSymbol = this.settings.Symbols.find(sym => sym.Id === firstSymbolId);
-  const canMatch = firstSymbol.canmatch;
-  const isMixedWin = row.slice(1).every(symbol => canMatch.includes(symbol.toString()));
+      switch (isWinning.winType) {
+        case WINNINGTYPE.REGULAR:
+          console.log("Regular Win! Calculating payout...");
+          payout = await calculatePayout(this, middleRow, isWinning.symbolId, WINNINGTYPE.REGULAR);
+         
+          console.log("Payout:", payout);
+          break;
 
-  if (isMixedWin) {
-      return { winType: 'mixed', symbolId: firstSymbolId };
-  }
+        case WINNINGTYPE.MIXED:
+          console.log("Mixed Win! Calculating mixed payout...");
+          payout = await calculatePayout(this, middleRow, isWinning.symbolId, WINNINGTYPE.MIXED);
+          console.log("Mixed Payout:", payout);
+          break;
 
-  return { winType: 'default' };
-}
-private calculatePayout(symbols: any[], symbolId: number, winType: string): number {
-  const symbol = this.settings.Symbols.find(sym => sym.Id === symbolId);
-  let payout = 0;
-
-  if (winType === 'regular') {
-      payout = symbol.payout; 
-  } else if (winType === 'mixed') {
-      payout = symbol.mixedPayout;
-  }
-
-  return payout;
-}
-private applyExtraSymbolEffect(payout: number, extraSymbolId: number): number {
-  const extraSymbol = this.settings.Symbols.find(sym => sym.Id === extraSymbolId);
-
-  if (extraSymbol && extraSymbol.isSpecialCrz) {
-      if (extraSymbol.SpecialType === "MULTIPLY") {
-          console.log(`Special MULTIPLY: Multiplying payout by ${extraSymbol.payout}`);
-          return payout * extraSymbol.payout;  
-      } else if (extraSymbol.SpecialType === "ADD") {
-          console.log(`Special ADD: Adding extra payout based on bet.`);
-          const additionalPayout = extraSymbol.payout * this.settings.currentBet;
-          return payout + additionalPayout;
+        default:
+          console.log("No specific win condition met. Applying default payout.");
+          payout = this.settings.defaultPayout * this.settings.BetPerLines;
+          this.playerData.currentWining = payout
+          console.log("Default Payout:", payout);
+          break;
       }
-      else if (extraSymbol.SpecialType === "RESPIN") {
-        // const freespinpayout = payout
-        this.settings.isFreeSpin = true
-        const freeSpinCount = Math.floor(Math.random() * 3) + 3;
-        console.log("Free spin started");
-        return payout    
+
+      if (payout > 0 && !this.settings.isFreeSpin) {
+        payout = await applyExtraSymbolEffect(this, payout, extrasymbol);
+        this.playerData.currentWining=payout
+        makeResultJson(this)
+      }
+    
+     
+      console.log("Total Payout for:", this.getPlayerData().username, "" + payout);
+      console.log("Total Free Spins Remaining:", this.settings.freeSpinCount);
+
+      if (this.settings.isFreeSpin) {
+        this.settings.freeSpinCount--;
+        //ON THE FUNCTION FOR TESTING PURPOSE ONLY
+        // this.spinResult()
+        if (this.settings.freeSpinCount === 0) {
+          this.settings.isFreeSpin = false;
+        }
+      }
+    } catch (error) {
+      console.error("Error in checkResult:", error);
     }
   }
-  console.log("No special effect from the extra symbol.");
-  return payout;
-}
 }

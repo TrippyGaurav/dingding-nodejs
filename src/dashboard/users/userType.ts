@@ -1,3 +1,4 @@
+
 import mongoose, { Document, Types, mongo } from "mongoose";
 
 export interface IUser extends Document {

@@ -126,6 +126,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
   deductPlayerBalance(message: number) {
     this.currentGameData.deductPlayerBalance(message);
   }
+  
   getPlayerData() {
     return this.currentGameData.getPlayerData();
   }
@@ -139,7 +140,6 @@ export default class BaseSlotGame implements RequiredSocketMethods {
           this.settings.currentBet =
             this.settings.currentGamedata.bets[response.data.currentBet] *
             this.settings.currentLines;
-
           this.spinResult();
         }
         break;

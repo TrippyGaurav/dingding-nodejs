@@ -22,9 +22,23 @@ export interface CMSettings {
     BetPerLines: number;
     bets: number[];
     reels: any[][];
+    hasreSpin: boolean,
     Symbols: Symbol[];
-    lastReSpin: any[];    // To store the matrix before respin
-    freezeIndex: number[]; // Indexes where 0 and 00 are found
-    newMatrix: any[];     // To store the matrix after replacement of frozen indexes
+    lastReSpin: any[];
+    freezeIndex: number[];
+    newMatrix: any[];
     initialRedRespinMatrix?: any[];
+}
+
+export enum SPINTYPES {
+    RESPIN = 'reSpin',
+    REDRESPIN = 'redReSpin'
+}
+
+export enum SPECIALSYMBOLS {
+    DOUBLEZERO = 'doubleZero',
+    ZERO = '0',
+    ONE = '1',
+    TWO = '2',
+    FIVE = '5'
 }
