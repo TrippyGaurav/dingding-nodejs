@@ -1,6 +1,6 @@
 import { WinData } from "../BaseSlotGame/WinData";
 import { RandomResultGenerator } from "../RandomResultGenerator";
-import { CMSettings, SPINTYPES } from "./types";
+import { CMSettings, SPECIALSYMBOLS, SPINTYPES } from "./types";
 import { initializeGameSettings, generateInitialReel, sendInitData, freezeIndex, checkSameMatrix, checkPayout, makeResultJson } from "./helper";
 import { currentGamedata } from "../../../Player";
 
@@ -14,8 +14,7 @@ export class SLCM {
         currentWining: 0,
         totalbet: 0,
         rtpSpinCount: 0,
-        totalSpin: 0,
-        currentPayout: 0
+        totalSpin: 0
     };
 
     constructor(public currentGameData: currentGamedata) {
@@ -49,6 +48,7 @@ export class SLCM {
     }
 
     getPlayerData() {
+
         return this.currentGameData.getPlayerData();
     }
 
@@ -97,18 +97,21 @@ export class SLCM {
 
     private checkResult() {
         const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
-
         const totalPayout = checkPayout(preProcessedResult);
         const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
 
-        if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === '0' || symbol.Name === 'doubleZero')) {
+        if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
+            this.settings.hasreSpin = true
+            makeResultJson(this)
             this.handleZeroRespin();
         }
         else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin()) {
             console.log('Red Respin triggered.');
             this.handleRedRespin();
         } else {
+
             this.playerData.currentWining = finalPayout;
+            makeResultJson(this)
             console.log('SYMBOLS:', preProcessedResult);
             console.log('FINALPAY:', finalPayout);
         }
@@ -139,7 +142,7 @@ export class SLCM {
             const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
 
             this.settings.freezeIndex = preProcessedResult
-                .map((symbol, index) => (symbol.Name === '0' || symbol.Name === 'doubleZero') ? index : null)
+                .map((symbol, index) => (symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO) ? index : null)
                 .filter(index => index !== null);
 
             this.settings.lastReSpin = this.settings.resultSymbolMatrix[0].slice();
@@ -153,13 +156,15 @@ export class SLCM {
             const newTotalPayout = checkPayout(updatedPreProcessedResult);
             const matricesAreSame = checkSameMatrix(this.settings.lastReSpin, this.settings.resultSymbolMatrix[0]);
 
-            if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === '0' || symbol.Name === 'doubleZero')) {
+            if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
                 console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
                 await this.handleZeroRespin();
             } else if (matricesAreSame || newTotalPayout > 0) {
                 console.log('Zero Respin stopped as matrix is the same or payout is greater than zero.');
                 console.log('Final Payout:', newTotalPayout);
                 this.playerData.currentWining = newTotalPayout;
+                this.settings.hasreSpin = false
+                await this.updatePlayerBalance(newTotalPayout);
                 makeResultJson(this);
                 return
             }
@@ -194,7 +199,7 @@ export class SLCM {
             const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
 
             this.settings.freezeIndex = preProcessedResult
-                .map((symbol, index) => (symbol.Name === '1' || symbol.Name === '2' || symbol.Name === '5') ? index : null)
+                .map((symbol, index) => (symbol.Name === SPECIALSYMBOLS.ONE || symbol.Name === SPECIALSYMBOLS.TWO || symbol.Name === SPECIALSYMBOLS.FIVE) ? index : null)
                 .filter(index => index !== null);
 
             if (!this.settings.initialRedRespinMatrix) {

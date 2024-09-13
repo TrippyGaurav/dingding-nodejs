@@ -2,7 +2,6 @@ import { WinData } from "../BaseSlotGame/WinData";
 import { convertSymbols, PlayerData, UiInitData } from "../../Utils/gameUtils";
 import { SLCM } from "./cashMachineBase";
 import { SPINTYPES } from "./types";
-
 /**
  * Initializes the game settings using the provided game data and game instance.
  * @param gameData - The data used to configure the game settings.
@@ -23,6 +22,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCM) {
         currentLines: 0,
         BetPerLines: 0,
         reels: [],
+        hasreSpin: false,
         lastReSpin: [],
         freezeIndex: [],
         newMatrix: []
@@ -66,6 +66,7 @@ function shuffleArray(array: any[]) {
  * @param gameInstance - The instance of the SLCM class containing the game settings and player data.
  */
 export function sendInitData(gameInstance: SLCM) {
+    UiInitData.paylines = convertSymbols(gameInstance.settings.Symbols);
     const reels = generateInitialReel(gameInstance.settings);
     gameInstance.settings.reels = reels;
     const dataToSend = {
@@ -210,10 +211,12 @@ export function makeResultJson(gameInstance: SLCM) {
     const { settings } = gameInstance
     const sendData = {
         gameData: {
-            resultSymbols: settings.resultSymbolMatrix[0]
+            resultSymbols: settings.resultSymbolMatrix[0],
+            hasReSpin: settings.hasreSpin
         },
         PlayerData: {
-            balace: PlayerData.Balance,
+            Balance: gameInstance.getPlayerData().credits,
+            currentWining: gameInstance.playerData.currentWining
         }
     }
 
