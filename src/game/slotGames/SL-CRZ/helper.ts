@@ -59,7 +59,7 @@ export function sendInitData(gameInstance: SLCRZ) {
     gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
-            Reel: reels,
+            // Reel: reels,
             Bets: gameInstance.settings.currentGamedata.bets,
             autoSpin: [1, 5, 10, 20],
         },
@@ -87,12 +87,12 @@ export function calculatePayout(gameInstance: SLCRZ, symbols: any[], symbolId: n
         switch (winType) {
             case WINNINGTYPE.REGULAR:
                 payout = symbol.payout * gameInstance.settings.BetPerLines;
-                gameInstance.playerData.currentWining=payout
+                gameInstance.playerData.currentWining = payout
                 break;
 
             case WINNINGTYPE.MIXED:
                 payout = symbol.mixedPayout * gameInstance.settings.BetPerLines;
-                gameInstance.playerData.currentWining=payout
+                gameInstance.playerData.currentWining = payout
                 break;
 
             default:
