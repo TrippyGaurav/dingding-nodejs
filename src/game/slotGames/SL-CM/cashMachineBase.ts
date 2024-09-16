@@ -65,6 +65,7 @@ export class SLCM {
         this.settings.currentLines = data.currentLines;
         this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
         this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
+
     }
 
     public async spinResult() {
@@ -102,14 +103,14 @@ export class SLCM {
 
         if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
             this.settings.hasreSpin = true
-            makeResultJson(this)
             this.handleZeroRespin();
+
+
         }
         else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin() && this.settings.matrix.x > 1) {
             console.log('Red Respin triggered.');
             this.handleRedRespin();
         } else {
-
             this.playerData.currentWining = finalPayout;
             makeResultJson(this)
             console.log('SYMBOLS:', preProcessedResult);
@@ -144,22 +145,26 @@ export class SLCM {
                 .filter(index => index !== null);
             this.settings.lastReSpin = this.settings.resultSymbolMatrix[0].slice();
             await new RandomResultGenerator(this);
+
             let newMatrix = this.settings.resultSymbolMatrix[0];
             this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.RESPIN, newMatrix);
+    
             console.log('New Matrix after Zero Respin: ', this.settings.resultSymbolMatrix[0]);
             const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
             const newTotalPayout = checkPayout(updatedPreProcessedResult);
             const matricesAreSame = checkSameMatrix(this.settings.lastReSpin, this.settings.resultSymbolMatrix[0]);
+
             if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
                 console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
                 await this.handleZeroRespin();
             } else if (matricesAreSame || newTotalPayout > 0) {
                 console.log('Zero Respin stopped as matrix is the same or payout is greater than zero.');
                 console.log('Final Payout:', newTotalPayout);
+                this.settings.resultSymbolMatrix.push(this.settings.resultSymbolMatrix[0])
                 this.playerData.currentWining = newTotalPayout;
-                this.settings.hasreSpin = false
-                await this.updatePlayerBalance(newTotalPayout);
                 makeResultJson(this);
+                this.settings.hasreSpin = false
+                this.settings.reSpinReels = []
                 return
             }
 

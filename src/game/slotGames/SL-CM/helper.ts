@@ -119,7 +119,6 @@ export function freezeIndex(gameInstance: SLCM, type: string, matrix: any[]) {
                 }
                 return item;
             });
-            console.log('New Matrix after Respin:', updatedMatrix);
             return updatedMatrix;
         } else if (type === SPINTYPES.REDRESPIN) {
             const updatedMatrix = matrix.map((item, index) => {
@@ -212,9 +211,8 @@ export function makeResultJson(gameInstance: SLCM) {
         const { settings } = gameInstance;
         const sendData = {
             gameData: {
-                resultSymbols: settings.resultSymbolMatrix[0],
+                resultSymbols: settings.resultSymbolMatrix,
                 hasReSpin: settings.hasreSpin,
-                reSpinReels: settings.reSpinReels
             },
             PlayerData: {
                 Balance: gameInstance.getPlayerData().credits,
