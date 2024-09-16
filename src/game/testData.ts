@@ -2,7 +2,7 @@ export const moolahPayOut = [5, 10, 15, 20]
 export const gameData = [
 
     {
-        "id": "SL-CRZ",
+        "id": "SL-WOF",
         "isSpecial" : true,
         "matrix": {
             "x": 4,
@@ -17,16 +17,13 @@ export const gameData = [
             {
                 "Name": "Blank",
                 "Id": 0,
-                "isSpecialCrz" : false,
                 "payout": 0,
-                "SpecialType " : "",
                 "mixedPayout": 0,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 35,
                     "1": 35,
-                    "2": 35,
-                    "3": 0
+                    "2": 35
                 }
             },
             {
@@ -34,14 +31,11 @@ export const gameData = [
                 "Id": 1,
                 "payout": 1000,
                 "mixedPayout": 20,
-                "isSpecialCrz" : false,
-                "SpecialType" : "",
-                "canmatch": ["1","2", "3"],
+                "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 25,
                     "1": 24,
-                    "2": 23,
-                    "3": 0
+                    "2": 23
                 }
             },
             {
@@ -49,14 +43,11 @@ export const gameData = [
                 "Id": 2,
                 "payout": 200,
                 "mixedPayout": 20,
-                "isSpecialCrz" : false,
-                "SpecialType" : "",
-                "canmatch": ["1","2", "3"],
+                "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 15,
                     "1": 15,
-                    "2": 10,
-                    "3": 0
+                    "2": 10
                 }
             },
             {
@@ -64,29 +55,23 @@ export const gameData = [
                 "Id": 3,
                 "payout": 5,
                 "mixedPayout": 20,
-                "isSpecialCrz" : false,
-                "SpecialType" : "",
-                "canmatch": ["1", "2","3"],
+                "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 20,
                     "1": 24,
-                    "2": 25,
-                    "3": 0
+                    "2": 25
                 }
             },
             {
-                "Name": "bar/bar",
+                "Name": "5/bar",
                 "Id": 4,
                 "payout": 40,
                 "mixedPayout": 30,
-                "isSpecialCrz" : false,
-                "SpecialType" : "",
-                "canmatch": ["4","5"],
+                "canmatch": ["4","5","9","10"],
                 "reelInstance": {
                     "0": 15,
                     "1": 15,
-                    "2": 15,
-                    "3": 0
+                    "2": 15
                 }
             },
             {
@@ -94,105 +79,107 @@ export const gameData = [
                 "Id": 5,
                 "payout": 30,
                 "mixedPayout": 0,
-                "isSpecialCrz" : false,
-                "SpecialType" : "",
-                "canmatch": ["4","5"],
+                "canmatch": ["4","5","9","10"],
                 "reelInstance": {
                     "0": 15,
                     "1": 15,
-                    "2": 15,
-                    "3": 2
+                    "2": 15
                 }
             },
             {
-                "Name": "10x",
+                "Name": "777T",
                 "Id": 6,
+                "payout": 1000,
+                "mixedPayout": 20,
+                "canmatch": ["1","2", "3","6","7","8","11"],
+                "reelInstance": {
+                    "0": 25,
+                    "1": 24,
+                    "2": 23
+                }
+            },
+            {
+                "Name": "77T",
+                "Id": 7,
+                "payout": 200,
+                "mixedPayout": 20,
+                "canmatch": ["1","2", "3","6","7","8","11"],
+                "reelInstance": {
+                    "0": 15,
+                    "1": 15,
+                    "2": 10
+                }
+            },
+            {
+                "Name": "7T",
+                "Id": 8,
+                "payout": 5,
+                "mixedPayout": 20,
+                "canmatch": ["1","2", "3","6","7","8","11"],
+                "reelInstance": {
+                    "0": 20,
+                    "1": 24,
+                    "2": 25
+                }
+            },
+            {
+                "Name": "5/barT",
+                "Id": 9,
+                "payout": 40,
+                "mixedPayout": 30,
+                "canmatch": ["4","5","9","10"],
+                "reelInstance": {
+                    "0": 15,
+                    "1": 15,
+                    "2": 15
+                }
+            },
+            {
+                "Name": "barT",
+                "Id": 10,
+                "payout": 30,
+                "mixedPayout": 0,
+                "canmatch": ["4","5","9","10"],
+                "reelInstance": {
+                    "0": 15,
+                    "1": 15,
+                    "2": 15
+                }
+            },
+            {
+                "Name": "WOF777",
+                "Id": 11,
                 "payout": 10,
                 "mixedPayout": 0,
-                "isSpecialCrz" : true,
-                "canmatch": [],
-                "SpecialType" : "MULTIPLY",
+                "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 0,
-                    "3": 8
+                    "2": 0
                 }
             },
             {
-                "Name": "5X",
-                "Id": 7,
+                "Name": "Spin",
+                "Id": 12,
                 "payout": 5,
                 "mixedPayout": 0,
-                "SpecialType" : "MULTIPLY",
-                "isSpecialCrz" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 0,
-                    "3": 12
+                    "2": 0
                 }
             },
             {
-                "Name": "2X",
-                "Id": 8,
+                "Name": "Goldspin",
+                "Id": 13,
                 "payout": 2,
                 "mixedPayout": 0,
-                "SpecialType" : "MULTIPLY",
-                "isSpecialCrz" : true,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 0,
                     "1": 0,
-                    "2": 0,
-                    "3": 15
-                }
-            },
-            {
-                "Name": "DOUBLE+",
-                "Id": 9,
-                "payout": 100,
-                "mixedPayout": 0,
-                "SpecialType" : "ADD",
-                "isSpecialCrz" : true,
-                "canmatch": [],
-                "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 0,
-                    "3": 10
-                }
-                
-            },
-            {
-                "Name": "ADD",
-                "Id": 10,
-                "payout": 10,
-                "mixedPayout": 0,
-                "SpecialType" : "ADD",
-                "isSpecialCrz" : true,
-                "canmatch": [],
-                "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 0,
-                    "3": 15
-                }
-            },
-            {
-                "Name": "RESPIN",
-                "Id": 11,
-                "payout": 0,
-                "mixedPayout": 0,
-                "SpecialType" : "RESPIN",
-                "isSpecialCrz" : true,
-                "canmatch": [],
-                "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 0,
-                    "3": 40
+                    "2": 0
                 }
             }
         ],
