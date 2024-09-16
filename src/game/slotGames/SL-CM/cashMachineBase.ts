@@ -48,7 +48,6 @@ export class SLCM {
     }
 
     getPlayerData() {
-
         return this.currentGameData.getPlayerData();
     }
 
@@ -100,6 +99,7 @@ export class SLCM {
         const totalPayout = checkPayout(preProcessedResult);
         const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
 
+
         if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
             this.settings.hasreSpin = true
             makeResultJson(this)
@@ -138,24 +138,18 @@ export class SLCM {
     private async handleZeroRespin() {
         try {
             console.log('Zero Respin triggered due to 0 or 00 in the matrix.');
-
             const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
-
             this.settings.freezeIndex = preProcessedResult
                 .map((symbol, index) => (symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO) ? index : null)
                 .filter(index => index !== null);
-
             this.settings.lastReSpin = this.settings.resultSymbolMatrix[0].slice();
-
             await new RandomResultGenerator(this);
             let newMatrix = this.settings.resultSymbolMatrix[0];
             this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.RESPIN, newMatrix);
             console.log('New Matrix after Zero Respin: ', this.settings.resultSymbolMatrix[0]);
-
             const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
             const newTotalPayout = checkPayout(updatedPreProcessedResult);
             const matricesAreSame = checkSameMatrix(this.settings.lastReSpin, this.settings.resultSymbolMatrix[0]);
-
             if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
                 console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
                 await this.handleZeroRespin();

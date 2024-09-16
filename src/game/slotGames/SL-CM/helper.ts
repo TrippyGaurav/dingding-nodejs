@@ -23,6 +23,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCM) {
         BetPerLines: 0,
         reels: [],
         hasreSpin: false,
+        reSpinReels: [],
         lastReSpin: [],
         freezeIndex: [],
         newMatrix: []
@@ -71,7 +72,7 @@ export function sendInitData(gameInstance: SLCM) {
     gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
-            Reel: reels,
+            // Reel: reels,
             Bets: gameInstance.settings.currentGamedata.bets,
             autoSpin: [1, 5, 10, 20],
         },
@@ -212,7 +213,8 @@ export function makeResultJson(gameInstance: SLCM) {
         const sendData = {
             gameData: {
                 resultSymbols: settings.resultSymbolMatrix[0],
-                hasReSpin: settings.hasreSpin
+                hasReSpin: settings.hasreSpin,
+                reSpinReels: settings.reSpinReels
             },
             PlayerData: {
                 Balance: gameInstance.getPlayerData().credits,

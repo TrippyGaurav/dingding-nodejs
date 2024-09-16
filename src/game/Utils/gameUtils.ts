@@ -16,7 +16,7 @@ export interface RequiredSocketMethods {
     messageHandler(data: any): void;
     updatePlayerBalance(amount: number): void;
     deductPlayerBalance(amount: number): void;
-  }
+}
 export enum bonusGameType {
     tap = "tap",
     spin = "spin",
@@ -80,6 +80,8 @@ export const UiInitData = {
 
 
 export function convertSymbols(data) {
+
+
     let uiData = {
         symbols: [],
     };
@@ -93,13 +95,16 @@ export function convertSymbols(data) {
 
         let symbolData = {
             ID: element.Id,
-            Name: element.Name ||  {},
-            "multiplier": element.multiplier ||  {},
-            "defaultAmount": element.defaultAmount ||  {},
+            Name: element.Name || {},
+            "multiplier": element.multiplier || {},
+            "defaultAmount": element.defaultAmount || {},
             "symbolsCount": element.symbolsCount || {},
-            "increaseValue": element.increaseValue||   {},
+            "increaseValue": element.increaseValue || {},
             "freeSpin": element.freeSpin,
-            "description": element.description || {}
+            "description": element.description || {},
+            "payout": element.payout || {},
+            "mixedPayout": element.mixedPayout || {},
+            "defaultPayout": element.defaultPayout || {}
         };
         // if (element.multiplier) {
         //   const multiplierObject = {};
@@ -108,6 +113,8 @@ export function convertSymbols(data) {
         //   });
         //   symbolData.multiplier = multiplierObject;
         // }
+
+
         uiData.symbols.push(symbolData);
     });
 
