@@ -12,7 +12,7 @@ export const gameData = [
             [1, 1, 1]
         ],
         "linesCount": [1],
-        "bets": [0.02,0.04,0.1,0.2,0.3,0.5,1,1.5,3,7,10,15,20,32,64],
+        "bets": [0.02, 0.04, 0.1, 0.2, 0.3, 0.5, 1, 1.5, 3, 7, 10, 15, 20, 32, 64],
         "Symbols": [
             {
                 "Name": "Blank",
@@ -184,7 +184,7 @@ export const gameData = [
                 }
             }
         ],
-        "defaultPayout": 10 
+        "defaultPayout": 10
     }
 
 ]
@@ -270,7 +270,7 @@ export const gameData = [
 //             "canCallRespin": true,
 //             "reelInstance": {
 //                 "0": 0,
-//                 "1": 3,
+//                 "1": 30,
 //                 "2": 0
 //             }
 //         },
@@ -283,7 +283,7 @@ export const gameData = [
 //             "reelInstance": {
 //                 "0": 0,
 //                 "1": 0,
-//                 "2": 4
+//                 "2": 40
 //             }
 //         }
 //     ]

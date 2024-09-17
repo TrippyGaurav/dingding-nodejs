@@ -79,6 +79,24 @@ export class SLCRZ {
         await this.deductPlayerBalance(this.settings.currentBet);
         this.playerData.totalbet += this.settings.currentBet;
       }
+
+      if (
+        this.settings.isFreeSpin &&
+        this.settings.freeSpinCount > 0
+      ) {
+        this.settings.freeSpinCount--;
+        this.settings.currentBet = 0;
+        console.log(
+          this.settings.freeSpinCount,
+          "this.settings.freeSpinCount"
+        );
+        this.updatePlayerBalance(this.playerData.currentWining)
+        makeResultJson(this)
+        if (this.settings.freeSpinCount <= 0) {
+          this.settings.isFreeSpin = false;
+
+        }
+      }
       new RandomResultGenerator(this);
       this.checkResult();
     } catch (error) {
@@ -99,11 +117,13 @@ export class SLCRZ {
 
       console.log("Middle row:", middleRow);
       console.log("Special element:", extrasymbol);
-
+      console.log('freeSpins', this.settings.freeSpinCount)
       if (middleRow.includes(0)) {
         this.playerData.currentWining = 0
+
         makeResultJson(this)
         console.log("No win: '0' present in the middle row.");
+        return
       }
 
       const isWinning = await checkWinningCondition(this, middleRow);
@@ -114,7 +134,7 @@ export class SLCRZ {
         case WINNINGTYPE.REGULAR:
           console.log("Regular Win! Calculating payout...");
           payout = await calculatePayout(this, middleRow, isWinning.symbolId, WINNINGTYPE.REGULAR);
-         
+
           console.log("Payout:", payout);
           break;
 
@@ -134,22 +154,16 @@ export class SLCRZ {
 
       if (payout > 0 && !this.settings.isFreeSpin) {
         payout = await applyExtraSymbolEffect(this, payout, extrasymbol);
-        this.playerData.currentWining=payout
+        this.playerData.currentWining = payout
+        this.updatePlayerBalance(this.playerData.currentWining)
         makeResultJson(this)
       }
-    
-     
+
+
       console.log("Total Payout for:", this.getPlayerData().username, "" + payout);
       console.log("Total Free Spins Remaining:", this.settings.freeSpinCount);
 
-      if (this.settings.isFreeSpin) {
-        this.settings.freeSpinCount--;
-        //ON THE FUNCTION FOR TESTING PURPOSE ONLY
-        // this.spinResult()
-        if (this.settings.freeSpinCount === 0) {
-          this.settings.isFreeSpin = false;
-        }
-      }
+
     } catch (error) {
       console.error("Error in checkResult:", error);
     }

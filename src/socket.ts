@@ -61,39 +61,48 @@ const socketController = (io: Server) => {
     });
 
     io.on("connection", async (socket) => {
-        const decoded = (socket as any).decoded;
-        const gameTag = socket.handshake.auth.gameId
+        try {
+            const decoded = (socket as any).decoded;
+            const gameTag = socket.handshake.auth.gameId
 
-        if (!decoded || !decoded.username || !decoded.role) {
-            console.error("Connection rejected: missing required fields in token");
-            socket.disconnect(true);
-            return;
-        }
-
-
-        const userAgent = (socket as any).userAgent;
-        const username = decoded.username;
-
-        const existingUser = users.get(username);
-
-        if (existingUser) {
-            if (existingUser.playerData.userAgent !== userAgent) {
-                socket.emit("AnotherDevice", "You are already playing on another browser.");
+            if (!decoded || !decoded.username || !decoded.role) {
+                console.error("Connection rejected: missing required fields in token");
                 socket.disconnect(true);
-                throw createHttpError(403, "Please wait to disconnect")
+                return;
             }
 
-            await existingUser.updateGameSocket(socket);
-            existingUser.sendAlert(`Game socket created for ${username}`);
 
-            return;
+            const userAgent = (socket as any).userAgent;
+            const username = decoded.username;
+
+            const existingUser = users.get(username);
+
+            if (existingUser) {
+                if (existingUser.playerData.userAgent !== userAgent) {
+                    socket.emit("AnotherDevice", "You are already playing on another browser.");
+                    socket.disconnect(true);
+                    throw createHttpError(403, "Please wait to disconnect")
+                }
+
+                await existingUser.updateGameSocket(socket);
+                existingUser.sendAlert(`Game socket created for ${username}`);
+
+                return;
+            }
+
+            // This is a new user connecting
+            const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket, gameTag);
+            users.set(username, newUser);
+
+            newUser.sendAlert(`Welcome, ${newUser.playerData.username}!`);
+        } catch (error) {
+            console.error("An error occurred during socket connection:", error.message);
+            if (socket.connected) {
+                socket.disconnect(true);
+            }
         }
 
-        // This is a new user connecting
-        const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket, gameTag);
-        users.set(username, newUser);
 
-        newUser.sendAlert(`Welcome, ${newUser.playerData.username}!`);
     });
 
     // Error handling middleware

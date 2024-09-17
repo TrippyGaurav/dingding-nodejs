@@ -1,6 +1,6 @@
 
 import { currentGamedata } from "../../../Player";
-import {  UiInitData, convertSymbols, specialIcons, bonusGameType, shuffleArray, ResultType, RequiredSocketMethods } from "../../Utils/gameUtils";
+import { UiInitData, convertSymbols, specialIcons, bonusGameType, shuffleArray, ResultType, RequiredSocketMethods } from "../../Utils/gameUtils";
 import { combineUniqueSymbols, removeRecurringIndexSymbols, cascadeMoveTowardsNull, transposeMatrix } from "../../Utils/SlotUtils";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { BonusGame } from "./BonusGame";
@@ -126,7 +126,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
   deductPlayerBalance(message: number) {
     this.currentGameData.deductPlayerBalance(message);
   }
-  
+
   getPlayerData() {
     return this.currentGameData.getPlayerData();
   }
