@@ -10,6 +10,7 @@ export interface Symbol {
     isSpecial: boolean;
     isSpecialWof: boolean;
     symbolsCount: number;
+    bonus: boolean;
     reelInstance: { [key: string]: number };   
 }
 
@@ -31,6 +32,8 @@ export interface WOFSETTINGS {
     Symbols: Symbol[];
     isSpecialWof: boolean;
     symbolsCount: number;
+    bonus: boolean;
+    bonusStopIndex:number
 }
 
 export enum WINNINGTYPE {

@@ -2,11 +2,13 @@ import { WinData } from "../BaseSlotGame/WinData";
 import { convertSymbols, UiInitData } from "../../Utils/gameUtils";
 import { SLWOF } from "./wheelOfFortuneBase";
 import { WINNINGTYPE } from "./types";
+import { CloudWatchLogs } from "aws-sdk";
 
 export function initializeGameSettings(gameData: any, gameInstance: SLWOF) {
     return {
         id: gameData.gameSettings.id,
         isSpecial: gameData.gameSettings.isSpecial,
+        bonus: gameData.gameSettings.bonus,
         matrix: gameData.gameSettings.matrix,
         bets: gameData.gameSettings.bets,
         Symbols: gameInstance.initSymbols,
@@ -23,8 +25,73 @@ export function initializeGameSettings(gameData: any, gameInstance: SLWOF) {
         SpecialType: gameData.gameSettings.SpecialType,
         isSpecialWof: gameData.gameSettings.isSpecialWof,
         symbolsCount: gameData.gameSettings.symbolsCount,
+        bonusStopIndex:0
     };
 }
+// export function setRandomStopIndex(gameInstance:SLWOF) {
+//     const symbol = gameInstance.settings.bonus;
+// console.log(symbol,'SYMBOL')
+//     let amount: number = 0;
+//     if (gameInstance.settings.bonus && gameInstance.settings.bonus) {
+//         gameInstance.settings.bonusStopIndex = getRandomPayoutIndex(this.parent.settings.currentGamedata.bonus.payOutProb);
+//         amount = this.parent.settings.BetPerLines * this.result[this.parent.settings.bonus.stopIndex];
+//     }
+//     if (!amount || amount < 0)
+//         amount = 0;
+//     return amount;
+// }
+
+// function generateData(totalPay: number = 0): string[] {
+//     this.result = [];
+//     let res: string[] = [];
+
+//     this.result = this.parent.settings.currentGamedata.bonus.payOut;
+
+//     if (this.parent.settings.bonus.start  )
+//         shuffle(this.result);
+
+//     for (let i = 0; i < this.result.length; i++) {
+//         res.push(this.result[i].toString());
+//     }
+//     return res;
+// }
+
+
+
+// function shuffle(array: number[]) {
+//     for (let i = array.length - 1; i > 0; i--) {
+//         let j = Math.floor(Math.random() * (i + 1));
+//         let k = array[i];
+//         array[i] = array[j];
+//         array[j] = k;
+//     }
+// }
+
+
+
+// function getRandomPayoutIndex(payOutProb): number {
+//     const totalProb = payOutProb.reduce((sum, prob) => sum + prob, 0);
+
+//     const normalizedProb = payOutProb.map(prob => prob / totalProb);
+
+//     const cumulativeProb = [];
+//     normalizedProb.reduce((acc, prob, index) => {
+//         cumulativeProb[index] = acc + prob;
+//         return cumulativeProb[index];
+//     }, 0);
+
+//     console.log("cumulative array", cumulativeProb);
+
+//     const randomNum = Math.random();
+
+//     for (let i = 0; i < cumulativeProb.length; i++) {
+//         if (randomNum <= cumulativeProb[i]) {
+//             return i;
+//         }
+//     }
+
+//     return cumulativeProb.length - 1;
+// }
 
 export function generateInitialReel(gameSettings: any): string[][] {
     const reels = [[], [], [], []];
@@ -48,6 +115,23 @@ function shuffleArray(array: any[]) {
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
+
+export function triggerBonusGame(settings: any): number {
+    const { payOut, payOutProb } = settings.bonus;
+    const randomValue = Math.random() * 100; 
+    let cumulativeProbability = 0;
+
+    for (let i = 0; i < payOut.length; i++) {
+        cumulativeProbability += payOutProb[i];
+        if (randomValue <= cumulativeProbability) {
+            console.log(`Bonus Game: Selected payout is ${payOut[i]} `);
+            return payOut[i];
+        }
+    }
+
+    return payOut[payOut.length - 1];
+}
+
 
 export function sendInitData(gameInstance: SLWOF) {
     UiInitData.paylines = convertSymbols(gameInstance.settings.Symbols);
@@ -102,12 +186,6 @@ export function checkWinningCondition(gameInstance: SLWOF, row: any[]): { winTyp
     }
 }
 
-
-export enum EXTRASYMBOL {
-    MULTIPLY = 'MULTIPLY',
-    ADD = 'ADD',
-    RESPIN = 'RESPIN'
-}
 
 export async function calculatePayout(gameInstance: SLWOF, symbols: any[], symbolId: number, winType: string): Promise<number> {
     try {

@@ -149,7 +149,6 @@ export default class BaseSlotGame implements RequiredSocketMethods {
         this.settings.BetPerLines = this.settings.currentGamedata.bets[response.data.currentBet];
         this.settings.currentBet =
           this.settings.currentGamedata.bets[response.data.currentBet] * this.settings.currentLines;
-
         this.getRTP(response.data.spins);
         break;
 

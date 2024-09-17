@@ -1,7 +1,7 @@
 import { currentGamedata } from "../../../Player";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { WOFSETTINGS, WINNINGTYPE } from "./types";
-import { initializeGameSettings, generateInitialReel, sendInitData,checkWinningCondition, calculatePayout, makeResultJson } from "./helper";
+import { initializeGameSettings, generateInitialReel, sendInitData,checkWinningCondition, calculatePayout, makeResultJson, triggerBonusGame } from "./helper";
 
 export class SLWOF {
   public settings: WOFSETTINGS;
@@ -146,9 +146,10 @@ export class SLWOF {
         console.log(bonusSymbolsInRows)
         if (bonusSymbolsInRows >= 2) {
           console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
-         
-          // triggerBonusGame();
-        }
+          const bonusWin = triggerBonusGame(this.settings);
+          totalPayout += bonusWin;
+          console.log(`Bonus Payout: ${bonusWin}`);
+      }
         this.playerData.currentWining = totalPayout;
         console.log("Total Payout for all rows:", totalPayout);
         makeResultJson(this, winningRows);
