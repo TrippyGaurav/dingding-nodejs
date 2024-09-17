@@ -21,10 +21,8 @@ export function initializeGameSettings(gameData: any, gameInstance: SLWOF) {
         reels: [],
         defaultPayout: gameData.gameSettings.defaultPayout,
         SpecialType: gameData.gameSettings.SpecialType,
-        isSpecialCrz: gameData.gameSettings.isSpecialCrz,
-        freeSpinCount: 0,
-        isFreeSpin: false,
-
+        isSpecialWof: gameData.gameSettings.isSpecialWof,
+        symbolsCount: gameData.gameSettings.symbolsCount,
     };
 }
 
@@ -74,9 +72,44 @@ export function sendInitData(gameInstance: SLWOF) {
     gameInstance.sendMessage("InitData", dataToSend);
 }
 
+export function checkWinningCondition(gameInstance: SLWOF, row: any[]): { winType: string; symbolId?: number } {
+    try {
+        if (row.length === 0) {
+            throw new Error("Row is empty, cannot check winning condition.");
+        }
+
+        const firstSymbolId = row[0];
+        const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id === firstSymbolId);
+        if (!firstSymbol) {
+            throw new Error(`Symbol with Id ${firstSymbolId} not found.`);
+        }
+        const allSame = row.every(symbol => symbol === firstSymbolId);
+        if (allSame) {
+            return { winType: WINNINGTYPE.REGULAR, symbolId: firstSymbolId };
+        }
+        if (firstSymbol.canmatch.length > 0) {
+            const canMatchSet = new Set(firstSymbol.canmatch.map(String));
+            const isMixedWin = row.slice(1).every(symbol => canMatchSet.has(symbol.toString()));
+            if (isMixedWin) {
+                return { winType: WINNINGTYPE.MIXED, symbolId: firstSymbolId };
+            }
+        }
+
+        return { winType: 'default' };
+    } catch (error) {
+        console.error("Error in checkWinningCondition:", error.message);
+        return { winType: 'error' };
+    }
+}
 
 
-export function calculatePayout(gameInstance: SLWOF, symbols: any[], symbolId: number, winType: string): number {
+export enum EXTRASYMBOL {
+    MULTIPLY = 'MULTIPLY',
+    ADD = 'ADD',
+    RESPIN = 'RESPIN'
+}
+
+export async function calculatePayout(gameInstance: SLWOF, symbols: any[], symbolId: number, winType: string): Promise<number> {
     try {
         const symbol = gameInstance.settings.Symbols.find(sym => sym.Id === symbolId);
         if (!symbol) {
@@ -87,12 +120,10 @@ export function calculatePayout(gameInstance: SLWOF, symbols: any[], symbolId: n
         switch (winType) {
             case WINNINGTYPE.REGULAR:
                 payout = symbol.payout * gameInstance.settings.BetPerLines;
-                gameInstance.playerData.currentWining=payout
                 break;
 
             case WINNINGTYPE.MIXED:
                 payout = symbol.mixedPayout * gameInstance.settings.BetPerLines;
-                gameInstance.playerData.currentWining=payout
                 break;
 
             default:
@@ -105,15 +136,7 @@ export function calculatePayout(gameInstance: SLWOF, symbols: any[], symbolId: n
     }
 }
 
-export enum EXTRASYMBOL {
-    MULTIPLY = 'MULTIPLY',
-    ADD = 'ADD',
-    RESPIN = 'RESPIN'
-}
-
-
-
-export function makeResultJson(gameInstance: SLWOF) {
+export function makeResultJson(gameInstance: SLWOF, winningRows: number[]) {
     try {
         const { settings, playerData } = gameInstance;
         const credits = gameInstance.getPlayerData().credits
@@ -121,6 +144,7 @@ export function makeResultJson(gameInstance: SLWOF) {
         const sendData = {
             gameData: {
                 resultSymbols: settings.resultSymbolMatrix,
+                linestoemit: winningRows
             },
             PlayerData: {
                 Balance: Balance,

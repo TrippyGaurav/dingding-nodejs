@@ -8,6 +8,8 @@ export interface Symbol {
     mixedPayout: number;
     defaultPayout: number;
     isSpecial: boolean;
+    isSpecialWof: boolean;
+    symbolsCount: number;
     reelInstance: { [key: string]: number };   
 }
 
@@ -27,6 +29,8 @@ export interface WOFSETTINGS {
     bets: number[];
     reels: any[][];
     Symbols: Symbol[];
+    isSpecialWof: boolean;
+    symbolsCount: number;
 }
 
 export enum WINNINGTYPE {
@@ -35,8 +39,3 @@ export enum WINNINGTYPE {
     DEFAULT = 'default'
 }
 
-export enum EXTRASYMBOL {
-    MULTIPLY = 'MULTIPLY',
-    ADD = 'ADD',
-    RESPIN = 'RESPIN'
-}

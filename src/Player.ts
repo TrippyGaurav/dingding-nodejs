@@ -171,7 +171,6 @@ export default class PlayerSocket {
   public async deductPlayerBalance(currentBet: number) {
     this.checkPlayerBalance(currentBet);
     this.playerData.credits -= currentBet;
-    await this.updateDatabase();
   }
 
   private async attemptReconnection() {

@@ -5,8 +5,8 @@ export const gameData = [
         "id": "SL-WOF",
         "isSpecial" : true,
         "matrix": {
-            "x": 4,
-            "y": 3
+            "x": 3,
+            "y": 5
         },
         "linesApiData": [
             [1, 1, 1]
@@ -19,6 +19,7 @@ export const gameData = [
                 "Id": 0,
                 "payout": 0,
                 "mixedPayout": 0,
+                "isSpecialWof" : false,
                 "canmatch": [],
                 "reelInstance": {
                     "0": 35,
@@ -31,6 +32,7 @@ export const gameData = [
                 "Id": 1,
                 "payout": 1000,
                 "mixedPayout": 20,
+                "isSpecialWof" : false,
                 "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 25,
@@ -43,6 +45,7 @@ export const gameData = [
                 "Id": 2,
                 "payout": 200,
                 "mixedPayout": 20,
+                "isSpecialWof" : false,
                 "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 15,
@@ -55,6 +58,7 @@ export const gameData = [
                 "Id": 3,
                 "payout": 5,
                 "mixedPayout": 20,
+                "isSpecialWof" : false,
                 "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 20,
@@ -63,10 +67,11 @@ export const gameData = [
                 }
             },
             {
-                "Name": "5/bar",
+                "Name": "5_bar",
                 "Id": 4,
                 "payout": 40,
                 "mixedPayout": 30,
+                "isSpecialWof" : false,
                 "canmatch": ["4","5","9","10"],
                 "reelInstance": {
                     "0": 15,
@@ -79,6 +84,7 @@ export const gameData = [
                 "Id": 5,
                 "payout": 30,
                 "mixedPayout": 0,
+                "isSpecialWof" : false,
                 "canmatch": ["4","5","9","10"],
                 "reelInstance": {
                     "0": 15,
@@ -91,6 +97,7 @@ export const gameData = [
                 "Id": 6,
                 "payout": 1000,
                 "mixedPayout": 20,
+                "isSpecialWof" : true,
                 "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 25,
@@ -103,6 +110,7 @@ export const gameData = [
                 "Id": 7,
                 "payout": 200,
                 "mixedPayout": 20,
+                "isSpecialWof" : true,
                 "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 15,
@@ -115,6 +123,7 @@ export const gameData = [
                 "Id": 8,
                 "payout": 5,
                 "mixedPayout": 20,
+                "isSpecialWof" : true,
                 "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 20,
@@ -123,10 +132,11 @@ export const gameData = [
                 }
             },
             {
-                "Name": "5/barT",
+                "Name": "5_barT",
                 "Id": 9,
                 "payout": 40,
                 "mixedPayout": 30,
+                "isSpecialWof" : true,
                 "canmatch": ["4","5","9","10"],
                 "reelInstance": {
                     "0": 15,
@@ -139,6 +149,7 @@ export const gameData = [
                 "Id": 10,
                 "payout": 30,
                 "mixedPayout": 0,
+                "isSpecialWof" : true,
                 "canmatch": ["4","5","9","10"],
                 "reelInstance": {
                     "0": 15,
@@ -151,6 +162,7 @@ export const gameData = [
                 "Id": 11,
                 "payout": 10,
                 "mixedPayout": 0,
+                "isSpecialWof" : true,
                 "canmatch": ["1","2", "3","6","7","8","11"],
                 "reelInstance": {
                     "0": 0,
@@ -159,27 +171,16 @@ export const gameData = [
                 }
             },
             {
-                "Name": "Spin",
+                "Name": "Bonus",
                 "Id": 12,
                 "payout": 5,
                 "mixedPayout": 0,
+                "symbolsCount": 2,
                 "canmatch": [],
                 "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 0
-                }
-            },
-            {
-                "Name": "Goldspin",
-                "Id": 13,
-                "payout": 2,
-                "mixedPayout": 0,
-                "canmatch": [],
-                "reelInstance": {
-                    "0": 0,
-                    "1": 0,
-                    "2": 0
+                    "0":30,
+                    "1":30,
+                    "2":30
                 }
             }
         ],
