@@ -136,6 +136,8 @@ export function applyExtraSymbolEffect(gameInstance: SLCRZ, payout: number, extr
             case EXTRASYMBOL.RESPIN:
                 gameInstance.settings.isFreeSpin = true;
                 const freeSpinCount = Math.floor(Math.random() * 3) + 3;
+                console.log("Free Spin thenbhdbj n count",freeSpinCount);
+                
                 gameInstance.settings.freeSpinCount = freeSpinCount;
                 console.log("Free spin started with count:", freeSpinCount);
                 return payout;
