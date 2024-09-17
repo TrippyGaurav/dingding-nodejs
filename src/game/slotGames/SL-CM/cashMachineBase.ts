@@ -62,9 +62,7 @@ export class SLCM {
 
     private prepareSpin(data: any) {
         this.settings.matrix.x = data.matrixX;
-        this.settings.currentLines = data.currentLines;
-        this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
-        this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
+        this.settings.currentBet = this.settings.currentGamedata.bets[data.currentBet];
 
     }
 
@@ -74,8 +72,9 @@ export class SLCM {
             if (this.settings.currentBet > playerData.credits) {
                 this.sendError("Low Balance");
                 return;
+            } else if (!this.settings.hasreSpin && !this.settings.hasredSpin) {
+                await this.deductPlayerBalance(this.settings.currentBet);
             }
-            await this.deductPlayerBalance(this.settings.currentBet);
             this.playerData.totalbet += this.settings.currentBet;
             new RandomResultGenerator(this);
             this.checkResult();
@@ -95,7 +94,7 @@ export class SLCM {
 
 
 
-    private checkResult() {
+    private async checkResult() {
         const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
         const totalPayout = checkPayout(preProcessedResult);
         const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
@@ -103,18 +102,23 @@ export class SLCM {
 
         if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
             this.settings.hasreSpin = true
+            this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0])
             this.handleZeroRespin();
 
 
         }
         else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin() && this.settings.matrix.x > 1) {
             console.log('Red Respin triggered.');
+            this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
+            this.settings.hasredSpin = true
             this.handleRedRespin();
         } else {
             this.playerData.currentWining = finalPayout;
+            await this.updatePlayerBalance(this.playerData.currentWining)
             makeResultJson(this)
             console.log('SYMBOLS:', preProcessedResult);
             console.log('FINALPAY:', finalPayout);
+
         }
     }
     private shouldTriggerRedRespin(): boolean {
@@ -148,7 +152,7 @@ export class SLCM {
 
             let newMatrix = this.settings.resultSymbolMatrix[0];
             this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.RESPIN, newMatrix);
-    
+
             console.log('New Matrix after Zero Respin: ', this.settings.resultSymbolMatrix[0]);
             const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
             const newTotalPayout = checkPayout(updatedPreProcessedResult);
@@ -156,15 +160,22 @@ export class SLCM {
 
             if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
                 console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
+                this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0])
+
                 await this.handleZeroRespin();
             } else if (matricesAreSame || newTotalPayout > 0) {
                 console.log('Zero Respin stopped as matrix is the same or payout is greater than zero.');
                 console.log('Final Payout:', newTotalPayout);
-                this.settings.resultSymbolMatrix.push(this.settings.resultSymbolMatrix[0])
+                this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
+                console.log(this.settings.specialSpins, 'this.settings.reSpinReels')
+                this.settings.resultSymbolMatrix = this.settings.specialSpins
                 this.playerData.currentWining = newTotalPayout;
+                await this.updatePlayerBalance(this.playerData.currentWining)
                 makeResultJson(this);
                 this.settings.hasreSpin = false
-                this.settings.reSpinReels = []
+                this.settings.specialSpins = [];
+
+
                 return
             }
 
@@ -220,8 +231,15 @@ export class SLCM {
                 await this.handleRedRespin();
             } else {
                 console.log('Red Respin stopped. Final Payout:', newTotalPayout);
+                this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
+                console.log(this.settings.specialSpins, 'this.settings.reSpinReels')
+                this.settings.resultSymbolMatrix = this.settings.specialSpins
                 this.playerData.currentWining = newTotalPayout;
                 this.settings.initialRedRespinMatrix = null;
+                await this.updatePlayerBalance(this.playerData.currentWining)
+                makeResultJson(this);
+                this.settings.hasredSpin = false
+                this.settings.specialSpins = [];
                 return;
             }
         } catch (error) {

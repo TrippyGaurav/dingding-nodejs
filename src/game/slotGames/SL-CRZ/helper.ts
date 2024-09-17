@@ -61,7 +61,6 @@ export function sendInitData(gameInstance: SLCRZ) {
         GameData: {
             // Reel: reels,
             Bets: gameInstance.settings.currentGamedata.bets,
-            autoSpin: [1, 5, 10, 20],
         },
         UIData: UiInitData,
         PlayerData: {

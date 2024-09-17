@@ -23,7 +23,8 @@ export interface CMSettings {
     bets: number[];
     reels: any[][];
     hasreSpin: boolean,
-    reSpinReels: any[],
+    hasredSpin: boolean,
+    specialSpins: any[],
     Symbols: Symbol[];
     lastReSpin: any[];
     freezeIndex: number[];

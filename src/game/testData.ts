@@ -6,7 +6,7 @@ export const moolahPayOut = [5, 10, 15, 20]
 //         "isSpecial": true,
 //         "matrix": {
 //             "x": 4,
-//             "y": 3
+//             "y": 3 
 //         },
 //         "linesApiData": [
 //             [1, 1, 1]
@@ -282,7 +282,7 @@ export const gameData = [{
             "canCallRespin": true,
             "reelInstance": {
                 "0": 0,
-                "1": 3,
+                "1": 30,
                 "2": 0
             }
         },
