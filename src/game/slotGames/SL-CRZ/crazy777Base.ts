@@ -90,6 +90,7 @@ export class SLCRZ {
           this.settings.freeSpinCount,
           "this.settings.freeSpinCount"
         );
+        this.updatePlayerBalance(this.playerData.currentWining)
         makeResultJson(this)
         if (this.settings.freeSpinCount <= 0) {
           this.settings.isFreeSpin = false;
@@ -119,7 +120,7 @@ export class SLCRZ {
       console.log('freeSpins', this.settings.freeSpinCount)
       if (middleRow.includes(0)) {
         this.playerData.currentWining = 0
-        this.updatePlayerBalance(this.playerData.currentWining)
+
         makeResultJson(this)
         console.log("No win: '0' present in the middle row.");
         return
@@ -154,7 +155,7 @@ export class SLCRZ {
       if (payout > 0 && !this.settings.isFreeSpin) {
         payout = await applyExtraSymbolEffect(this, payout, extrasymbol);
         this.playerData.currentWining = payout
-        // this.updatePlayerBalance(this.playerData.currentWining)
+        this.updatePlayerBalance(this.playerData.currentWining)
         makeResultJson(this)
       }
 
