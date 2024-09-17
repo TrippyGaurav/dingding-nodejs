@@ -216,7 +216,7 @@ export function makeResultJson(gameInstance: SLCM) {
             gameData: {
                 resultSymbols: settings.resultSymbolMatrix,
                 hasReSpin: settings.hasreSpin,
-                harRedSpin: settings.hasredSpin
+                hasRedSpin: settings.hasredSpin
             },
             PlayerData: {
                 Balance: Balance,
