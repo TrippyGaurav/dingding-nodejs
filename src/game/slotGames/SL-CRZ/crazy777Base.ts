@@ -79,7 +79,10 @@ export class SLCRZ {
         await this.deductPlayerBalance(this.settings.currentBet);
         this.playerData.totalbet += this.settings.currentBet;
       }
+      if (this.settings.freeSpinCount === 0) {
+        this.settings.isFreeSpin = false;
 
+      }
       if (
         this.settings.isFreeSpin &&
         this.settings.freeSpinCount > 0
@@ -91,11 +94,7 @@ export class SLCRZ {
           "this.settings.freeSpinCount"
         );
         this.updatePlayerBalance(this.playerData.currentWining)
-        makeResultJson(this)
-        if (this.settings.freeSpinCount <= 0) {
-          this.settings.isFreeSpin = false;
-
-        }
+        // makeResultJson(this)
       }
       new RandomResultGenerator(this);
       this.checkResult();
@@ -120,7 +119,6 @@ export class SLCRZ {
       console.log('freeSpins', this.settings.freeSpinCount)
       if (middleRow.includes(0)) {
         this.playerData.currentWining = 0
-
         makeResultJson(this)
         console.log("No win: '0' present in the middle row.");
         return
@@ -159,6 +157,7 @@ export class SLCRZ {
         makeResultJson(this)
       }
 
+      makeResultJson(this)
 
       console.log("Total Payout for:", this.getPlayerData().username, "" + payout);
       console.log("Total Free Spins Remaining:", this.settings.freeSpinCount);

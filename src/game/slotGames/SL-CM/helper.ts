@@ -87,8 +87,22 @@ export function sendInitData(gameInstance: SLCM) {
     };
     gameInstance.sendMessage("InitData", dataToSend);
 }
-
-
+/**
+ * Maps the input matrix to corresponding symbol objects based on their IDs.
+ * 
+ * @param {SLCM} gameInstance - The current game instance, which contains game settings.
+ * @param {any[]} matrix - An array of elements representing symbol IDs.
+ * 
+ * @returns {any[]} An array of symbol objects where each symbol in the matrix is 
+ * replaced by its corresponding symbol from the game settings.
+ */
+export function resultRow(gameInstance: SLCM, matrix: any[]): any[] {
+    const { settings } = gameInstance
+    return matrix.map(element => {
+        const symbol = settings.Symbols.find(sym => sym.Id === element);
+        return symbol;
+    });
+}
 /**
  * Updates the result matrix based on the type of spin and the frozen indices in the game settings.
  * This function modifies the matrix to retain frozen indices from previous spins or specific re-spin settings.

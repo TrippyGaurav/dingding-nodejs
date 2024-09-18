@@ -1,7 +1,7 @@
 import { currentGamedata } from "../../../Player";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { WOFSETTINGS, WINNINGTYPE } from "./types";
-import { initializeGameSettings, generateInitialReel, sendInitData,checkWinningCondition, calculatePayout, makeResultJson, triggerBonusGame } from "./helper";
+import { initializeGameSettings, generateInitialReel, sendInitData, checkWinningCondition, calculatePayout, makeResultJson, triggerBonusGame } from "./helper";
 
 export class SLWOF {
   public settings: WOFSETTINGS;
@@ -87,77 +87,98 @@ export class SLWOF {
 
   private async checkResult() {
     try {
-        const resultmatrix = this.settings.resultSymbolMatrix;
-        console.log("Result Matrix:", resultmatrix);
+      const resultMatrix = this.settings.resultSymbolMatrix;
+      console.log("Result Matrix:", resultMatrix);
 
-        const rows = resultmatrix.slice(1, 4); 
-        const winningRows: number[] = [];
-        let totalPayout = 0;
+      const rows = resultMatrix.slice(1, 4);
+      const winningRows: number[] = [];
+      let totalPayout = 0;
 
-        for (let index = 0; index < rows.length; index++) {
-            const row = rows[index];
-            console.log(`Checking Row ${index + 2}:`, row);
+      for (let index = 0; index < rows.length; index++) {
+        const row = rows[index];
+        console.log(`Checking Row ${index + 2}:`, row);
 
-            if (row.includes(0)) {
-                console.log(`No win: '0' present in row ${index + 2}.`);
-                continue; 
-            }
-            const isWinning = await checkWinningCondition(this, row);
-            let payout = 0;
-
-            switch (isWinning.winType) {
-                case WINNINGTYPE.REGULAR:
-                    console.log("Regular Win! Calculating payout...");
-                    payout = await calculatePayout(this, row, isWinning.symbolId, WINNINGTYPE.REGULAR);
-                    console.log(`Row ${index + 2} Regular Payout:`, payout);
-                    break;
-
-                case WINNINGTYPE.MIXED:
-                    console.log("Mixed Win! Calculating mixed payout...");
-                    payout = await calculatePayout(this, row, isWinning.symbolId, WINNINGTYPE.MIXED);
-                    console.log(`Row ${index + 2} Mixed Payout:`, payout);
-                    break;
-
-                default:
-                    console.log("No specific win condition met. Applying default payout.");
-                    payout = this.settings.defaultPayout * this.settings.BetPerLines;
-                    console.log(`Row ${index + 2} Default Payout:`, payout);
-                    break;
-            }
-            const specialSymbolCount = row.filter(symbolId => {
-                const symbol = this.settings.Symbols.find(sym => sym.Id === symbolId);
-                return symbol && symbol.isSpecialWof;
-            }).length;
-
-            if (specialSymbolCount === 1) {
-                payout *= 3;
-            } else if (specialSymbolCount === 2) {
-                payout *= 9;
-            } else if (specialSymbolCount === 3) {
-                payout *= 27;
-            }
-            if (payout > 0) {
-              winningRows.push(index + 1);
-            }
-            console.log(`Row ${index + 2} Adjusted Payout with isSpecialWof count (${specialSymbolCount}):`, payout);
-            totalPayout += payout;
+        if (row.includes(0)) {
+          console.log(`No win: '0' present in row ${index + 2}.`);
+          continue;
         }
-        const bonusSymbolsInRows = rows.flat().filter(symbolId => symbolId === 12).length;
-        console.log(bonusSymbolsInRows)
-        if (bonusSymbolsInRows >= 2) {
-          console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
-          const bonusWin = triggerBonusGame(this.settings);
-          totalPayout += bonusWin;
-          console.log(`Bonus Payout: ${bonusWin}`);
+
+        const isWinning = await checkWinningCondition(this, row);
+        let payout = await this.calculateRowPayout(row, isWinning);
+
+        payout = this.applySpecialSymbolMultipliers(row, payout);
+        if (payout > 0) winningRows.push(index + 1);
+
+        console.log(`Row ${index + 2} Adjusted Payout:`, payout);
+        totalPayout += payout;
       }
-        this.playerData.currentWining = totalPayout;
-        console.log("Total Payout for all rows:", totalPayout);
-        makeResultJson(this, winningRows);
+
+      totalPayout += this.checkForBonusGame(rows);
+      this.playerData.currentWining = totalPayout;
+
+      console.log("Total Payout for all rows:", totalPayout);
+      makeResultJson(this, winningRows);
 
     } catch (error) {
-        console.error("Error in checkResult:", error);
+      console.error("Error in checkResult:", error);
     }
-}
+  }
 
-  
+  private async calculateRowPayout(row: number[], isWinning: any): Promise<number> {
+    let payout = 0;
+    switch (isWinning.winType) {
+      case WINNINGTYPE.REGULAR:
+        console.log("Regular Win! Calculating payout...");
+        payout = await calculatePayout(this, row, isWinning.symbolId, WINNINGTYPE.REGULAR);
+        break;
+
+      case WINNINGTYPE.MIXED:
+        console.log("Mixed Win! Calculating mixed payout...");
+        payout = await calculatePayout(this, row, isWinning.symbolId, WINNINGTYPE.MIXED);
+        break;
+
+      default:
+        console.log("No specific win condition met. Applying default payout.");
+        payout = this.settings.defaultPayout * this.settings.BetPerLines;
+        break;
+    }
+    console.log(`Payout for row: ${payout}`);
+    return payout;
+  }
+
+  private applySpecialSymbolMultipliers(row: number[], payout: number): number {
+    const specialSymbolCount = row.filter(symbolId => {
+      const symbol = this.settings.Symbols.find(sym => sym.Id === symbolId);
+      return symbol && symbol.isSpecialWof;
+    }).length;
+
+    switch (specialSymbolCount) {
+      case 1:
+        payout *= 3;
+        break;
+      case 2:
+        payout *= 9;
+        break;
+      case 3:
+        payout *= 27;
+        break;
+      default:
+        break;
+    }
+
+    console.log(`Adjusted payout with special symbols (${specialSymbolCount}):`, payout);
+    return payout;
+  }
+
+  private checkForBonusGame(rows: number[][]): number {
+    const bonusSymbolsInRows = rows.flat().filter(symbolId => symbolId === 12).length;
+    if (bonusSymbolsInRows >= 2) {
+      console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
+      const bonusWin = triggerBonusGame(this.settings);
+      console.log(`Bonus Payout: ${bonusWin}`);
+      return bonusWin;
+    }
+    return 0;
+  }
+
 }
