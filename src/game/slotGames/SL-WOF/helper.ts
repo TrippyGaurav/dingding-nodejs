@@ -25,6 +25,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLWOF) {
         SpecialType: gameData.gameSettings.SpecialType,
         isSpecialWof: gameData.gameSettings.isSpecialWof,
         symbolsCount: gameData.gameSettings.symbolsCount,
+        isBonus: false,
         bonusStopIndex: 0
     };
 }
@@ -52,17 +53,21 @@ function shuffleArray(array: any[]) {
     }
 }
 
-export function triggerBonusGame(settings: any): number {
+export function triggerBonusGame(gameInstance: SLWOF, settings: any): number {
     const { payOut, payOutProb } = settings.bonus;
+
     const randomValue = Math.random() * 100;
     let cumulativeProbability = 0;
     for (let i = 0; i < payOut.length; i++) {
         cumulativeProbability += payOutProb[i];
         if (randomValue <= cumulativeProbability) {
-            console.log(`Bonus Game: Selected payout is ${payOut[i]} `);
+            console.log(`Bonus Game: Selected payout is ${payOut[i]} and index is ${i} `);
+            gameInstance.settings.bonusStopIndex = i
             return payOut[i];
         }
     }
+    const SelectedBonusIndex = payOut.length - 1;
+    gameInstance.settings.bonusStopIndex = SelectedBonusIndex
     return payOut[payOut.length - 1];
 }
 
@@ -159,6 +164,8 @@ export function makeResultJson(gameInstance: SLWOF, winningRows: number[]) {
                 Balance: Balance,
                 currentWining: playerData.currentWining,
                 totalbet: playerData.totalbet,
+                Bonus: settings.isBonus,
+                BonusIndex: settings.bonusStopIndex,
                 haveWon: playerData.haveWon,
             }
         };

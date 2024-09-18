@@ -115,10 +115,12 @@ export class SLWOF {
 
       totalPayout += this.checkForBonusGame(rows);
       this.playerData.currentWining = totalPayout;
-
-      console.log("Total Payout for all rows:", totalPayout);
+      this.playerData.haveWon += this.playerData.currentWining
+      console.log("Total Payout for all rows:", this.playerData.currentWining);
+      this.updatePlayerBalance(this.playerData.currentWining)
       makeResultJson(this, winningRows);
-
+      this.settings.bonus = false
+      this.settings.bonusStopIndex = 0
     } catch (error) {
       console.error("Error in checkResult:", error);
     }
@@ -174,7 +176,8 @@ export class SLWOF {
     const bonusSymbolsInRows = rows.flat().filter(symbolId => symbolId === 12).length;
     if (bonusSymbolsInRows >= 2) {
       console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
-      const bonusWin = triggerBonusGame(this.settings);
+      this.settings.isBonus = true
+      const bonusWin = triggerBonusGame(this, this.settings);
       console.log(`Bonus Payout: ${bonusWin}`);
       return bonusWin;
     }
