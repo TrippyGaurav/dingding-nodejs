@@ -26,10 +26,13 @@ export interface CMSettings {
     hasredSpin: boolean,
     specialSpins: any[],
     Symbols: Symbol[];
+    results: string[][];
+    probabilities: number[];
     lastReSpin: any[];
     freezeIndex: number[];
     newMatrix: any[];
     initialRedRespinMatrix?: any[];
+    redspinprobability : number,
 }
 
 export enum SPINTYPES {

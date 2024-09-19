@@ -27,7 +27,10 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCM) {
         specialSpins: [],
         lastReSpin: [],
         freezeIndex: [],
-        newMatrix: []
+        newMatrix: [],
+        results: gameData.gameSettings.results,
+        probabilities: gameData.gameSettings.probabilities,
+        redspinprobability : gameData.gameSettings.redspinprobability,
     };
 }
 

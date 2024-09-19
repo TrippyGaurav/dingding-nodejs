@@ -3,6 +3,8 @@ import { RandomResultGenerator } from "../RandomResultGenerator";
 import { CMSettings, SPECIALSYMBOLS, SPINTYPES } from "./types";
 import { initializeGameSettings, generateInitialReel, sendInitData, freezeIndex, checkSameMatrix, checkPayout, makeResultJson } from "./helper";
 import { currentGamedata } from "../../../Player";
+import { log } from "console";
+import { CloudWatchLogs } from "aws-sdk";
 
 /**
  * Represents the Slot Machine Game Class for handling slot machine operations.
@@ -76,7 +78,7 @@ export class SLCM {
                 await this.deductPlayerBalance(this.settings.currentBet);
             }
             this.playerData.totalbet += this.settings.currentBet;
-            new RandomResultGenerator(this);
+            this.settings.resultSymbolMatrix[0] = this.selectResultBasedOnProbability();
             this.checkResult();
         } catch (error) {
             this.sendError("Spin error");
@@ -86,28 +88,43 @@ export class SLCM {
 
     private resultRow(matrix: any[]): any[] {
         return matrix.map(element => {
-            const symbol = this.settings.Symbols.find(sym => sym.Id === element);
+            const symbolId = parseInt(element, 10);  
+            const symbol = this.settings.Symbols.find(sym => sym.Id === symbolId);
             return symbol;
         });
     }
 
-
+    private selectResultBasedOnProbability(): any[] {
+        const totalProbability = this.settings.probabilities.reduce((acc, curr) => acc + curr, 0);  
+        const randomValue = Math.random() * totalProbability;  
+        let cumulativeProbability = 0;
+    
+        for (let i = 0; i < this.settings.probabilities.length; i++) {
+            cumulativeProbability += this.settings.probabilities[i];
+            if (randomValue < cumulativeProbability) {
+                return this.settings.results[i];  
+            }
+        }
+    
+        return this.settings.results[this.settings.results.length - 1];  
+    }
 
 
     private async checkResult() {
         const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
         const totalPayout = checkPayout(preProcessedResult);
         const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
-
-
+        console.log("matrix",this.settings.resultSymbolMatrix[0]);
+        console.log("Payout:",totalPayout);
+        const zeroCount = this.settings.resultSymbolMatrix[0].filter(symbol => symbol === '0').length;
+        console.log(`Number of 0s in the matrix:`, zeroCount);
         if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
             this.settings.hasreSpin = true
             this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0])
             this.handleZeroRespin();
-
-
+        
         }
-        else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin() && this.settings.matrix.x > 1) {
+        else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin() && this.settings.matrix.x > 1 && zeroCount === 2) {
             console.log('Red Respin triggered.');
             this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
             this.settings.hasredSpin = true
@@ -122,7 +139,7 @@ export class SLCM {
         }
     }
     private shouldTriggerRedRespin(): boolean {
-        return Math.random() < 0.9;
+        return (Math.random() * 100) < this.settings.redspinprobability;
     }
 
 
@@ -148,10 +165,8 @@ export class SLCM {
                 .map((symbol, index) => (symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO) ? index : null)
                 .filter(index => index !== null);
             this.settings.lastReSpin = this.settings.resultSymbolMatrix[0].slice();
-            await new RandomResultGenerator(this);
-
-            let newMatrix = this.settings.resultSymbolMatrix[0];
-            this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.RESPIN, newMatrix);
+            this.settings.resultSymbolMatrix[0] = this.selectResultBasedOnProbability();
+            this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.RESPIN, this.settings.resultSymbolMatrix[0]);
 
             console.log('New Matrix after Zero Respin: ', this.settings.resultSymbolMatrix[0]);
             const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
@@ -174,6 +189,8 @@ export class SLCM {
                 makeResultJson(this);
                 this.settings.hasreSpin = false
                 this.settings.specialSpins = [];
+                this.settings.lastReSpin = [];
+                this.settings.resultSymbolMatrix=[]
 
 
                 return
@@ -211,14 +228,15 @@ export class SLCM {
             this.settings.freezeIndex = preProcessedResult
                 .map((symbol, index) => (symbol.Name === SPECIALSYMBOLS.ONE || symbol.Name === SPECIALSYMBOLS.TWO || symbol.Name === SPECIALSYMBOLS.FIVE) ? index : null)
                 .filter(index => index !== null);
-
             if (!this.settings.initialRedRespinMatrix) {
                 this.settings.initialRedRespinMatrix = this.settings.resultSymbolMatrix[0].slice();
             }
 
-            await new RandomResultGenerator(this);
-            let newMatrix = this.settings.resultSymbolMatrix[0];
-            this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.REDRESPIN, newMatrix);
+            const selectedResult = this.selectResultBasedOnProbability();
+            this.settings.resultSymbolMatrix[0] = selectedResult;
+            console.log("Red spin Matrix:",this.settings.resultSymbolMatrix[0]);
+            
+            this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.REDRESPIN, this.settings.resultSymbolMatrix[0]);
             console.log('New Matrix after Red Respin:', this.settings.resultSymbolMatrix[0]);
 
             const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
@@ -240,6 +258,8 @@ export class SLCM {
                 makeResultJson(this);
                 this.settings.hasredSpin = false
                 this.settings.specialSpins = [];
+                this.settings.lastReSpin = [];
+                this.settings.resultSymbolMatrix=[]
                 return;
             }
         } catch (error) {
