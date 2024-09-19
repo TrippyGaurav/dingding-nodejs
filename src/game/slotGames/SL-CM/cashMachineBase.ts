@@ -54,7 +54,7 @@ export class SLCM {
         switch (response.id) {
             case "SPIN":
                 this.prepareSpin(response.data);
-                this.getRTP(response.data.spins);
+                this.getRTP(response.data.spins || 1);
                 break;
         }
     }
@@ -103,7 +103,7 @@ export class SLCM {
             if (spend > 0) {
                 rtp = won / spend;
             }
-            console.log('RTP calculated:', rtp * 100);
+            // console.log('RTP calculated:', rtp * 100);
 
             return;
         } catch (error) {
