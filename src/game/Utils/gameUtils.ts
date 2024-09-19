@@ -96,15 +96,15 @@ export function convertSymbols(data) {
         let symbolData = {
             ID: element.Id,
             Name: element.Name || {},
-            "multiplier": element.multiplier || {},
-            "defaultAmount": element.defaultAmount || {},
-            "symbolsCount": element.symbolsCount || {},
-            "increaseValue": element.increaseValue || {},
+            "multiplier": element.multiplier ,
+            "defaultAmount": element.defaultAmount ,
+            "symbolsCount": element.symbolsCount ,
+            "increaseValue": element.increaseValue ,
             "freeSpin": element.freeSpin,
-            "description": element.description || {},
-            "payout": element.payout || {},
-            "mixedPayout": element.mixedPayout || {},
-            "defaultPayout": element.defaultPayout || {}
+            "description": element.description,
+            "payout": element.payout,
+            "mixedPayout": element.mixedPayout,
+            "defaultPayout": element.defaultPayout
         };
         // if (element.multiplier) {
         //   const multiplierObject = {};
