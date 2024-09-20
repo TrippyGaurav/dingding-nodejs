@@ -27,29 +27,11 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCM) {
         specialSpins: [],
         lastReSpin: [],
         freezeIndex: [],
-        newMatrix: []
+        newMatrix: [],
+        results: gameData.gameSettings.results,
+        probabilities: gameData.gameSettings.probabilities,
+        redspinprobability: gameData.gameSettings.redspinprobability,
     };
-}
-
-/**
- * Generates the initial reel setup based on the game settings.
- * @param gameSettings - The settings used to generate the reel setup.
- * @returns A 2D array representing the reels, where each sub-array corresponds to a reel.
- */
-export function generateInitialReel(gameSettings: any): string[][] {
-    const reels = [[], [], []];
-    gameSettings.Symbols.forEach(symbol => {
-        for (let i = 0; i < 3; i++) {
-            const count = symbol.reelInstance[i] || 0;
-            for (let j = 0; j < count; j++) {
-                reels[i].push(symbol.Id);
-            }
-        }
-    });
-    reels.forEach(reel => {
-        shuffleArray(reel);
-    });
-    return reels;
 }
 
 /**
@@ -69,11 +51,8 @@ function shuffleArray(array: any[]) {
  */
 export function sendInitData(gameInstance: SLCM) {
     UiInitData.paylines = convertSymbols(gameInstance.settings.Symbols);
-    const reels = generateInitialReel(gameInstance.settings);
-    gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
-            // Reel: reels,
             Bets: gameInstance.settings.currentGamedata.bets,
 
         },
@@ -87,22 +66,8 @@ export function sendInitData(gameInstance: SLCM) {
     };
     gameInstance.sendMessage("InitData", dataToSend);
 }
-/**
- * Maps the input matrix to corresponding symbol objects based on their IDs.
- * 
- * @param {SLCM} gameInstance - The current game instance, which contains game settings.
- * @param {any[]} matrix - An array of elements representing symbol IDs.
- * 
- * @returns {any[]} An array of symbol objects where each symbol in the matrix is 
- * replaced by its corresponding symbol from the game settings.
- */
-export function resultRow(gameInstance: SLCM, matrix: any[]): any[] {
-    const { settings } = gameInstance
-    return matrix.map(element => {
-        const symbol = settings.Symbols.find(sym => sym.Id === element);
-        return symbol;
-    });
-}
+
+
 /**
  * Updates the result matrix based on the type of spin and the frozen indices in the game settings.
  * This function modifies the matrix to retain frozen indices from previous spins or specific re-spin settings.
