@@ -1,7 +1,7 @@
 import { WinData } from "../BaseSlotGame/WinData";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { CMSettings, SPECIALSYMBOLS, SPINTYPES } from "./types";
-import { initializeGameSettings, generateInitialReel, sendInitData, freezeIndex, checkSameMatrix, checkPayout, makeResultJson } from "./helper";
+import { initializeGameSettings,sendInitData, freezeIndex, checkSameMatrix, checkPayout, makeResultJson } from "./helper";
 import { currentGamedata } from "../../../Player";
 import { log } from "console";
 import { CloudWatchLogs } from "aws-sdk";
@@ -21,7 +21,6 @@ export class SLCM {
 
     constructor(public currentGameData: currentGamedata) {
         this.settings = initializeGameSettings(currentGameData, this);
-        this.settings.reels = generateInitialReel(this.settings);
         sendInitData(this);
     }
 
@@ -57,7 +56,7 @@ export class SLCM {
         switch (response.id) {
             case "SPIN":
                 this.prepareSpin(response.data);
-                this.spinResult();
+                this.getRTP(response.data.spins || 1);
                 break;
         }
     }
@@ -68,7 +67,7 @@ export class SLCM {
 
     }
 
-    public async spinResult() {
+    public async spinResult(): Promise<void>  {
         try {
             const playerData = this.getPlayerData();
             if (this.settings.currentBet > playerData.credits) {
@@ -85,7 +84,30 @@ export class SLCM {
             console.error("Failed to generate spin results:", error);
         }
     }
+    private async getRTP(spins: number): Promise<void> {
+        try {
+            let spend: number = 0;
+            let won: number = 0;
+            this.playerData.rtpSpinCount = spins;
 
+            for (let i = 0; i < this.playerData.rtpSpinCount; i++) {
+                await this.spinResult();
+                spend = this.playerData.totalbet;
+                won = this.playerData.haveWon;
+                console.log(`Spin ${i + 1} completed. ${this.playerData.totalbet} , ${won}`);
+            }
+            let rtp = 0;
+            if (spend > 0) {
+                rtp = won / spend;
+            }
+            console.log('RTP calculated:', rtp * 100);
+
+            return;
+        } catch (error) {
+            console.error("Failed to calculate RTP:", error);
+            this.sendError("RTP calculation error");
+        }
+    }
     private resultRow(matrix: any[]): any[] {
         return matrix.map(element => {
             const symbolId = parseInt(element, 10);  
@@ -131,6 +153,7 @@ export class SLCM {
             this.handleRedRespin();
         } else {
             this.playerData.currentWining = finalPayout;
+            this.playerData.haveWon += this.playerData.currentWining
             await this.updatePlayerBalance(this.playerData.currentWining)
             makeResultJson(this)
             console.log('SYMBOLS:', preProcessedResult);
@@ -173,18 +196,32 @@ export class SLCM {
             const newTotalPayout = checkPayout(updatedPreProcessedResult);
             const matricesAreSame = checkSameMatrix(this.settings.lastReSpin, this.settings.resultSymbolMatrix[0]);
 
-            if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO)) {
+            if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO )|| newTotalPayout >=50) {
                 console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
                 this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0])
-
                 await this.handleZeroRespin();
-            } else if (matricesAreSame || newTotalPayout > 0) {
+            } else if (matricesAreSame || newTotalPayout > 0 ) {
                 console.log('Zero Respin stopped as matrix is the same or payout is greater than zero.');
                 console.log('Final Payout:', newTotalPayout);
                 this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
+            if(this.settings.specialSpins.length>2){    
+                const resultSpins = [
+                    this.settings.specialSpins[0], 
+                    this.settings.specialSpins[this.settings.specialSpins.length - 2], 
+                    this.settings.specialSpins[this.settings.specialSpins.length - 1], 
+                ]
+                    console.log(resultSpins, 'this.settings.reSpinReels')
+                    this.settings.resultSymbolMatrix = resultSpins
+
+            }
+            else if(this.settings.specialSpins.length === 2) {
                 console.log(this.settings.specialSpins, 'this.settings.reSpinReels')
                 this.settings.resultSymbolMatrix = this.settings.specialSpins
+
+            }
+                
                 this.playerData.currentWining = newTotalPayout;
+                this.playerData.haveWon += this.playerData.currentWining
                 await this.updatePlayerBalance(this.playerData.currentWining)
                 makeResultJson(this);
                 this.settings.hasreSpin = false
@@ -244,7 +281,7 @@ export class SLCM {
             const newTotalPayout = checkPayout(updatedPreProcessedResult);
             console.log('Payout after Red Respin:', newTotalPayout);
 
-            if (newTotalPayout <= 5) {
+            if (newTotalPayout <= 5 || newTotalPayout >= 105) {
                 console.log('Payout is still <= 5. Triggering another red respin.');
                 await this.handleRedRespin();
             } else {
@@ -254,6 +291,7 @@ export class SLCM {
                 this.settings.resultSymbolMatrix = this.settings.specialSpins
                 this.playerData.currentWining = newTotalPayout;
                 this.settings.initialRedRespinMatrix = null;
+                this.playerData.haveWon += this.playerData.currentWining
                 await this.updatePlayerBalance(this.playerData.currentWining)
                 makeResultJson(this);
                 this.settings.hasredSpin = false

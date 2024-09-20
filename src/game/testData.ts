@@ -1110,8 +1110,68 @@ export const gameData = [
          ['4', '5', '6'],
          ['4', '3', '6']
       ],
-     
-     "probabilities":  [250, 40, 40, 30, 40, 30, 70, 25, 35, 60, 10, 32, 30, 28, 26, 24, 22, 20, 18, 16, 15, 14, 13, 12, 11, 10, 9, 9, 8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1],
+"probabilities": [
+    700,
+    40,
+    30,
+    30,
+    25,
+    10,
+    50,
+    25,
+    20,
+    28.9799,
+    60,
+    30,
+    40,
+    40,
+    40,
+    20,
+    20,
+    15,
+    15,
+    10,
+    10,
+    3,
+    3,
+    3,
+    3,
+    3,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.03,
+    0.03,
+    0.3,
+    0.3,
+    0.2,
+    0.1,
+    0.1,
+    0.01,
+    0.01,
+    0.001,
+    0.001,
+    0.00001
+],
      "redspinprobability": 5,
      "Symbols": [
             {
@@ -1120,11 +1180,7 @@ export const gameData = [
                "payout": "",
                "canCallRedSpin": false,
                "canCallRespin": false,
-               "reelInstance": {
-                     "0": 60,
-                     "1": 62,
-                     "2": 55
-               }
+               
             },
             {
                "Name": "1",
@@ -1132,11 +1188,7 @@ export const gameData = [
                "payout": "1",
                "canCallRedSpin": true,
                "canCallRespin": false,
-               "reelInstance": {
-                     "0": 5,
-                     "1": 0,
-                     "2": 0
-               }
+               
             },
             {
                "Name": "2",
@@ -1144,11 +1196,7 @@ export const gameData = [
                "payout": "2",
                "canCallRedSpin": true,
                "canCallRespin": false,
-               "reelInstance": {
-                     "0": 4,
-                     "1": 0,
-                     "2": 0
-               }
+               
             },
             {
                "Name": "5",
@@ -1156,11 +1204,7 @@ export const gameData = [
                "payout": "5",
                "canCallRedSpin": true,
                "canCallRespin": false,
-               "reelInstance": {
-                     "0": 2,
-                     "1": 5,
-                     "2": 8
-               }
+               
             },
             {
                "Name": "10",
@@ -1168,11 +1212,7 @@ export const gameData = [
                "payout": "10",
                "canCallRedSpin": false,
                "canCallRespin": false,
-               "reelInstance": {
-                     "0": 1,
-                     "1": 0,
-                     "2": 0
-               }
+               
             },
             {
                "Name": "0",
@@ -1180,11 +1220,7 @@ export const gameData = [
                "payout": "0",
                "canCallRedSpin": false,
                "canCallRespin": true,
-               "reelInstance": {
-                     "0": 0,
-                     "1": 30,
-                     "2": 0
-               }
+               
             },
             {
                "Name": "doubleZero",
@@ -1192,11 +1228,7 @@ export const gameData = [
                "payout": "00",
                "canCallRedSpin": false,
                "canCallRespin": true,
-               "reelInstance": {
-                     "0": 0,
-                     "1": 0,
-                     "2": 40
-               }
+               
             }
          ]
    }
