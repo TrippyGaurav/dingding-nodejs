@@ -757,7 +757,7 @@ export const gameData = [
    //              "Name": "Blank",
    //              "Id": 0,
    //              "isSpecialCrz": false,
-   //              "payout": 0,
+   //              payout": 0,"
    //              "SpecialType": "",
    //              "mixedPayout": 0,
    //              "canmatch": [],

@@ -77,7 +77,7 @@ export class SLCM {
                 await this.deductPlayerBalance(this.settings.currentBet);
             }
             this.playerData.totalbet += this.settings.currentBet;
-            this.settings.resultSymbolMatrix[0] = this.selectResultBasedOnProbability();
+            this.settings.resultSymbolMatrix[0] = this.selectResultBasedOnProbability(this.settings.matrix.x);
             this.checkResult();
         } catch (error) {
             this.sendError("Spin error");
@@ -116,19 +116,27 @@ export class SLCM {
         });
     }
 
-    private selectResultBasedOnProbability(): any[] {
+    private selectResultBasedOnProbability(matrixX: number): any[] {
         const totalProbability = this.settings.probabilities.reduce((acc, curr) => acc + curr, 0);  
         const randomValue = Math.random() * totalProbability;  
         let cumulativeProbability = 0;
     
+        let selectedResult = this.settings.results[this.settings.results.length - 1];  
         for (let i = 0; i < this.settings.probabilities.length; i++) {
             cumulativeProbability += this.settings.probabilities[i];
             if (randomValue < cumulativeProbability) {
-                return this.settings.results[i];  
+                selectedResult = this.settings.results[i]; 
+                break;
             }
         }
     
-        return this.settings.results[this.settings.results.length - 1];  
+        if (matrixX === 1) {
+            return [selectedResult[0]];  
+        } else if (matrixX === 2) {
+            return selectedResult.slice(0, 2);  
+        } else {
+            return selectedResult;  
+        }
     }
 
 
@@ -188,7 +196,7 @@ export class SLCM {
                 .map((symbol, index) => (symbol.Name === SPECIALSYMBOLS.ZERO || symbol.Name === SPECIALSYMBOLS.DOUBLEZERO) ? index : null)
                 .filter(index => index !== null);
             this.settings.lastReSpin = this.settings.resultSymbolMatrix[0].slice();
-            this.settings.resultSymbolMatrix[0] = this.selectResultBasedOnProbability();
+            this.settings.resultSymbolMatrix[0] = this.selectResultBasedOnProbability(this.settings.matrix.x);
             this.settings.resultSymbolMatrix[0] = freezeIndex(this, SPINTYPES.RESPIN, this.settings.resultSymbolMatrix[0]);
 
             console.log('New Matrix after Zero Respin: ', this.settings.resultSymbolMatrix[0]);
@@ -269,7 +277,7 @@ export class SLCM {
                 this.settings.initialRedRespinMatrix = this.settings.resultSymbolMatrix[0].slice();
             }
 
-            const selectedResult = this.selectResultBasedOnProbability();
+            const selectedResult = this.selectResultBasedOnProbability(this.settings.matrix.x);
             this.settings.resultSymbolMatrix[0] = selectedResult;
             console.log("Red spin Matrix:",this.settings.resultSymbolMatrix[0]);
             
