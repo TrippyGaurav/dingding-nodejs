@@ -173,9 +173,8 @@ export function checkForWin(gameInstance: SLPM) {
         });
 
         settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
-
         switch (true) {
-            case winningLines.length >= 1:
+            case winningLines.length >= 1 && settings.cascadingNo < 4:
                 settings.cascadingNo += 1;
                 new RandomResultGenerator(gameInstance);
                 settings.tempReel = settings.resultSymbolMatrix;
