@@ -173,6 +173,7 @@ export function checkForWin(gameInstance: SLPM) {
         });
 
         settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
+
         switch (true) {
             case winningLines.length >= 1 && settings.cascadingNo < 4:
                 settings.cascadingNo += 1;
@@ -183,7 +184,14 @@ export function checkForWin(gameInstance: SLPM) {
                 settings.cascadingNo = 0;
                 break;
         }
+        const values = settings._winData.winningSymbols.flatMap(symbolIndices => {
+            return symbolIndices.map(indexStr => {
+                const [row, col] = indexStr.split(',').map(Number);
+                return settings.tempReel[row][col];
+            });
+        });
 
+        console.log(values, 'Winning symbols values');
         return winningLines;
     } catch (error) {
         console.error("Error in checkForWin", error);
