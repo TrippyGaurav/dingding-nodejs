@@ -131,7 +131,6 @@ class PlayerSocket {
         return __awaiter(this, void 0, void 0, function* () {
             this.checkPlayerBalance(currentBet);
             this.playerData.credits -= currentBet;
-            yield this.updateDatabase();
         });
     }
     attemptReconnection() {

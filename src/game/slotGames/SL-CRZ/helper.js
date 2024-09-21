@@ -63,9 +63,8 @@ function sendInitData(gameInstance) {
     gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
-            Reel: reels,
+            // Reel: reels,
             Bets: gameInstance.settings.currentGamedata.bets,
-            autoSpin: [1, 5, 10, 20],
         },
         UIData: gameUtils_1.UiInitData,
         PlayerData: {
@@ -131,7 +130,6 @@ function applyExtraSymbolEffect(gameInstance, payout, extraSymbolId) {
                 gameInstance.settings.isFreeSpin = true;
                 const freeSpinCount = Math.floor(Math.random() * 3) + 3;
                 gameInstance.settings.freeSpinCount = freeSpinCount;
-                console.log("Free spin started with count:", freeSpinCount);
                 return payout;
             default:
                 throw new Error(`Invalid SpecialType: ${extraSymbol.SpecialType}`);
