@@ -23,31 +23,15 @@ export function initializeGameSettings(gameData: any, gameInstance: SLCM) {
         BetPerLines: 0,
         reels: [],
         hasreSpin: false,
+        hasredSpin: false,
+        specialSpins: [],
         lastReSpin: [],
         freezeIndex: [],
-        newMatrix: []
+        newMatrix: [],
+        results: gameData.gameSettings.results,
+        probabilities: gameData.gameSettings.probabilities,
+        redspinprobability: gameData.gameSettings.redspinprobability,
     };
-}
-
-/**
- * Generates the initial reel setup based on the game settings.
- * @param gameSettings - The settings used to generate the reel setup.
- * @returns A 2D array representing the reels, where each sub-array corresponds to a reel.
- */
-export function generateInitialReel(gameSettings: any): string[][] {
-    const reels = [[], [], []];
-    gameSettings.Symbols.forEach(symbol => {
-        for (let i = 0; i < 3; i++) {
-            const count = symbol.reelInstance[i] || 0;
-            for (let j = 0; j < count; j++) {
-                reels[i].push(symbol.Id);
-            }
-        }
-    });
-    reels.forEach(reel => {
-        shuffleArray(reel);
-    });
-    return reels;
 }
 
 /**
@@ -67,13 +51,10 @@ function shuffleArray(array: any[]) {
  */
 export function sendInitData(gameInstance: SLCM) {
     UiInitData.paylines = convertSymbols(gameInstance.settings.Symbols);
-    const reels = generateInitialReel(gameInstance.settings);
-    gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
-            Reel: reels,
             Bets: gameInstance.settings.currentGamedata.bets,
-            autoSpin: [1, 5, 10, 20],
+
         },
         UIData: UiInitData,
         PlayerData: {
@@ -118,7 +99,6 @@ export function freezeIndex(gameInstance: SLCM, type: string, matrix: any[]) {
                 }
                 return item;
             });
-            console.log('New Matrix after Respin:', updatedMatrix);
             return updatedMatrix;
         } else if (type === SPINTYPES.REDRESPIN) {
             const updatedMatrix = matrix.map((item, index) => {
@@ -209,13 +189,16 @@ export function checkPayout(preProcessedResult: any[]): number {
 export function makeResultJson(gameInstance: SLCM) {
     try {
         const { settings } = gameInstance;
+        const credits = gameInstance.getPlayerData().credits
+        const Balance = credits.toFixed(2)
         const sendData = {
             gameData: {
-                resultSymbols: settings.resultSymbolMatrix[0],
-                hasReSpin: settings.hasreSpin
+                resultSymbols: settings.resultSymbolMatrix,
+                hasReSpin: settings.hasreSpin,
+                hasRedSpin: settings.hasredSpin
             },
             PlayerData: {
-                Balance: gameInstance.getPlayerData().credits,
+                Balance: Balance,
                 currentWining: gameInstance.playerData.currentWining
             }
         };

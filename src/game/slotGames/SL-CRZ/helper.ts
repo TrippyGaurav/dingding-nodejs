@@ -59,9 +59,8 @@ export function sendInitData(gameInstance: SLCRZ) {
     gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
-            Reel: reels,
+            // Reel: reels,
             Bets: gameInstance.settings.currentGamedata.bets,
-            autoSpin: [1, 5, 10, 20],
         },
         UIData: UiInitData,
         PlayerData: {
@@ -87,12 +86,12 @@ export function calculatePayout(gameInstance: SLCRZ, symbols: any[], symbolId: n
         switch (winType) {
             case WINNINGTYPE.REGULAR:
                 payout = symbol.payout * gameInstance.settings.BetPerLines;
-                gameInstance.playerData.currentWining=payout
+                gameInstance.playerData.currentWining = payout
                 break;
 
             case WINNINGTYPE.MIXED:
                 payout = symbol.mixedPayout * gameInstance.settings.BetPerLines;
-                gameInstance.playerData.currentWining=payout
+                gameInstance.playerData.currentWining = payout
                 break;
 
             default:
@@ -138,7 +137,6 @@ export function applyExtraSymbolEffect(gameInstance: SLCRZ, payout: number, extr
                 gameInstance.settings.isFreeSpin = true;
                 const freeSpinCount = Math.floor(Math.random() * 3) + 3;
                 gameInstance.settings.freeSpinCount = freeSpinCount;
-                console.log("Free spin started with count:", freeSpinCount);
                 return payout;
 
             default:
