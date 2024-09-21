@@ -76,7 +76,10 @@ function convertSymbols(data) {
             "symbolsCount": element.symbolsCount || {},
             "increaseValue": element.increaseValue || {},
             "freeSpin": element.freeSpin,
-            "description": element.description || {}
+            "description": element.description || {},
+            "payout": element.payout || {},
+            "mixedPayout": element.mixedPayout || {},
+            "defaultPayout": element.defaultPayout || {}
         };
         // if (element.multiplier) {
         //   const multiplierObject = {};

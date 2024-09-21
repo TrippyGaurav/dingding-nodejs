@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initializeGameSettings = initializeGameSettings;
-exports.generateInitialReel = generateInitialReel;
 exports.sendInitData = sendInitData;
 exports.freezeIndex = freezeIndex;
 exports.checkSameMatrix = checkSameMatrix;
@@ -31,30 +30,15 @@ function initializeGameSettings(gameData, gameInstance) {
         BetPerLines: 0,
         reels: [],
         hasreSpin: false,
+        hasredSpin: false,
+        specialSpins: [],
         lastReSpin: [],
         freezeIndex: [],
-        newMatrix: []
+        newMatrix: [],
+        results: gameData.gameSettings.results,
+        probabilities: gameData.gameSettings.probabilities,
+        redspinprobability: gameData.gameSettings.redspinprobability,
     };
-}
-/**
- * Generates the initial reel setup based on the game settings.
- * @param gameSettings - The settings used to generate the reel setup.
- * @returns A 2D array representing the reels, where each sub-array corresponds to a reel.
- */
-function generateInitialReel(gameSettings) {
-    const reels = [[], [], []];
-    gameSettings.Symbols.forEach(symbol => {
-        for (let i = 0; i < 3; i++) {
-            const count = symbol.reelInstance[i] || 0;
-            for (let j = 0; j < count; j++) {
-                reels[i].push(symbol.Id);
-            }
-        }
-    });
-    reels.forEach(reel => {
-        shuffleArray(reel);
-    });
-    return reels;
 }
 /**
  * Shuffles the elements of an array in place using the Fisher-Yates algorithm.
@@ -72,13 +56,9 @@ function shuffleArray(array) {
  */
 function sendInitData(gameInstance) {
     gameUtils_1.UiInitData.paylines = (0, gameUtils_1.convertSymbols)(gameInstance.settings.Symbols);
-    const reels = generateInitialReel(gameInstance.settings);
-    gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
-            Reel: reels,
             Bets: gameInstance.settings.currentGamedata.bets,
-            autoSpin: [1, 5, 10, 20],
         },
         UIData: gameUtils_1.UiInitData,
         PlayerData: {
@@ -121,7 +101,6 @@ function freezeIndex(gameInstance, type, matrix) {
                 }
                 return item;
             });
-            console.log('New Matrix after Respin:', updatedMatrix);
             return updatedMatrix;
         }
         else if (type === types_1.SPINTYPES.REDRESPIN) {
@@ -208,13 +187,16 @@ function checkPayout(preProcessedResult) {
 function makeResultJson(gameInstance) {
     try {
         const { settings } = gameInstance;
+        const credits = gameInstance.getPlayerData().credits;
+        const Balance = credits.toFixed(2);
         const sendData = {
             gameData: {
-                resultSymbols: settings.resultSymbolMatrix[0],
-                hasReSpin: settings.hasreSpin
+                resultSymbols: settings.resultSymbolMatrix,
+                hasReSpin: settings.hasreSpin,
+                hasRedSpin: settings.hasredSpin
             },
             PlayerData: {
-                Balance: gameInstance.getPlayerData().credits,
+                Balance: Balance,
                 currentWining: gameInstance.playerData.currentWining
             }
         };
