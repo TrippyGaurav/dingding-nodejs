@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SLCM = void 0;
-const RandomResultGenerator_1 = require("../RandomResultGenerator");
 const types_1 = require("./types");
 const helper_1 = require("./helper");
 /**
@@ -27,7 +26,6 @@ class SLCM {
             totalSpin: 0
         };
         this.settings = (0, helper_1.initializeGameSettings)(currentGameData, this);
-        this.settings.reels = (0, helper_1.generateInitialReel)(this.settings);
         (0, helper_1.sendInitData)(this);
     }
     get initSymbols() {
@@ -55,15 +53,13 @@ class SLCM {
         switch (response.id) {
             case "SPIN":
                 this.prepareSpin(response.data);
-                this.spinResult();
+                this.getRTP(response.data.spins || 1);
                 break;
         }
     }
     prepareSpin(data) {
         this.settings.matrix.x = data.matrixX;
-        this.settings.currentLines = data.currentLines;
-        this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
-        this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
+        this.settings.currentBet = this.settings.currentGamedata.bets[data.currentBet];
     }
     spinResult() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -73,9 +69,11 @@ class SLCM {
                     this.sendError("Low Balance");
                     return;
                 }
-                yield this.deductPlayerBalance(this.settings.currentBet);
+                else if (!this.settings.hasreSpin && !this.settings.hasredSpin) {
+                    yield this.deductPlayerBalance(this.settings.currentBet);
+                }
                 this.playerData.totalbet += this.settings.currentBet;
-                new RandomResultGenerator_1.RandomResultGenerator(this);
+                this.settings.resultSymbolMatrix[0] = this.selectResultBasedOnProbability(this.settings.matrix.x);
                 this.checkResult();
             }
             catch (error) {
@@ -84,34 +82,112 @@ class SLCM {
             }
         });
     }
+    getRTP(spins) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let spend = 0;
+                let won = 0;
+                this.playerData.rtpSpinCount = spins;
+                for (let i = 0; i < this.playerData.rtpSpinCount; i++) {
+                    yield this.spinResult();
+                    spend = this.playerData.totalbet;
+                    won = this.playerData.haveWon;
+                    console.log(`Spin ${i + 1} completed. ${this.playerData.totalbet} , ${won}`);
+                }
+                let rtp = 0;
+                if (spend > 0) {
+                    rtp = won / spend;
+                }
+                console.log('RTP calculated:', rtp * 100);
+                return;
+            }
+            catch (error) {
+                console.error("Failed to calculate RTP:", error);
+                this.sendError("RTP calculation error");
+            }
+        });
+    }
     resultRow(matrix) {
         return matrix.map(element => {
-            const symbol = this.settings.Symbols.find(sym => sym.Id === element);
+            const symbolId = parseInt(element, 10);
+            const symbol = this.settings.Symbols.find(sym => sym.Id === symbolId);
             return symbol;
         });
     }
-    checkResult() {
-        const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
-        const totalPayout = (0, helper_1.checkPayout)(preProcessedResult);
-        const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
-        if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === types_1.SPECIALSYMBOLS.ZERO || symbol.Name === types_1.SPECIALSYMBOLS.DOUBLEZERO)) {
-            this.settings.hasreSpin = true;
-            (0, helper_1.makeResultJson)(this);
-            this.handleZeroRespin();
+    selectResultBasedOnProbability(matrixX) {
+        const totalProbability = this.settings.probabilities.reduce((acc, curr) => acc + curr, 0);
+        const randomValue = Math.random() * totalProbability;
+        let cumulativeProbability = 0;
+        let selectedResult = this.settings.results[this.settings.results.length - 1];
+        for (let i = 0; i < this.settings.probabilities.length; i++) {
+            cumulativeProbability += this.settings.probabilities[i];
+            if (randomValue < cumulativeProbability) {
+                selectedResult = this.settings.results[i];
+                break;
+            }
         }
-        else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin() && this.settings.matrix.x > 1) {
-            console.log('Red Respin triggered.');
-            this.handleRedRespin();
+        if (matrixX === 1) {
+            return [selectedResult[0]];
+        }
+        else if (matrixX === 2) {
+            return selectedResult.slice(0, 2);
         }
         else {
-            this.playerData.currentWining = finalPayout;
-            (0, helper_1.makeResultJson)(this);
-            console.log('SYMBOLS:', preProcessedResult);
-            console.log('FINALPAY:', finalPayout);
+            return selectedResult;
         }
     }
+    /**
+     * Checks the result of the current spin and processes based on the result.
+     *
+     * This method performs the following tasks:
+     * 1. Pre-processes the result matrix by mapping the symbols in the matrix to their corresponding symbol objects.
+     * 2. Calculates the total payout based on the pre-processed result and parses it to an integer.
+     * 3. If the final payout is 0 and the result contains special symbols (ZERO or DOUBLEZERO), a re-spin is triggered:
+     *    - Marks `hasreSpin` as true and pushes the current result to `specialSpins`.
+     *    - Calls the method `handleZeroRespin()` to process the re-spin.
+     * 4. If the final payout is greater than 0 but less than or equal to 5, and a red re-spin should be triggered:
+     *    - Marks `hasredSpin` as true and pushes the current result to `specialSpins`.
+     *    - Calls `handleRedRespin()` to process the red re-spin.
+     * 5. If no re-spin or red re-spin is triggered:
+     *    - Updates the player's current winnings and updates their balance.
+     *    - Creates a result JSON for further processing or storage.
+     *    - Logs the pre-processed symbols and final payout to the console for debugging.
+     *
+     * @private
+     * @async
+     */
+    checkResult() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const preProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
+            const totalPayout = (0, helper_1.checkPayout)(preProcessedResult);
+            const finalPayout = totalPayout ? parseInt(totalPayout.toString(), 10) : 0;
+            console.log("matrix", this.settings.resultSymbolMatrix[0]);
+            console.log("Payout:", totalPayout);
+            const zeroCount = this.settings.resultSymbolMatrix[0].filter(symbol => symbol === '0').length;
+            console.log(`Number of 0s in the matrix:`, zeroCount);
+            if (finalPayout === 0 && preProcessedResult.some(symbol => symbol.Name === types_1.SPECIALSYMBOLS.ZERO || symbol.Name === types_1.SPECIALSYMBOLS.DOUBLEZERO)) {
+                this.settings.hasreSpin = true;
+                this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
+                this.handleZeroRespin();
+            }
+            else if (finalPayout > 0 && finalPayout <= 5 && this.shouldTriggerRedRespin() && this.settings.matrix.x > 1 && zeroCount === 2) {
+                console.log('Red Respin triggered.');
+                this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
+                this.settings.hasredSpin = true;
+                this.handleRedRespin();
+            }
+            else {
+                this.playerData.currentWining = finalPayout;
+                this.playerData.haveWon += this.playerData.currentWining;
+                yield this.updatePlayerBalance(this.playerData.currentWining);
+                (0, helper_1.makeResultJson)(this);
+                console.log('SYMBOLS:', preProcessedResult);
+                console.log('FINALPAY:', finalPayout);
+            }
+        });
+    }
     shouldTriggerRedRespin() {
-        return Math.random() < 0.9;
+        return (Math.random() * 100) < this.settings.redspinprobability;
     }
     /**
      * Handles the respin logic when a '0' or '00' symbol is present in the matrix.
@@ -135,24 +211,42 @@ class SLCM {
                     .map((symbol, index) => (symbol.Name === types_1.SPECIALSYMBOLS.ZERO || symbol.Name === types_1.SPECIALSYMBOLS.DOUBLEZERO) ? index : null)
                     .filter(index => index !== null);
                 this.settings.lastReSpin = this.settings.resultSymbolMatrix[0].slice();
-                yield new RandomResultGenerator_1.RandomResultGenerator(this);
-                let newMatrix = this.settings.resultSymbolMatrix[0];
-                this.settings.resultSymbolMatrix[0] = (0, helper_1.freezeIndex)(this, types_1.SPINTYPES.RESPIN, newMatrix);
+                this.settings.resultSymbolMatrix[0] = this.selectResultBasedOnProbability(this.settings.matrix.x);
+                this.settings.resultSymbolMatrix[0] = (0, helper_1.freezeIndex)(this, types_1.SPINTYPES.RESPIN, this.settings.resultSymbolMatrix[0]);
                 console.log('New Matrix after Zero Respin: ', this.settings.resultSymbolMatrix[0]);
                 const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
                 const newTotalPayout = (0, helper_1.checkPayout)(updatedPreProcessedResult);
                 const matricesAreSame = (0, helper_1.checkSameMatrix)(this.settings.lastReSpin, this.settings.resultSymbolMatrix[0]);
-                if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === types_1.SPECIALSYMBOLS.ZERO || symbol.Name === types_1.SPECIALSYMBOLS.DOUBLEZERO)) {
+                if (newTotalPayout === 0 && !matricesAreSame && updatedPreProcessedResult.some(symbol => symbol.Name === types_1.SPECIALSYMBOLS.ZERO || symbol.Name === types_1.SPECIALSYMBOLS.DOUBLEZERO) || newTotalPayout >= 50) {
                     console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
+                    this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
                     yield this.handleZeroRespin();
                 }
                 else if (matricesAreSame || newTotalPayout > 0) {
                     console.log('Zero Respin stopped as matrix is the same or payout is greater than zero.');
                     console.log('Final Payout:', newTotalPayout);
+                    this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
+                    if (this.settings.specialSpins.length > 2) {
+                        const resultSpins = [
+                            this.settings.specialSpins[0],
+                            this.settings.specialSpins[this.settings.specialSpins.length - 2],
+                            this.settings.specialSpins[this.settings.specialSpins.length - 1],
+                        ];
+                        console.log(resultSpins, 'this.settings.reSpinReels');
+                        this.settings.resultSymbolMatrix = resultSpins;
+                    }
+                    else if (this.settings.specialSpins.length === 2) {
+                        console.log(this.settings.specialSpins, 'this.settings.reSpinReels');
+                        this.settings.resultSymbolMatrix = this.settings.specialSpins;
+                    }
                     this.playerData.currentWining = newTotalPayout;
-                    this.settings.hasreSpin = false;
-                    yield this.updatePlayerBalance(newTotalPayout);
+                    this.playerData.haveWon += this.playerData.currentWining;
+                    yield this.updatePlayerBalance(this.playerData.currentWining);
                     (0, helper_1.makeResultJson)(this);
+                    this.settings.hasreSpin = false;
+                    this.settings.specialSpins = [];
+                    this.settings.lastReSpin = [];
+                    this.settings.resultSymbolMatrix = [];
                     return;
                 }
                 this.settings.freezeIndex = [];
@@ -188,21 +282,32 @@ class SLCM {
                 if (!this.settings.initialRedRespinMatrix) {
                     this.settings.initialRedRespinMatrix = this.settings.resultSymbolMatrix[0].slice();
                 }
-                yield new RandomResultGenerator_1.RandomResultGenerator(this);
-                let newMatrix = this.settings.resultSymbolMatrix[0];
-                this.settings.resultSymbolMatrix[0] = (0, helper_1.freezeIndex)(this, types_1.SPINTYPES.REDRESPIN, newMatrix);
+                const selectedResult = this.selectResultBasedOnProbability(this.settings.matrix.x);
+                this.settings.resultSymbolMatrix[0] = selectedResult;
+                console.log("Red spin Matrix:", this.settings.resultSymbolMatrix[0]);
+                this.settings.resultSymbolMatrix[0] = (0, helper_1.freezeIndex)(this, types_1.SPINTYPES.REDRESPIN, this.settings.resultSymbolMatrix[0]);
                 console.log('New Matrix after Red Respin:', this.settings.resultSymbolMatrix[0]);
                 const updatedPreProcessedResult = this.resultRow(this.settings.resultSymbolMatrix[0]);
                 const newTotalPayout = (0, helper_1.checkPayout)(updatedPreProcessedResult);
                 console.log('Payout after Red Respin:', newTotalPayout);
-                if (newTotalPayout <= 5) {
+                if (newTotalPayout <= 5 || newTotalPayout >= 105) {
                     console.log('Payout is still <= 5. Triggering another red respin.');
                     yield this.handleRedRespin();
                 }
                 else {
                     console.log('Red Respin stopped. Final Payout:', newTotalPayout);
+                    this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);
+                    console.log(this.settings.specialSpins, 'this.settings.reSpinReels');
+                    this.settings.resultSymbolMatrix = this.settings.specialSpins;
                     this.playerData.currentWining = newTotalPayout;
                     this.settings.initialRedRespinMatrix = null;
+                    this.playerData.haveWon += this.playerData.currentWining;
+                    yield this.updatePlayerBalance(this.playerData.currentWining);
+                    (0, helper_1.makeResultJson)(this);
+                    this.settings.hasredSpin = false;
+                    this.settings.specialSpins = [];
+                    this.settings.lastReSpin = [];
+                    this.settings.resultSymbolMatrix = [];
                     return;
                 }
             }

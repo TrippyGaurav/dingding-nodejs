@@ -12,14 +12,14 @@ class RandomResultGenerator {
                 matrix[y][x] = current.settings.reels[x][(startPosition + y) % current.settings.reels[x].length];
             }
         }
-        // console.log(matrix, 'MATRIX')
+        console.log(matrix, 'MATRIX');
         current.settings.resultReelIndex = matrix;
         current.settings.resultSymbolMatrix = matrix;
         // matrix.pop();
         // matrix.pop();
         // matrix.pop();
-        // matrix.push(['8', '8', '8', '8', '8'])
-        // matrix.push(['5', '1', '1', '1', '4'])
+        // matrix.push(['11', '8', '2', '8', '8'])
+        // matrix.push(['5', '2', '1', '2', '4'])
         // matrix.push(['2', '1', '5', '7', '1'])
     }
     getRandomIndex(maxValue) {
