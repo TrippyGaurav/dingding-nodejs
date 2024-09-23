@@ -25,73 +25,10 @@ export function initializeGameSettings(gameData: any, gameInstance: SLWOF) {
         SpecialType: gameData.gameSettings.SpecialType,
         isSpecialWof: gameData.gameSettings.isSpecialWof,
         symbolsCount: gameData.gameSettings.symbolsCount,
-        bonusStopIndex:0
+        isBonus: false,
+        bonusStopIndex: 0
     };
 }
-// export function setRandomStopIndex(gameInstance:SLWOF) {
-//     const symbol = gameInstance.settings.bonus;
-// console.log(symbol,'SYMBOL')
-//     let amount: number = 0;
-//     if (gameInstance.settings.bonus && gameInstance.settings.bonus) {
-//         gameInstance.settings.bonusStopIndex = getRandomPayoutIndex(this.parent.settings.currentGamedata.bonus.payOutProb);
-//         amount = this.parent.settings.BetPerLines * this.result[this.parent.settings.bonus.stopIndex];
-//     }
-//     if (!amount || amount < 0)
-//         amount = 0;
-//     return amount;
-// }
-
-// function generateData(totalPay: number = 0): string[] {
-//     this.result = [];
-//     let res: string[] = [];
-
-//     this.result = this.parent.settings.currentGamedata.bonus.payOut;
-
-//     if (this.parent.settings.bonus.start  )
-//         shuffle(this.result);
-
-//     for (let i = 0; i < this.result.length; i++) {
-//         res.push(this.result[i].toString());
-//     }
-//     return res;
-// }
-
-
-
-// function shuffle(array: number[]) {
-//     for (let i = array.length - 1; i > 0; i--) {
-//         let j = Math.floor(Math.random() * (i + 1));
-//         let k = array[i];
-//         array[i] = array[j];
-//         array[j] = k;
-//     }
-// }
-
-
-
-// function getRandomPayoutIndex(payOutProb): number {
-//     const totalProb = payOutProb.reduce((sum, prob) => sum + prob, 0);
-
-//     const normalizedProb = payOutProb.map(prob => prob / totalProb);
-
-//     const cumulativeProb = [];
-//     normalizedProb.reduce((acc, prob, index) => {
-//         cumulativeProb[index] = acc + prob;
-//         return cumulativeProb[index];
-//     }, 0);
-
-//     console.log("cumulative array", cumulativeProb);
-
-//     const randomNum = Math.random();
-
-//     for (let i = 0; i < cumulativeProb.length; i++) {
-//         if (randomNum <= cumulativeProb[i]) {
-//             return i;
-//         }
-//     }
-
-//     return cumulativeProb.length - 1;
-// }
 
 export function generateInitialReel(gameSettings: any): string[][] {
     const reels = [[], [], [], []];
@@ -116,19 +53,21 @@ function shuffleArray(array: any[]) {
     }
 }
 
-export function triggerBonusGame(settings: any): number {
+export function triggerBonusGame(gameInstance: SLWOF, settings: any): number {
     const { payOut, payOutProb } = settings.bonus;
-    const randomValue = Math.random() * 100; 
-    let cumulativeProbability = 0;
 
+    const randomValue = Math.random() * 100;
+    let cumulativeProbability = 0;
     for (let i = 0; i < payOut.length; i++) {
         cumulativeProbability += payOutProb[i];
         if (randomValue <= cumulativeProbability) {
-            console.log(`Bonus Game: Selected payout is ${payOut[i]} `);
+            console.log(`Bonus Game: Selected payout is ${payOut[i]} and index is ${i} `);
+            gameInstance.settings.bonusStopIndex = i
             return payOut[i];
         }
     }
-
+    const SelectedBonusIndex = payOut.length - 1;
+    gameInstance.settings.bonusStopIndex = SelectedBonusIndex
     return payOut[payOut.length - 1];
 }
 
@@ -141,9 +80,7 @@ export function sendInitData(gameInstance: SLWOF) {
     gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
-            Reel: reels,
             Bets: gameInstance.settings.currentGamedata.bets,
-            autoSpin: [1, 5, 10, 20],
         },
         UIData: UiInitData,
         PlayerData: {
@@ -161,7 +98,6 @@ export function checkWinningCondition(gameInstance: SLWOF, row: any[]): { winTyp
         if (row.length === 0) {
             throw new Error("Row is empty, cannot check winning condition.");
         }
-
         const firstSymbolId = row[0];
         const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id === firstSymbolId);
         if (!firstSymbol) {
@@ -179,7 +115,7 @@ export function checkWinningCondition(gameInstance: SLWOF, row: any[]): { winTyp
             }
         }
 
-        return { winType: 'default' };
+        return { winType: WINNINGTYPE.DEFAULT };
     } catch (error) {
         console.error("Error in checkWinningCondition:", error.message);
         return { winType: 'error' };
@@ -228,6 +164,8 @@ export function makeResultJson(gameInstance: SLWOF, winningRows: number[]) {
                 Balance: Balance,
                 currentWining: playerData.currentWining,
                 totalbet: playerData.totalbet,
+                Bonus: settings.isBonus,
+                BonusIndex: settings.bonusStopIndex,
                 haveWon: playerData.haveWon,
             }
         };

@@ -32,7 +32,7 @@ export interface CMSettings {
     freezeIndex: number[];
     newMatrix: any[];
     initialRedRespinMatrix?: any[];
-    redspinprobability : number,
+    redspinprobability: number,
 }
 
 export enum SPINTYPES {

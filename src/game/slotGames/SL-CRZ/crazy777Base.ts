@@ -2,6 +2,7 @@ import { currentGamedata } from "../../../Player";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { CRZSETTINGS, WINNINGTYPE } from "./types";
 import { initializeGameSettings, generateInitialReel, sendInitData, calculatePayout, applyExtraSymbolEffect, checkWinningCondition, makeResultJson } from "./helper";
+import { log } from "console";
 
 export class SLCRZ {
   public settings: CRZSETTINGS;
@@ -25,7 +26,7 @@ export class SLCRZ {
     this.currentGameData.gameSettings.Symbols.forEach((Element: Symbol) => {
       Symbols.push(Element);
     });
-    return Symbols;
+    return Symbols;``
   }
 
 
@@ -55,10 +56,10 @@ export class SLCRZ {
 
   messageHandler(response: any) {
     switch (response.id) {
-      case "SPIN":
-        this.prepareSpin(response.data);
-        this.spinResult();
-        break;
+        case "SPIN":
+            this.prepareSpin(response.data);
+            this.getRTP(response.data.spins || 1);
+            break;
     }
   }
   private prepareSpin(data: any) {
@@ -67,7 +68,7 @@ export class SLCRZ {
     this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
   }
 
-  private async spinResult() {
+  private async spinResult() : Promise<void>{
     try {
       const playerData = this.getPlayerData();
       if (!this.settings.isFreeSpin && this.settings.currentBet > playerData.credits) {
@@ -77,25 +78,26 @@ export class SLCRZ {
 
       if (!this.settings.isFreeSpin) {
         await this.deductPlayerBalance(this.settings.currentBet);
-        this.playerData.totalbet += this.settings.currentBet;
+        this.playerData.totalbet += this.settings.currentBet*3 ;
       }
+      if (this.settings.freeSpinCount === 1) {
+        this.settings.isFreeSpin = false;
 
+      }
       if (
         this.settings.isFreeSpin &&
         this.settings.freeSpinCount > 0
       ) {
         this.settings.freeSpinCount--;
-        this.settings.currentBet = 0;
+        // this.settings.currentBet = 0;
+        console.log("Running");
+        
         console.log(
           this.settings.freeSpinCount,
           "this.settings.freeSpinCount"
         );
         this.updatePlayerBalance(this.playerData.currentWining)
-        makeResultJson(this)
-        if (this.settings.freeSpinCount <= 0) {
-          this.settings.isFreeSpin = false;
-
-        }
+        // makeResultJson(this)
       }
       new RandomResultGenerator(this);
       this.checkResult();
@@ -104,7 +106,30 @@ export class SLCRZ {
       console.error("Failed to generate spin results:", error);
     }
   }
+  private async getRTP(spins: number): Promise<void> {
+    try {
+        let spend: number = 0;
+        let won: number = 0;
+        this.playerData.rtpSpinCount = spins;
 
+        for (let i = 0; i < this.playerData.rtpSpinCount; i++) {
+            await this.spinResult();
+            spend = this.playerData.totalbet;
+            won = this.playerData.haveWon;
+            console.log(`Spin ${i + 1} completed. ${this.playerData.totalbet} , ${won}`);
+        }
+        let rtp = 0;
+        if (spend > 0) {
+            rtp = won / spend;
+        }
+        console.log('RTP calculated:', rtp * 100);
+
+        return;
+    } catch (error) {
+        console.error("Failed to calculate RTP:", error);
+        this.sendError("RTP calculation error");
+    }
+}
   private async checkResult() {
     try {
       const resultmatrix = this.settings.resultSymbolMatrix;
@@ -120,7 +145,6 @@ export class SLCRZ {
       console.log('freeSpins', this.settings.freeSpinCount)
       if (middleRow.includes(0)) {
         this.playerData.currentWining = 0
-
         makeResultJson(this)
         console.log("No win: '0' present in the middle row.");
         return
@@ -155,10 +179,14 @@ export class SLCRZ {
       if (payout > 0 && !this.settings.isFreeSpin) {
         payout = await applyExtraSymbolEffect(this, payout, extrasymbol);
         this.playerData.currentWining = payout
+        this.playerData.haveWon += this.playerData.currentWining
+
         this.updatePlayerBalance(this.playerData.currentWining)
         makeResultJson(this)
       }
+      this.playerData.haveWon += this.playerData.currentWining
 
+      makeResultJson(this)
 
       console.log("Total Payout for:", this.getPlayerData().username, "" + payout);
       console.log("Total Free Spins Remaining:", this.settings.freeSpinCount);

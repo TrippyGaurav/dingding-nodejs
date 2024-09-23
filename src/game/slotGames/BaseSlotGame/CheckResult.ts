@@ -82,7 +82,6 @@ export class CheckResult {
             if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.spin)
                 this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();
         }
-
     }
 
     private checkForFreeSpin() {
