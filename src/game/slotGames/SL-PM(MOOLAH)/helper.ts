@@ -24,7 +24,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLPM) {
         currentLines: 0,
         BetPerLines: 0,
         reels: [],
-        hasreSpin: false,
+        hasCascading: false,
         cascadingNo: 0,
         lastReel: [],
         tempReel: [],
@@ -139,6 +139,7 @@ export function checkForWin(gameInstance: SLPM) {
             switch (true) {
                 case isWinningLine && matchCount >= 3:
                     const symbolMultiplier = accessData(firstSymbol, matchCount, gameInstance);
+
                     settings.lastReel = settings.resultSymbolMatrix
                     switch (true) {
                         case symbolMultiplier > 0:
@@ -152,12 +153,11 @@ export function checkForWin(gameInstance: SLPM) {
                             });
                             console.log(`Line ${index + 1}:`, line);
                             console.log(`Payout for Line ${index + 1}:`, 'payout', symbolMultiplier);
-
-                            const formattedIndices = matchedIndices.map(({ col, row }) => `${col},${row}`);
+                            const formattedIndices = matchedIndices.map(({ col, row }) => `${row},${col}`);
                             const validIndices = formattedIndices.filter(index => index.length > 2);
-                            console.log(validIndices, 'validIndices');
-
                             if (validIndices.length > 0) {
+                                console.log(settings.lastReel, 'settings.lastReel')
+                                console.log(validIndices)
                                 settings._winData.winningSymbols.push(validIndices);
                             }
                             break;
@@ -171,12 +171,11 @@ export function checkForWin(gameInstance: SLPM) {
                     break;
             }
         });
-
         settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
-
         switch (true) {
             case winningLines.length >= 1 && settings.cascadingNo < 4:
                 settings.cascadingNo += 1;
+                settings.hasCascading = true
                 new RandomResultGenerator(gameInstance);
                 settings.tempReel = settings.resultSymbolMatrix;
                 break;
@@ -184,20 +183,32 @@ export function checkForWin(gameInstance: SLPM) {
                 settings.cascadingNo = 0;
                 break;
         }
-        const values = settings._winData.winningSymbols.flatMap(symbolIndices => {
-            return symbolIndices.map(indexStr => {
-                const [row, col] = indexStr.split(',').map(Number);
-                return settings.tempReel[row][col];
-            });
-        });
-
-        console.log(values, 'Winning symbols values');
+        ExtractTempReelsWiningSym(gameInstance)
         return winningLines;
     } catch (error) {
         console.error("Error in checkForWin", error);
         return [];
     }
 }
+
+
+function ExtractTempReelsWiningSym(gameInstance: SLPM) {
+    const { settings } = gameInstance;
+
+    const valuesWithIndices = settings._winData.winningSymbols.flatMap(symbolIndices => {
+        return symbolIndices.map(indexStr => {
+            const [row, col] = indexStr.split(',').map(Number);
+            return {
+                index: { col, row }
+            };
+        });
+    });
+
+    console.log(valuesWithIndices, 'Winning symbols with their indices');
+    return valuesWithIndices;
+}
+
+
 
 
 //checking matching lines with first symbol and wild subs

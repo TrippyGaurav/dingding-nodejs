@@ -20,7 +20,7 @@ export interface SLPMSETTINGS {
     bets: number[];
     reels: any[][];
     Symbols: Symbol[];
-    hasreSpin: boolean,
+    hasCascading: boolean,
     cascadingNo: number,
     lastReel: any[],
     tempReel: any[],
