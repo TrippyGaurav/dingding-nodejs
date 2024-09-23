@@ -92,8 +92,8 @@ export class GameController {
           const platformDoc = await Platform.aggregate([
             { $match: { name: platform } },
             { $unwind: "$games" },
-            { $match: { "games.status": { $ne: "inactive" }, ...(category !== "all" ? { "games.category": category } : {}) } },
             { $sort: { "games.createdAt": -1 } },
+            { $match: { "games.status": { $ne: "inactive" }, ...(category !== "all" ? { "games.category": category } : {}) } },
             {
               $group: {
                 _id: "$_id",
@@ -102,15 +102,13 @@ export class GameController {
             },
             { $project: { "games.url": 0 } },
           ]);
-
           if (!platformDoc.length) {
             return res.status(200).json([]); // Return an empty array if no games are found
           }
 
           const games = platformDoc[0].games;
           const featured = games.slice(0, 5);
-          const others = games.slice(5);
-
+          const others = platformDoc[0].games;
           return res.status(200).json({ featured, others });
         }
       } else if (role === "company") {

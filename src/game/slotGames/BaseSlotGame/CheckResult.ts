@@ -1,4 +1,5 @@
 
+
 import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "../../Utils/gameUtils";
 import BaseSlotGame from "./BaseSlotGame";
 import { BonusGame } from "./BonusGame";
@@ -99,7 +100,6 @@ export class CheckResult {
               // this.currentGame.settings._winData.totalWinningAmount += 0
             }
         }
-
     }
 
     private checkForFreeSpin() {
@@ -235,7 +235,7 @@ export class CheckResult {
 
     //payouts to user according to symbols count in matched lines
     private accessData(symbol, matchCount) {
-        try {
+        try { 
             // console.log("Symbol:",symbol);
 
             const symbolData = this.currentGame.settings.currentGamedata.Symbols.find(s => s.Id.toString() === symbol.toString());

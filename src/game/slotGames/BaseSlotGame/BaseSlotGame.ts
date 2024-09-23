@@ -227,22 +227,18 @@ export default class BaseSlotGame implements RequiredSocketMethods {
         this.settings.jackpot.defaultAmount = symbol.defaultAmount;
         this.settings.jackpot.increaseValue = symbol.increaseValue;
         this.settings.jackpot.useJackpot = true;
-
         break;
-
       case specialIcons.wild:
         this.settings.wildSymbol.SymbolName = symbol.Name;
         this.settings.wildSymbol.SymbolID = symbol.Id;
         this.settings.wildSymbol.useWild = true;
         break;
-
       case specialIcons.scatter:
         (this.settings.scatter.symbolID = symbol.Id),
           (this.settings.scatter.multiplier = symbol.multiplier);
         this.settings.scatter.useScatter = true;
 
         break;
-
       case specialIcons.bonus:
         this.settings.bonus.id = symbol.Id;
         this.settings.bonus.symbolCount = symbol.symbolCount;
