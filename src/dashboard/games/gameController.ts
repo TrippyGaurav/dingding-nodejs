@@ -68,6 +68,7 @@ export class GameController {
             { $match: { name: platform } },
             { $unwind: "$games" },
             { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
+            { $sort: { "games.createdAt": -1 } },
             {
               $group: {
                 _id: "$_id",
@@ -102,12 +103,12 @@ export class GameController {
           ]);
 
           if (!platformDoc.length) {
-            return res.status(200).json([]); // Return an empty array if no games are found
+            return res.status(200).json([]); 
           }
 
           const games = platformDoc[0].games;
           const featured = games.slice(0, 5);
-          const others = games.slice(5);
+          const others = games;
 
           return res.status(200).json({ featured, others });
         }

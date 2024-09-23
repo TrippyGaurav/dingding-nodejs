@@ -145,7 +145,7 @@ export default class PlayerSocket {
       await session.commitTransaction();
     } catch (error) {
       await session.abortTransaction();
-      console.error("Failed to update database:", error);
+      // console.error("Failed to update database:", error);
       this.sendError("Database error");
     } finally {
       session.endSession();

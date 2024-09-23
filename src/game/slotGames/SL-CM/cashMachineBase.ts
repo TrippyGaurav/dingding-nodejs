@@ -62,7 +62,6 @@ export class SLCM {
     private prepareSpin(data: any) {
         this.settings.matrix.x = data.matrixX;
         this.settings.currentBet = this.settings.currentGamedata.bets[data.currentBet];
-
     }
 
     public async spinResult(): Promise<void> {
