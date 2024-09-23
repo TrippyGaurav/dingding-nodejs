@@ -12,7 +12,7 @@ export const checkToggle = async (req: Request, res: Response, next: NextFunctio
 
       // Check if the current time is before the 'availableAt' time
       if (now < availableAt) {
-        return res.status(503).json({ message: `Service is unavailable until ${availableAt}` });
+        return res.status(503).json({ message: `Under Maintenance until ${availableAt}` });
       }
 
       // If the time has passed, reset 'availableAt' to null
