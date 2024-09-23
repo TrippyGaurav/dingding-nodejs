@@ -48,6 +48,7 @@ export class GameController {
         throw createHttpError(400, "Platform query parameter is required");
       }
 
+
       if (role === "player") {
         if (category === "fav") {
           const player = await Player.findOne({ username });
@@ -68,6 +69,7 @@ export class GameController {
             { $match: { name: platform } },
             { $unwind: "$games" },
             { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
+            { $sort: { "games.createdAt": -1 } },
             {
               $group: {
                 _id: "$_id",

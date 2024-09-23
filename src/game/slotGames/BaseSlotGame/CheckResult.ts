@@ -1,6 +1,9 @@
 
 import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "../../Utils/gameUtils";
 import BaseSlotGame from "./BaseSlotGame";
+import { BonusGame } from "./BonusGame";
+import { MiniSpinBonus } from "./gameType";
+import { runMiniSpin } from "./MiniSpinGame";
 import { WinData } from "./WinData";
 
 export class CheckResult {
@@ -16,6 +19,7 @@ export class CheckResult {
     winSeq: any;
     bonusResult: string[];
     currentGame: BaseSlotGame;
+    bonusGame:BonusGame
     constructor(current) {
         current.settings._winData = new WinData(current);
         this.currentGame = current;
@@ -29,6 +33,7 @@ export class CheckResult {
         this.jackpotWinSymbols = [];
         this.winSeq = null;
         this.bonusResult = [];
+        this.bonusGame=this.bonusGame
         this.searchWinSymbols();
     }
 
@@ -81,6 +86,18 @@ export class CheckResult {
             }
             if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.spin)
                 this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();
+
+            //NOTE: minispin for fruity cocktail
+            else if(this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.miniSpin){
+              console.log("MINI SPIN");
+              this.currentGame.settings.currentGamedata.bonus.noOfItem = temp.length;
+              // console.log(this.currentGame.settings.currentGamedata.bonus);
+
+              // const resp =  this.bonusGame?.runMiniSpin()
+              // console.log("resp",resp);
+              runMiniSpin(this.currentGame.settings.currentGamedata.bonus );
+              // this.currentGame.settings._winData.totalWinningAmount += 0
+            }
         }
 
     }
