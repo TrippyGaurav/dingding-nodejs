@@ -118,57 +118,42 @@ export function checkForWin(gameInstance: SLPM) {
         const { settings } = gameInstance;
         const winningLines = [];
         let totalPayout = 0;
-
         settings.lineData.forEach((line, index) => {
             const firstSymbolPosition = line[0];
+            settings.lastReel.push(settings.resultSymbolMatrix)
             let firstSymbol = settings.resultSymbolMatrix[firstSymbolPosition][0];
 
-            // Handle wild symbols
+
             if (settings.wild.useWild && firstSymbol === settings.wild.SymbolID.toString()) {
                 firstSymbol = findFirstNonWildSymbol(line, gameInstance);
             }
 
-            // Handle special icons
             if (Object.values(specialIcons).includes(settings.currentGamedata.Symbols[firstSymbol].Name as specialIcons)) {
-                console.log("Special Icon Matched : ", settings.currentGamedata.Symbols[firstSymbol].Name);
+                console.log("Special Icon Matched : ", settings.currentGamedata.Symbols[firstSymbol].Name)
                 return;
             }
 
             const { isWinningLine, matchCount, matchedIndices } = checkLineSymbols(firstSymbol, line, gameInstance);
-
-            switch (true) {
-                case isWinningLine && matchCount >= 3:
-                    const symbolMultiplier = accessData(firstSymbol, matchCount, gameInstance);
-
-                    settings.lastReel = settings.resultSymbolMatrix
-                    switch (true) {
-                        case symbolMultiplier > 0:
-                            totalPayout += symbolMultiplier;
-                            settings._winData.winningLines.push(index);
-                            winningLines.push({
-                                line,
-                                symbol: firstSymbol,
-                                multiplier: symbolMultiplier,
-                                matchCount
-                            });
-                            console.log(`Line ${index + 1}:`, line);
-                            console.log(`Payout for Line ${index + 1}:`, 'payout', symbolMultiplier);
-                            const formattedIndices = matchedIndices.map(({ col, row }) => `${row},${col}`);
-                            const validIndices = formattedIndices.filter(index => index.length > 2);
-                            if (validIndices.length > 0) {
-                                console.log(settings.lastReel, 'settings.lastReel')
-                                console.log(validIndices)
-                                settings._winData.winningSymbols.push(validIndices);
-                            }
-                            break;
-
-                        default:
-                            break;
+            if (isWinningLine && matchCount >= 3) {
+                const symbolMultiplier = accessData(firstSymbol, matchCount, gameInstance);
+                console.log(matchedIndices)
+                if (symbolMultiplier > 0) {
+                    totalPayout += symbolMultiplier;
+                    settings._winData.winningLines.push(index);
+                    winningLines.push({
+                        line,
+                        symbol: firstSymbol,
+                        multiplier: symbolMultiplier,
+                        matchCount
+                    });
+                    console.log(`Line ${index + 1}:`, line);
+                    console.log(`Payout for Line ${index + 1}:`, 'payout', symbolMultiplier);
+                    const formattedIndices = matchedIndices.map(({ col, row }) => `${col},${row}`);
+                    const validIndices = formattedIndices.filter(index => index.length > 2);
+                    if (validIndices.length > 0) {
+                        settings._winData.winningSymbols.push(validIndices);
                     }
-                    break;
-
-                default:
-                    break;
+                }
             }
         });
         settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
@@ -181,6 +166,7 @@ export function checkForWin(gameInstance: SLPM) {
                 break;
             default:
                 settings.cascadingNo = 0;
+                settings.hasCascading = false
                 break;
         }
         ExtractTempReelsWiningSym(gameInstance)
@@ -191,10 +177,8 @@ export function checkForWin(gameInstance: SLPM) {
     }
 }
 
-
 function ExtractTempReelsWiningSym(gameInstance: SLPM) {
     const { settings } = gameInstance;
-
     const valuesWithIndices = settings._winData.winningSymbols.flatMap(symbolIndices => {
         return symbolIndices.map(indexStr => {
             const [row, col] = indexStr.split(',').map(Number);
@@ -204,7 +188,7 @@ function ExtractTempReelsWiningSym(gameInstance: SLPM) {
         });
     });
 
-    console.log(valuesWithIndices, 'Winning symbols with their indices');
+    // console.log(valuesWithIndices, 'Winning symbols with their indices');
     return valuesWithIndices;
 }
 
@@ -213,12 +197,14 @@ function ExtractTempReelsWiningSym(gameInstance: SLPM) {
 
 //checking matching lines with first symbol and wild subs
 function checkLineSymbols(firstSymbol: string, line: number[], gameInstance: SLPM): { isWinningLine: boolean, matchCount: number, matchedIndices: { col: number, row: number }[] } {
+    const { settings } = gameInstance
     try {
-        const { settings } = gameInstance;
+
         const wildSymbol = settings.wild.SymbolID.toString() || "";
         let matchCount = 1;
         let currentSymbol = firstSymbol;
         const matchedIndices: { col: number, row: number }[] = [{ col: 0, row: line[0] }];
+
         for (let i = 1; i < line.length; i++) {
             const rowIndex = line[i];
             const symbol = settings.resultSymbolMatrix[rowIndex][i];
@@ -227,20 +213,24 @@ function checkLineSymbols(firstSymbol: string, line: number[], gameInstance: SLP
                 console.error(`Symbol at position [${rowIndex}, ${i}] is undefined.`);
                 return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
             }
-            switch (true) {
-                case symbol === currentSymbol || symbol === wildSymbol:
-                    matchCount++;
-                    matchedIndices.push({ col: i, row: rowIndex });
-                    break;
-                case currentSymbol === wildSymbol:
-                    currentSymbol = symbol;
-                    matchCount++;
-                    matchedIndices.push({ col: i, row: rowIndex });
-                    break;
-                default:
-                    return { isWinningLine: matchCount >= 3, matchCount, matchedIndices };
+
+            // if (i === 1 && currentSymbol !== wildSymbol) {
+
+            //     break;
+            // }
+
+            if (symbol === currentSymbol || symbol === wildSymbol) {
+                matchCount++;
+                matchedIndices.push({ col: i, row: rowIndex });
+            } else if (currentSymbol === wildSymbol) {
+                currentSymbol = symbol;
+                matchCount++;
+                matchedIndices.push({ col: i, row: rowIndex });
+            } else {
+                break;
             }
         }
+
         return { isWinningLine: matchCount >= 3, matchCount, matchedIndices };
     } catch (error) {
         console.error('Error in checkLineSymbols:', error);

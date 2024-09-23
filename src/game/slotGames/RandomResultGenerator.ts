@@ -9,7 +9,7 @@ export class RandomResultGenerator {
                 matrix[y][x] = current.settings.reels[x][(startPosition + y) % current.settings.reels[x].length];
             }
         }
-        // console.log(matrix.flat(), 'MATRIX')
+        console.log(matrix, 'MATRIX')
 
         // matrix.pop();
         // matrix.pop();

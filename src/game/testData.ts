@@ -44,11 +44,11 @@ export const gameData = [{
             "Name": "0",
             "Id": 0,
             "reelInstance": {
-                "0": 9,
-                "1": 9,
-                "2": 9,
-                "3": 9,
-                "4": 9
+                "0": 20,
+                "1": 20,
+                "2": 20,
+                "3": 20,
+                "4": 20
             },
             "useWildSub": true,
             "multiplier": [
