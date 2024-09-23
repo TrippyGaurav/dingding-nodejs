@@ -175,8 +175,6 @@ export function makeResultJson(gameInstance: SLWOF, winningRows: number[]) {
                 Balance: Balance,
                 currentWining: playerData.currentWining,
                 totalbet: playerData.totalbet,
-
-
                 haveWon: playerData.haveWon,
             }
         };

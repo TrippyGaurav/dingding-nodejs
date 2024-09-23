@@ -72,6 +72,7 @@ export class SLPM {
         try {
             const playerData = this.getPlayerData();
             if (this.settings.hasCascading) {
+                await new RandomResultGenerator(this);
                 this.checkMoolahResult()
                 return
             }
@@ -114,7 +115,7 @@ export class SLPM {
         }
     }
     private async checkMoolahResult() {
-    
+
         checkForWin(this)
         console.log(this.settings.cascadingNo, 'CASCADING')
 

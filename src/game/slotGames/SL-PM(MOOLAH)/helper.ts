@@ -161,7 +161,7 @@ export function checkForWin(gameInstance: SLPM) {
             case winningLines.length >= 1 && settings.cascadingNo < 4:
                 settings.cascadingNo += 1;
                 settings.hasCascading = true
-                new RandomResultGenerator(gameInstance);
+                // new RandomResultGenerator(gameInstance);
                 settings.tempReel = settings.resultSymbolMatrix;
                 break;
             default:
