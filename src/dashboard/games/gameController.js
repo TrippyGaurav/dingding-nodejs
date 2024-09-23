@@ -71,6 +71,7 @@ class GameController {
                             { $match: { name: platform } },
                             { $unwind: "$games" },
                             { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
+                            { $sort: { "games.createdAt": -1 } },
                             {
                                 $group: {
                                     _id: "$_id",
@@ -90,8 +91,8 @@ class GameController {
                         const platformDoc = yield gameModel_1.Platform.aggregate([
                             { $match: { name: platform } },
                             { $unwind: "$games" },
-                            { $match: Object.assign({ "games.status": { $ne: "inactive" } }, (category !== "all" ? { "games.category": category } : {})) },
                             { $sort: { "games.createdAt": -1 } },
+                            { $match: Object.assign({ "games.status": { $ne: "inactive" } }, (category !== "all" ? { "games.category": category } : {})) },
                             {
                                 $group: {
                                     _id: "$_id",
@@ -105,7 +106,7 @@ class GameController {
                         }
                         const games = platformDoc[0].games;
                         const featured = games.slice(0, 5);
-                        const others = games.slice(5);
+                        const others = platformDoc[0].games;
                         return res.status(200).json({ featured, others });
                     }
                 }

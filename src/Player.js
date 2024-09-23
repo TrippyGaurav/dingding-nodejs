@@ -102,7 +102,7 @@ class PlayerSocket {
             }
             catch (error) {
                 yield session.abortTransaction();
-                console.error("Failed to update database:", error);
+                // console.error("Failed to update database:", error);
                 this.sendError("Database error");
             }
             finally {
