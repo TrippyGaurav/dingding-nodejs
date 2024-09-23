@@ -29,7 +29,7 @@ function initializeGameSettings(gameData, gameInstance) {
         currentLines: 0,
         BetPerLines: 0,
         reels: [],
-        hasreSpin: false,
+        hasCascading: false,
         cascadingNo: 0,
         lastReel: [],
         tempReel: [],
@@ -123,59 +123,52 @@ function checkForWin(gameInstance) {
         let totalPayout = 0;
         settings.lineData.forEach((line, index) => {
             const firstSymbolPosition = line[0];
+            settings.lastReel.push(settings.resultSymbolMatrix);
             let firstSymbol = settings.resultSymbolMatrix[firstSymbolPosition][0];
-            // Handle wild symbols
             if (settings.wild.useWild && firstSymbol === settings.wild.SymbolID.toString()) {
                 firstSymbol = findFirstNonWildSymbol(line, gameInstance);
             }
-            // Handle special icons
             if (Object.values(types_1.specialIcons).includes(settings.currentGamedata.Symbols[firstSymbol].Name)) {
                 console.log("Special Icon Matched : ", settings.currentGamedata.Symbols[firstSymbol].Name);
                 return;
             }
             const { isWinningLine, matchCount, matchedIndices } = checkLineSymbols(firstSymbol, line, gameInstance);
-            switch (true) {
-                case isWinningLine && matchCount >= 3:
-                    const symbolMultiplier = accessData(firstSymbol, matchCount, gameInstance);
-                    settings.lastReel = settings.resultSymbolMatrix;
-                    switch (true) {
-                        case symbolMultiplier > 0:
-                            totalPayout += symbolMultiplier;
-                            settings._winData.winningLines.push(index);
-                            winningLines.push({
-                                line,
-                                symbol: firstSymbol,
-                                multiplier: symbolMultiplier,
-                                matchCount
-                            });
-                            console.log(`Line ${index + 1}:`, line);
-                            console.log(`Payout for Line ${index + 1}:`, 'payout', symbolMultiplier);
-                            const formattedIndices = matchedIndices.map(({ col, row }) => `${col},${row}`);
-                            const validIndices = formattedIndices.filter(index => index.length > 2);
-                            console.log(validIndices, 'validIndices');
-                            if (validIndices.length > 0) {
-                                settings._winData.winningSymbols.push(validIndices);
-                            }
-                            break;
-                        default:
-                            break;
+            if (isWinningLine && matchCount >= 3) {
+                const symbolMultiplier = accessData(firstSymbol, matchCount, gameInstance);
+                console.log(matchedIndices);
+                if (symbolMultiplier > 0) {
+                    totalPayout += symbolMultiplier;
+                    settings._winData.winningLines.push(index);
+                    winningLines.push({
+                        line,
+                        symbol: firstSymbol,
+                        multiplier: symbolMultiplier,
+                        matchCount
+                    });
+                    console.log(`Line ${index + 1}:`, line);
+                    console.log(`Payout for Line ${index + 1}:`, 'payout', symbolMultiplier);
+                    const formattedIndices = matchedIndices.map(({ col, row }) => `${col},${row}`);
+                    const validIndices = formattedIndices.filter(index => index.length > 2);
+                    if (validIndices.length > 0) {
+                        settings._winData.winningSymbols.push(validIndices);
                     }
-                    break;
-                default:
-                    break;
+                }
             }
         });
         settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
         switch (true) {
             case winningLines.length >= 1 && settings.cascadingNo < 4:
                 settings.cascadingNo += 1;
+                settings.hasCascading = true;
                 new RandomResultGenerator_1.RandomResultGenerator(gameInstance);
                 settings.tempReel = settings.resultSymbolMatrix;
                 break;
             default:
                 settings.cascadingNo = 0;
+                settings.hasCascading = false;
                 break;
         }
+        ExtractTempReelsWiningSym(gameInstance);
         return winningLines;
     }
     catch (error) {
@@ -183,10 +176,23 @@ function checkForWin(gameInstance) {
         return [];
     }
 }
+function ExtractTempReelsWiningSym(gameInstance) {
+    const { settings } = gameInstance;
+    const valuesWithIndices = settings._winData.winningSymbols.flatMap(symbolIndices => {
+        return symbolIndices.map(indexStr => {
+            const [row, col] = indexStr.split(',').map(Number);
+            return {
+                index: { col, row }
+            };
+        });
+    });
+    // console.log(valuesWithIndices, 'Winning symbols with their indices');
+    return valuesWithIndices;
+}
 //checking matching lines with first symbol and wild subs
 function checkLineSymbols(firstSymbol, line, gameInstance) {
+    const { settings } = gameInstance;
     try {
-        const { settings } = gameInstance;
         const wildSymbol = settings.wild.SymbolID.toString() || "";
         let matchCount = 1;
         let currentSymbol = firstSymbol;
@@ -198,18 +204,20 @@ function checkLineSymbols(firstSymbol, line, gameInstance) {
                 console.error(`Symbol at position [${rowIndex}, ${i}] is undefined.`);
                 return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
             }
-            switch (true) {
-                case symbol === currentSymbol || symbol === wildSymbol:
-                    matchCount++;
-                    matchedIndices.push({ col: i, row: rowIndex });
-                    break;
-                case currentSymbol === wildSymbol:
-                    currentSymbol = symbol;
-                    matchCount++;
-                    matchedIndices.push({ col: i, row: rowIndex });
-                    break;
-                default:
-                    return { isWinningLine: matchCount >= 3, matchCount, matchedIndices };
+            // if (i === 1 && currentSymbol !== wildSymbol) {
+            //     break;
+            // }
+            if (symbol === currentSymbol || symbol === wildSymbol) {
+                matchCount++;
+                matchedIndices.push({ col: i, row: rowIndex });
+            }
+            else if (currentSymbol === wildSymbol) {
+                currentSymbol = symbol;
+                matchCount++;
+                matchedIndices.push({ col: i, row: rowIndex });
+            }
+            else {
+                break;
             }
         }
         return { isWinningLine: matchCount >= 3, matchCount, matchedIndices };
