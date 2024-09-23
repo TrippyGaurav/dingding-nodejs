@@ -119,7 +119,7 @@ export class SLWOF {
       console.log("Total Payout for all rows:", this.playerData.currentWining);
       this.updatePlayerBalance(this.playerData.currentWining)
       makeResultJson(this, winningRows);
-      this.settings.bonus = false
+      this.settings.isBonus = false
       this.settings.bonusStopIndex = 0
     } catch (error) {
       console.error("Error in checkResult:", error);
@@ -177,7 +177,7 @@ export class SLWOF {
     if (bonusSymbolsInRows >= 2) {
       console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
       this.settings.isBonus = true
-      const bonusWin = triggerBonusGame(this, this.settings);
+      const bonusWin = triggerBonusGame(this);
       console.log(`Bonus Payout: ${bonusWin}`);
       return bonusWin;
     }
