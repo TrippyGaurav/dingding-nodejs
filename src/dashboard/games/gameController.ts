@@ -49,96 +49,90 @@ export class GameController {
       }
 
 
-      if (role === "player") {
-        if (category === "fav") {
-          const player = await Player.findOne({ username });
-          if (!player || player.status === 'inactive') {
-            return next(
-              createHttpError(
-                404,
-                "Player not found or player is inactive"
-              ))
-          }
+      switch (role) {
+        case "player":
+          if (category === "fav") {
+            const player = await Player.findOne({ username });
+            if (!player || player.status === 'inactive') {
+              return next(
+                createHttpError(404, "Player not found or player is inactive")
+              );
+            }
 
-          const favoriteGameIds = player.favouriteGames.map(
-            (game) => new mongoose.Types.ObjectId(game)
-          );
+            const favoriteGameIds = player.favouriteGames.map(
+              (game) => new mongoose.Types.ObjectId(game)
+            );
 
-
-          const favoriteGames = await Platform.aggregate([
-            { $match: { name: platform } },
-            { $unwind: "$games" },
-            { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
-            { $sort: { "games.createdAt": -1 } },
-            {
-              $group: {
-                _id: "$_id",
-                games: { $push: "$games" },
+            const favoriteGames = await Platform.aggregate([
+              { $match: { name: platform } },
+              { $unwind: "$games" },
+              { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
+              { $sort: { "games.createdAt": -1 } },
+              {
+                $group: {
+                  _id: "$_id",
+                  games: { $push: "$games" },
+                },
               },
-            },
-            { $project: { "games.url": 0 } },
-          ]);
+              { $project: { "games.url": 0 } },
+            ]);
 
+            if (!favoriteGames.length) {
+              return res.status(200).json({ featured: [], others: [] });
+            }
 
+            return res.status(200).json({ featured: [], others: favoriteGames[0]?.games });
+          } else {
+            const platformDoc = await Platform.aggregate([
+              { $match: { name: platform } },
+              { $unwind: "$games" },
+              { $sort: { "games.createdAt": -1 } },
+              { $match: { "games.status": { $ne: "inactive" }, ...(category !== "all" ? { "games.category": category } : {}) } },
+              {
+                $group: {
+                  _id: "$_id",
+                  games: { $push: "$games" },
+                },
+              },
+              { $project: { "games.url": 0 } },
+            ]);
 
-          if (!favoriteGames.length) {
-            return res.status(200).json({ featured: [], others: [] });
+            if (!platformDoc.length) {
+              return res.status(200).json([]); // Return an empty array if no games are found
+            }
+
+            const games = platformDoc[0].games;
+            const featured = games.slice(0, 5);
+            const others = platformDoc[0].games;
+            return res.status(200).json({ featured, others });
           }
 
-          return res
-            .status(200)
-            .json({ featured: [], others: favoriteGames[0]?.games });
-        } else {
+        case "company":
           const platformDoc = await Platform.aggregate([
-            { $match: { name: platform } },
+            {
+              $match: category !== "all" ? { name: category } : {},
+            },
             { $unwind: "$games" },
             { $sort: { "games.createdAt": -1 } },
-            { $match: { "games.status": { $ne: "inactive" }, ...(category !== "all" ? { "games.category": category } : {}) } },
             {
               $group: {
                 _id: "$_id",
                 games: { $push: "$games" },
               },
             },
-            { $project: { "games.url": 0 } },
           ]);
-          if (!platformDoc.length) {
-            return res.status(200).json([]); // Return an empty array if no games are found
-          }
 
-          const games = platformDoc[0].games;
-          const featured = games.slice(0, 5);
-          const others = platformDoc[0].games;
-          return res.status(200).json({ featured, others });
-        }
-      } else if (role === "company") {
-        const platformDoc = await Platform.aggregate([
-          {
-            $match: category !== "all" ? { name: category } : {},
-          },
-          { $unwind: "$games" },
-          { $sort: { "games.createdAt": -1 } },
-          {
-            $group: {
-              _id: "$_id",
-              games: { $push: "$games" },
-            },
-          },
-        ]);
+          // Flatten the array of games from multiple platforms if category is "all"
+          const allGames = platformDoc.reduce(
+            (acc, platform) => acc.concat(platform.games),
+            []
+          );
+          return res.status(200).json(allGames);
 
-        // Flatten the array of games from multiple platforms if category is "all"
-        const allGames = platformDoc.reduce(
-          (acc, platform) => acc.concat(platform.games),
-          []
-        );
-        return res.status(200).json(allGames);
-      } else {
-        return next(
-          createHttpError(
-            403,
-            "Access denied: You don't have permission to access this resource."
-          )
-        );
+        default:
+          return next(
+            createHttpError(403, "Access denied: You don't have permission to access this resource.")
+          );
       }
     } catch (error) {
       next(error);
