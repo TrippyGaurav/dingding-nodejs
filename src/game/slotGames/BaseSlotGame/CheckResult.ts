@@ -91,13 +91,14 @@ export class CheckResult {
             //NOTE: minispin for fruity cocktail
             else if(this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.miniSpin){
               console.log("MINI SPIN");
+          const betPerLines = this.currentGame.settings.BetPerLines;
               this.currentGame.settings.currentGamedata.bonus.noOfItem = temp.length;
               // console.log(this.currentGame.settings.currentGamedata.bonus);
 
               // const resp =  this.bonusGame?.runMiniSpin()
               // console.log("resp",resp);
-              runMiniSpin(this.currentGame.settings.currentGamedata.bonus );
-              // this.currentGame.settings._winData.totalWinningAmount += 0
+              const result = runMiniSpin(this.currentGame.settings.currentGamedata.bonus, betPerLines );
+              this.currentGame.settings._winData.totalWinningAmount += result.totalWinAmount;
             }
         }
     }

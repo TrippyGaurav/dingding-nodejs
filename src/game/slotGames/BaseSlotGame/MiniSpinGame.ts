@@ -24,7 +24,7 @@ const generateInnerMatrix = (symbols: number[], miniSlotProb: number[]): number[
 
 
 
-export function runMiniSpin(bonus: any): any {
+export function runMiniSpin(bonus: any,betPerLines: number): any {
   try {
     if (bonus.noOfItem < 3) return ;
 
@@ -44,11 +44,14 @@ export function runMiniSpin(bonus: any): any {
       const innerMatrix = generateInnerMatrix(symbols, miniSlotProb);
       const outerRingSymbol = getRandomSymbol(symbols, outerRingProb);
       const matchCount = innerMatrix.filter(symbol => symbol === outerRingSymbol).length;
+
+      const win = payout[outerRingSymbol] * matchCount * betPerLines;
+
       result.innerMatrix.push(innerMatrix);
       result.outerRingSymbol.push(outerRingSymbol);
-      result.totalWinAmount += payout[outerRingSymbol] * matchCount;
+      result.totalWinAmount += win;
 
-      totalWinAmount += payout[outerRingSymbol] * matchCount;
+      totalWinAmount += win;
 
 
       if (outerRingSymbol === 7) {
@@ -57,7 +60,7 @@ export function runMiniSpin(bonus: any): any {
 
       console.log(`Inner Matrix: ${innerMatrix.join(', ')}`);
       console.log(`Outer Ring: ${outerRingSymbol}`);
-      console.log(`Matches: ${matchCount}, Win: ${payout[outerRingSymbol] * matchCount}`);
+      console.log(`Matches: ${matchCount}, Win: ${win}`);
       console.log(`Lives remaining: ${lives}`);
     }
 
