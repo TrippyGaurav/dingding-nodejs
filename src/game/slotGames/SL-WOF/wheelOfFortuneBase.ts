@@ -177,6 +177,7 @@ export class SLWOF {
     if (bonusSymbolsInRows >= 2) {
       console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
       this.settings.isBonus = true
+      console.log(this.settings.isBonus)
       const bonusWin = triggerBonusGame(this);
       console.log(`Bonus Payout: ${bonusWin}`);
       return bonusWin;
