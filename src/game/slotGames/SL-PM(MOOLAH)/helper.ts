@@ -28,6 +28,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLPM) {
         cascadingNo: 0,
         lastReel: [],
         tempReel: [],
+        tempReelSym: [],
         jackpot: {
             symbolName: "",
             symbolsCount: 0,
@@ -136,9 +137,7 @@ export function checkForWin(gameInstance: SLPM) {
                 console.log("Special Icon Matched : ", settings.Symbols[firstSymbol].Name);
                 return;
             }
-
             const { isWinningLine, matchCount, matchedIndices } = checkLineSymbols(firstSymbol, line, gameInstance);
-
             switch (true) {
                 case isWinningLine && matchCount >= 3:
                     const symbolMultiplier = accessData(firstSymbol, matchCount, gameInstance);
@@ -177,12 +176,13 @@ export function checkForWin(gameInstance: SLPM) {
             case winningLines.length >= 1 && settings.cascadingNo < 4:
                 settings.cascadingNo += 1;
                 settings.hasCascading = true
-                // ExtractTempReelsWiningSym(gameInstance)
                 new RandomResultGenerator(gameInstance);
                 settings.tempReel = settings.resultSymbolMatrix;
+                ExtractTempReelsWiningSym(gameInstance)
                 break;
             default:
                 settings.cascadingNo = 0;
+                settings.hasCascading = false
                 break;
         }
 
@@ -276,14 +276,18 @@ function ExtractTempReelsWiningSym(gameInstance: SLPM) {
         return symbolIndices.map(indexStr => {
             const [row, col] = indexStr.split(',').map(Number);
             const symbolValues = settings.tempReel[row][col]
+            settings.tempReelSym.push(symbolValues)
             return {
-                index: { col, row },
+                index: { row, col },
                 value: symbolValues
             };
         });
     });
+
     setToMinusOne(gameInstance)
-    console.log(valuesWithIndices, 'Winning symbols with their indices');
+
+
+    // console.log(valuesWithIndices, 'Winning symbols with their indices');
     return valuesWithIndices;
 }
 function setToMinusOne(gameInstance: SLPM) {
@@ -298,8 +302,49 @@ function setToMinusOne(gameInstance: SLPM) {
         });
     });
     console.log(settings.lastReel, 'Winning symbols set to -1');
+    cascadeSymbols(gameInstance)
     return valuesWithIndices;
 }
+
+/**
+ * Handles cascading mechanic and checks for additional wins.
+ * @param gameInstance - The game instance to apply cascading to.
+ */
+function cascadeSymbols(gameInstance: SLPM) {
+    const { settings } = gameInstance;
+
+    let tempReelIndex = 0;
+    const tempSymbols = settings.tempReelSym.flat();
+    console.log(tempSymbols, 'tempSymbols')
+    for (let col = 0; col < settings.lastReel[0].length; col++) {
+        let emptySlots = 0;
+        for (let row = settings.lastReel.length - 1; row >= 0; row--) {
+            if (settings.lastReel[row][col] === -1) {
+                emptySlots++;
+            } else if (emptySlots > 0) {
+                settings.lastReel[row + emptySlots][col] = settings.lastReel[row][col];
+                settings.lastReel[row][col] = -1;
+            }
+
+        }
+        // console.log(settings.lastReel, 'before ')
+        for (let row = 0; row < emptySlots; row++) {
+            if (tempReelIndex < tempSymbols.length) {
+                const symbolData = tempSymbols[tempReelIndex++];
+                settings.lastReel[row][col] = symbolData;
+            } else {
+                settings.lastReel[row][col] = 0;
+            }
+        }
+    }
+    settings.resultSymbolMatrix = settings.lastReel
+    console.log(settings.lastReel, 'after cascading');
+}
+
+
+
+
+
 //
 //
 /**

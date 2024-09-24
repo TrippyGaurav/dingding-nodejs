@@ -24,6 +24,7 @@ export interface SLPMSETTINGS {
     cascadingNo: number,
     lastReel: any[],
     tempReel: any[],
+    tempReelSym: any[],
     jackpot: {
         symbolName: string;
         symbolsCount: number;

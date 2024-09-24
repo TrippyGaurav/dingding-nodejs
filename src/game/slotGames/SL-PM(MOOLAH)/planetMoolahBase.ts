@@ -72,7 +72,7 @@ export class SLPM {
         try {
             const playerData = this.getPlayerData();
             if (this.settings.hasCascading) {
-                await new RandomResultGenerator(this);
+                // await new RandomResultGenerator(this);
                 this.checkMoolahResult()
                 return
             }
