@@ -10,14 +10,15 @@ export class RandomResultGenerator {
             }
         }
         console.log(matrix, 'MATRIX')
+
+        // matrix.pop();
+        // matrix.pop();
+        // matrix.pop();
+        // matrix.push(['1', '4', '2'])
+        // matrix.push(['12', '12', '12'])
+        // matrix.push(['3', '4', '12'])
         current.settings.resultReelIndex = matrix;
         current.settings.resultSymbolMatrix = matrix;
-        // matrix.pop();
-        // matrix.pop();
-        // matrix.pop();
-        // matrix.push(['11', '8', '2', '8', '8'])
-        // matrix.push(['5', '2', '1', '2', '4'])
-        // matrix.push(['2', '1', '5', '7', '1'])
 
     }
     getRandomIndex(maxValue: number): number {

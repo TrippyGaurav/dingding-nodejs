@@ -32,9 +32,12 @@ export interface WOFSETTINGS {
     Symbols: Symbol[];
     isSpecialWof: boolean;
     symbolsCount: number;
-    bonus: boolean;
     bonusStopIndex: number
     isBonus: boolean
+    bonus: {
+        payOut: any[],
+        payOutProb: any[]
+    },
 }
 
 export enum WINNINGTYPE {
@@ -43,3 +46,7 @@ export enum WINNINGTYPE {
     DEFAULT = 'default'
 }
 
+export enum specialIcons {
+    bonus = "bonus",
+
+}
