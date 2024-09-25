@@ -118,11 +118,13 @@ function handleSpecialSymbols(symbol: any, gameInstance: SLPM) {
 //CHECK WINS ON PAYLINES WITH OR WITHOUT WILD
 //check for win function
 export function checkForWin(gameInstance: SLPM) {
+    console.log(gameInstance.settings.resultSymbolMatrix, 'dfdfd')
+    console.log(gameInstance.settings.cascadingNo, 'CASCADING')
+
     try {
         const { settings } = gameInstance;
         const winningLines = [];
         let totalPayout = 0;
-
         settings.lineData.forEach((line, index) => {
             const firstSymbolPosition = line[0];
             let firstSymbol = settings.resultSymbolMatrix[firstSymbolPosition][0];
@@ -131,7 +133,6 @@ export function checkForWin(gameInstance: SLPM) {
                 console.log('afdfsfsdfsdfsdf')
                 firstSymbol = findFirstNonWildSymbol(line, gameInstance);
             }
-
             // Handle special icons
             if (Object.values(specialIcons).includes(settings.Symbols[firstSymbol].Name as specialIcons)) {
                 console.log("Special Icon Matched : ", settings.Symbols[firstSymbol].Name);
@@ -141,7 +142,6 @@ export function checkForWin(gameInstance: SLPM) {
             switch (true) {
                 case isWinningLine && matchCount >= 3:
                     const symbolMultiplier = accessData(firstSymbol, matchCount, gameInstance);
-
                     settings.lastReel = settings.resultSymbolMatrix
                     switch (true) {
                         case symbolMultiplier > 0:
@@ -181,8 +181,13 @@ export function checkForWin(gameInstance: SLPM) {
                 ExtractTempReelsWiningSym(gameInstance)
                 break;
             default:
+                console.log('NO PAYLINE MATCH')
                 settings.cascadingNo = 0;
                 settings.hasCascading = false
+                settings.resultSymbolMatrix = []
+                settings.tempReelSym = []
+                settings.tempReel = []
+                settings.lastReel = []
                 break;
         }
 
@@ -312,20 +317,20 @@ function setToMinusOne(gameInstance: SLPM) {
  */
 function cascadeSymbols(gameInstance: SLPM) {
     const { settings } = gameInstance;
-
     let tempReelIndex = 0;
+    let totalEmptySlots = 0;
+    settings.tempReelSym.push(settings.tempReelSym.slice(0, totalEmptySlots))
     const tempSymbols = settings.tempReelSym.flat();
-    console.log(tempSymbols, 'tempSymbols')
     for (let col = 0; col < settings.lastReel[0].length; col++) {
         let emptySlots = 0;
         for (let row = settings.lastReel.length - 1; row >= 0; row--) {
             if (settings.lastReel[row][col] === -1) {
                 emptySlots++;
+                totalEmptySlots++;
             } else if (emptySlots > 0) {
                 settings.lastReel[row + emptySlots][col] = settings.lastReel[row][col];
                 settings.lastReel[row][col] = -1;
             }
-
         }
         // console.log(settings.lastReel, 'before ')
         for (let row = 0; row < emptySlots; row++) {
@@ -338,11 +343,14 @@ function cascadeSymbols(gameInstance: SLPM) {
         }
     }
     settings.resultSymbolMatrix = settings.lastReel
+    console.log(settings.cascadingNo, 'CASCADING')
+    console.log(tempSymbols, 'totalEmptySlots')
     console.log(settings.lastReel, 'after cascading');
+    settings.tempReelSym = []
+    settings.tempReel = []
+    settings.lastReel = []
+    checkForWin(gameInstance)
 }
-
-
-
 
 
 //
