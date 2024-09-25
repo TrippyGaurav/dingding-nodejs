@@ -13,7 +13,24 @@ export class ToggleController {
   async getToggle(req: Request, res: Response, next: NextFunction) {
     try {
       const toggle = await Toggle.findOne({});
-      res.status(200).json(toggle);
+      if(!toggle) throw createHttpError(404, "Toggle not found");
+      if(toggle.availableAt === null) {
+        res.status(200).json({ underMaintenance: false });
+        return
+      }
+
+      const now = new Date();
+      if(new Date(toggle.availableAt) < now) {
+        await Toggle.findOneAndUpdate(
+          {},
+          { availableAt: null },
+          { new: true, upsert: true }
+        )
+        res.status(200).json({ underMaintenance: false });
+        return
+      }else{
+        res.status(200).json({ underMaintenance: true,availableAt: toggle.availableAt });
+      }
     } catch (error) {
       next(error);
     }
@@ -33,7 +50,7 @@ export class ToggleController {
           { availableAt: null },
           { new: true, upsert: true }
         );
-        res.status(200).json(toggle);
+        res.status(200).json({ message: "Toggle updated successfully", availableAt: toggle.availableAt });
         return
       }
       const now = new Date();
@@ -44,7 +61,7 @@ export class ToggleController {
         { availableAt },
         { new: true, upsert: true }
       );
-      res.status(200).json({ message: "Toggle updated successfully", toggle });
+      res.status(200).json({ message: "Toggle updated successfully", availableAt: toggle.availableAt });
 
     } catch (error) {
       next(error);
