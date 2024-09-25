@@ -82,8 +82,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/games", gameRoutes);
 app.use("/api/payouts", checkUser, checkAdmin, payoutRoutes)
-// app.use("/api/toggle",checkUser,checkAdmin, toggleRoutes);
-app.use("/api/toggle" ,toggleRoutes);
+app.use("/api/toggle",checkUser,checkAdmin, toggleRoutes);
+// app.use("/api/toggle" ,toggleRoutes);
 
 const io = new Server(server, {
   cors: {
