@@ -42,6 +42,15 @@ export interface Bonus {
   payOutProb: number[];
   payTable: number[];
 }
+export interface MiniSpinBonus {
+  isEnabled: boolean;
+  type: string;
+  noOfItem: number;
+  symbols: number[];
+  payOut: number[];
+  miniSlotProb: number[];
+  outerRingProb: number[];
+}
 
 export interface GameData {
   id: string;
@@ -51,7 +60,7 @@ export interface GameData {
   bets: number[]; // Add this line to include bets property
   matrix: { x: number; y: number };
   linesCount: number; // Add this line to include linesCount property
-  
+
 }
 
 

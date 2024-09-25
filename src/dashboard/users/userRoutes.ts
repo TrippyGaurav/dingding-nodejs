@@ -2,12 +2,13 @@ import express from "express";
 import { extractRoleFromCookie } from "../middleware/middlware";
 import { UserController } from "./userController";
 import { checkUser } from "../middleware/checkUser";
+import { checkToggle } from "../middleware/checkToggle";
 
 const userController = new UserController();
 const userRoutes = express.Router();
 
 // LOGIN
-userRoutes.post("/login", userController.loginUser);
+userRoutes.post("/login",checkToggle, userController.loginUser);
 
 // LOGOUT
 userRoutes.post("/logout", checkUser, userController.logoutUser)
