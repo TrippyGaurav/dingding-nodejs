@@ -3,45 +3,46 @@ import { Request, Response, NextFunction } from 'express';
 import Toggle from '../Toggle/ToggleModel';
 import { AuthRequest } from '../../utils/utils';
 import { User } from '../users/userModel';
+import createHttpError from 'http-errors';
 
-export const checkToggle = async (req: Request, res: Response, next: NextFunction) => {
+export const checkLoginToggle = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const toggle = await Toggle.findOne();
-
-    const _req = req as AuthRequest;
-
-    //NOTE: checking if company user
-    if (_req.route.path === '/login') {
-      const companyUser = await User.findOne();
-
-      if (_req.body.username === companyUser?.username) {
-        //NOTE: is company user so proceed
-        next()
-      }
-    } else {
-      if (_req.user.role === "company") {
-        //NOTE: is company user so proceed
+    console.log("req", req.body);
+    const companyUsers = await User.find({ role: 'company' });
+    //check if company users exist ,then go through available function
+    if(companyUsers?.find(user => user.username === req.body.username)){ 
+      console.log("passed through");
+      next()
+    }else{
+      const {underMaintenance, availableAt} = await isAvaiable();
+      if(underMaintenance === true) {
+        res.status(200).json({ message:`underMaintenance till ${new Date(availableAt)}` , isUnderMaintenance: underMaintenance });
+        return
+      }else{
         next()
       }
     }
-
-
-    if (toggle?.availableAt) {
-      const now = new Date();
-      const availableAt = new Date(toggle.availableAt);
-
-      // Check if the current time is before the 'availableAt' time
-      if (now < availableAt) {
-        return res.status(503).json({ message: `Under Maintenance until ${availableAt}` });
-      }
-
-      // If the time has passed, reset 'availableAt' to null
-      toggle.availableAt = null;
-      await toggle.save();
-    }
-
-    next(); // Proceed if the service is available
   } catch (error) {
-    return res.status(500).json({ message: 'Error checking service status', error });
+    next(error);
   }
 };
+
+async function isAvaiable (){
+  const toggle = await Toggle.findOne();
+  if(!toggle) throw createHttpError(404, "Toggle not found");
+  if(toggle.availableAt === null) {
+    return {underMaintenance: false, availableAt: null}
+  }
+  const now = new Date();
+  const time = new Date(toggle.availableAt);
+  if (time > now) {
+    return {underMaintenance: true, availableAt: toggle.availableAt}
+  }else{
+    await Toggle.findOneAndUpdate(
+      {},
+      { availableAt: null },
+      { new: true, upsert: true }
+    )
+    return {underMaintenance: false, availableAt: null}
+  }
+}

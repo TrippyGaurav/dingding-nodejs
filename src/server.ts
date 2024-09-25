@@ -18,7 +18,6 @@ import payoutRoutes from "./dashboard/payouts/payoutRoutes";
 import { checkUser } from "./dashboard/middleware/checkUser";
 import { Platform } from "./dashboard/games/gameModel";
 import toggleRoutes from "./dashboard/Toggle/ToggleRoutes";
-import { checkToggle } from "./dashboard/middleware/checkToggle";
 declare module "express-session" {
   interface Session {
     captcha?: string;
