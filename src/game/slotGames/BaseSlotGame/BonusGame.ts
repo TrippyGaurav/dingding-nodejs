@@ -152,10 +152,29 @@ export class BonusGame {
             console.log("amount", amount);
             console.log("current bet", this.parent.settings.BetPerLines);
         }
-
+        else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == bonusGameType.layerTap) {
+            let totalWinAmount = 0;
+            const bonusData = this.parent.settings.currentGamedata.bonus;
+            var selectedIndex =[];
+            for (let layerIndex = 0; layerIndex < bonusData.payOut.length; layerIndex++) {
+                
+                const layerPayOuts = bonusData.payOut[layerIndex];
+                const layerPayOutProb = bonusData.payOutProb[layerIndex];
+                selectedIndex[layerIndex] = this.getRandomPayoutIndex(layerPayOutProb);
+                const selectedPayOut = layerPayOuts[selectedIndex[layerIndex]];
+                if (selectedPayOut === 0) {
+                    console.log(`Payout is 0 at layer ${layerIndex}, exiting...`);
+                    break;
+                }
+                totalWinAmount += this.parent.settings.BetPerLines * selectedPayOut;
+            }
+            console.log("Bonus Index",selectedIndex);
+            amount += totalWinAmount;
+        }
         if (!amount || amount < 0)
             amount = 0;
-        return amount;
+        
+        return { selectedIndex, amount };
     }
 
     shuffle(array: number[]) {
@@ -178,7 +197,7 @@ export class BonusGame {
             return cumulativeProb[index];
         }, 0);
 
-        console.log("cumulative array", cumulativeProb);
+        
 
         const randomNum = Math.random();
 
