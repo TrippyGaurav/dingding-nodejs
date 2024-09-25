@@ -9,20 +9,22 @@ export class ToggleController {
     this.putToggle = this.putToggle.bind(this);
   }
 
-  async getToggle() {
+  //NOTE: GET toggle
+  async getToggle(req: Request, res: Response, next: NextFunction) {
     try {
-      const toggle = await Toggle.findOne();
-      return toggle;
+      const toggle = await Toggle.findOne({});
+      res.status(200).json(toggle);
     } catch (error) {
-      throw error
+      next(error);
     }
   }
+
+
   //NOTE: Add new toggle
   async putToggle(req: Request, res: Response, next: NextFunction) {
     try {
 
       const _req = req as AuthRequest;
-      
       const { availableAt } = _req.body;
       if (!availableAt) throw createHttpError(404, "availableAt is required");
       if(availableAt === "null") {
