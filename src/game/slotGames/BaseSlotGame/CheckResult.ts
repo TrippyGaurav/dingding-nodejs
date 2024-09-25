@@ -99,7 +99,6 @@ export class CheckResult {
                 const result = runMiniSpin(this.currentGame.settings.currentGamedata.bonus, betPerLines);
                 this.bonusResult = result
                 this.currentGame.settings._winData.totalWinningAmount += result.totalWinAmount;
-                this.bonusResult = []
             }
         }
     }
