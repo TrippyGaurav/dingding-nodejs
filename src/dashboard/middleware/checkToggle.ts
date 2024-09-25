@@ -7,7 +7,6 @@ import createHttpError from 'http-errors';
 
 export const checkLoginToggle = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log("req", req.body);
     const companyUsers = await User.find({ role: 'company' });
     //check if company users exist ,then go through available function
     if(companyUsers?.find(user => user.username === req.body.username)){ 
@@ -26,6 +25,20 @@ export const checkLoginToggle = async (req: Request, res: Response, next: NextFu
     next(error);
   }
 };
+
+export const checkGamesToggle = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {underMaintenance, availableAt} = await isAvaiable();
+    if(underMaintenance === true) {
+      res.status(201).json({ message:`underMaintenance till ${new Date(availableAt)}` , isUnderMaintenance: underMaintenance });
+      return
+    }else{
+      next()
+    }
+  } catch (error) {
+    next(error);
+  }
+}
 
 async function isAvaiable (){
   const toggle = await Toggle.findOne();
