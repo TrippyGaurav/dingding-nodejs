@@ -91,7 +91,7 @@ export class CheckResult {
             //NOTE: minispin for fruity cocktail
             else if(this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.miniSpin){
               console.log("MINI SPIN");
-          const betPerLines = this.currentGame.settings.BetPerLines;
+              const betPerLines = this.currentGame.settings.BetPerLines;
               this.currentGame.settings.currentGamedata.bonus.noOfItem = temp.length;
               // console.log(this.currentGame.settings.currentGamedata.bonus);
 
@@ -135,7 +135,7 @@ export class CheckResult {
                 }
 
                 if (Object.values(specialIcons).includes(this.currentGame.settings.currentGamedata.Symbols[firstSymbol].Name as specialIcons)) {
-                    console.log("Special Icon Matched : ", this.currentGame.settings.currentGamedata.Symbols[firstSymbol].Name)
+                    // console.log("Special Icon Matched : ", this.currentGame.settings.currentGamedata.Symbols[firstSymbol].Name)
                     return;
                 }
 
