@@ -20,7 +20,9 @@ export class ToggleController {
   //NOTE: Add new toggle
   async putToggle(req: Request, res: Response, next: NextFunction) {
     try {
+
       const _req = req as AuthRequest;
+      
       const { availableAt } = _req.body;
       if (!availableAt) throw createHttpError(404, "availableAt is required");
       if(availableAt === "null") {
@@ -40,7 +42,7 @@ export class ToggleController {
         { availableAt },
         { new: true, upsert: true }
       );
-      res.status(200).json(toggle);
+      res.status(200).json({ message: "Toggle updated successfully", toggle });
 
     } catch (error) {
       next(error);
