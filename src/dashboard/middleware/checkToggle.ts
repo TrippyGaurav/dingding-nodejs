@@ -35,7 +35,7 @@ export const checkGamesToggle = async (req: Request, res: Response, next: NextFu
     } else {
       const { underMaintenance, availableAt } = await isAvaiable();
       if (underMaintenance === true) {
-        res.status(201).json({ message: `underMaintenance till ${new Date(availableAt)}`, isUnderMaintenance: underMaintenance });
+        res.status(201).json({ message: `underMaintenance till ${new Date(availableAt)}`, isUnderMaintenance: underMaintenance, availableAt: availableAt });
         return
       } else {
         next()
