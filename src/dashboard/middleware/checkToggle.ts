@@ -1,7 +1,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import Toggle from '../Toggle/ToggleModel';
-import { AuthRequest } from '../../utils/utils';
+import { AuthRequest, formatDate } from '../../utils/utils';
 import { User } from '../users/userModel';
 import createHttpError from 'http-errors';
 
@@ -14,7 +14,7 @@ export const checkLoginToggle = async (req: Request, res: Response, next: NextFu
     } else {
       const { underMaintenance, availableAt } = await isAvaiable();
       if (underMaintenance === true) {
-        res.status(200).json({ message: `underMaintenance till ${new Date(availableAt)}`, isUnderMaintenance: underMaintenance });
+        res.status(200).json({ message: `underMaintenance till ${formatDate(availableAt.toISOString())}`, isUnderMaintenance: underMaintenance });
         return
       } else {
         next()
@@ -35,7 +35,7 @@ export const checkGamesToggle = async (req: Request, res: Response, next: NextFu
     } else {
       const { underMaintenance, availableAt } = await isAvaiable();
       if (underMaintenance === true) {
-        res.status(201).json({ message: `underMaintenance till ${new Date(availableAt)}`, isUnderMaintenance: underMaintenance, availableAt: availableAt });
+        res.status(201).json({ message: `underMaintenance till ${formatDate(availableAt.toISOString())}`, isUnderMaintenance: underMaintenance, availableAt: availableAt });
         return
       } else {
         next()
