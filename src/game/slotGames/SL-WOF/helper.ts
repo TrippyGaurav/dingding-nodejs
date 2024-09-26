@@ -61,13 +61,12 @@ function shuffleArray(array: any[]) {
 export function triggerBonusGame(gameInstance: SLWOF): number {
     const { settings } = gameInstance
     const { payOut, payOutProb } = settings.currentGamedata.bonus;
-    console.log(payOut, payOutProb)
     const randomValue = Math.random() * 100;
     let cumulativeProbability = 0;
     for (let i = 0; i < payOut.length; i++) {
         cumulativeProbability += payOutProb[i];
         if (randomValue <= cumulativeProbability) {
-            console.log(`Bonus Game: Selected payout is ${payOut[i]} and index is ${i} `);
+            console.log(`Bonus Game: Selected payout is ${payOut[i] * settings.BetPerLines} and index is ${i} `);
             gameInstance.settings.bonusStopIndex = i
             return payOut[i];
         }
@@ -103,12 +102,13 @@ export function sendInitData(gameInstance: SLWOF) {
 }
 
 export function checkWinningCondition(gameInstance: SLWOF, row: any[]): { winType: string; symbolId?: number } {
+
     try {
         if (row.length === 0) {
             throw new Error("Row is empty, cannot check winning condition.");
         }
         const firstSymbolId = row[0];
-        const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id === firstSymbolId);
+        const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id ==firstSymbolId);
         if (!firstSymbol) {
             throw new Error(`Symbol with Id ${firstSymbolId} not found.`);
         }
@@ -134,7 +134,7 @@ export function checkWinningCondition(gameInstance: SLWOF, row: any[]): { winTyp
 
 export async function calculatePayout(gameInstance: SLWOF, symbols: any[], symbolId: number, winType: string): Promise<number> {
     try {
-        const symbol = gameInstance.settings.Symbols.find(sym => sym.Id === symbolId);
+        const symbol = gameInstance.settings.Symbols.find(sym => sym.Id == symbolId);
         if (!symbol) {
             throw new Error(`Symbol with Id ${symbolId} not found.`);
         }

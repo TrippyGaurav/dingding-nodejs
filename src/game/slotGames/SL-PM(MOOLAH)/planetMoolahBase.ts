@@ -72,7 +72,7 @@ export class SLPM {
         try {
             const playerData = this.getPlayerData();
             if (this.settings.hasCascading) {
-                await new RandomResultGenerator(this);
+                // await new RandomResultGenerator(this);
                 this.checkMoolahResult()
                 return
             }
@@ -107,7 +107,6 @@ export class SLPM {
                 rtp = won / spend;
             }
             // console.log('RTP calculated:', rtp * 100);
-
             return;
         } catch (error) {
             console.error("Failed to calculate RTP:", error);
@@ -117,7 +116,7 @@ export class SLPM {
     private async checkMoolahResult() {
 
         checkForWin(this)
-        console.log(this.settings.cascadingNo, 'CASCADING')
+        // console.log(this.settings.cascadingNo, 'CASCADING')
 
         // console.log(this.settings.lastReel, 'settings.lastReel')
         // console.log(this.settings.tempReel, ' this.settings.tempReel')

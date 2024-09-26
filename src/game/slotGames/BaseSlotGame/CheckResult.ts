@@ -2,9 +2,8 @@
 
 import { ScatterPayEntry, BonusPayEntry, specialIcons, bonusGameType, ResultType } from "../../Utils/gameUtils";
 import BaseSlotGame from "./BaseSlotGame";
-import { BonusGame } from "./BonusGame";
+import { BonusGame, runMiniSpin } from "./BonusGame";
 import { MiniSpinBonus } from "./gameType";
-import { runMiniSpin } from "./MiniSpinGame";
 import { WinData } from "./WinData";
 
 export class CheckResult {
@@ -20,7 +19,7 @@ export class CheckResult {
     winSeq: any;
     bonusResult: string[];
     currentGame: BaseSlotGame;
-    bonusGame:BonusGame
+    bonusGame: BonusGame
     constructor(current) {
         current.settings._winData = new WinData(current);
         this.currentGame = current;
@@ -34,11 +33,11 @@ export class CheckResult {
         this.jackpotWinSymbols = [];
         this.winSeq = null;
         this.bonusResult = [];
-        this.bonusGame=this.bonusGame
+        this.bonusGame = this.bonusGame
         this.searchWinSymbols();
     }
 
-    
+
     searchWinSymbols() {
         this.checkForWin();
         this.checkForFreeSpin();
@@ -92,16 +91,19 @@ export class CheckResult {
                 this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();
 
             //NOTE: minispin for fruity cocktail
-            if(this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.miniSpin){
-              console.log("MINI SPIN");
-              const betPerLines = this.currentGame.settings.BetPerLines;
-              this.currentGame.settings.currentGamedata.bonus.noOfItem = temp.length;
               // console.log(this.currentGame.settings.currentGamedata.bonus);
+            if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.miniSpin) {
+                console.log("MINI SPIN");
+                const betPerLines = this.currentGame.settings.BetPerLines;
+                this.currentGame.settings.currentGamedata.bonus.noOfItem = temp.length;
+                // console.log(this.currentGame.settings.currentGamedata.bonus);
 
-              // const resp =  this.bonusGame?.runMiniSpin()
-              // console.log("resp",resp);
-              const result = runMiniSpin(this.currentGame.settings.currentGamedata.bonus, betPerLines );
-              this.currentGame.settings._winData.totalWinningAmount += result.totalWinAmount;
+                // const resp =  this.bonusGame?.runMiniSpin()
+                // console.log("resp",resp);
+                const result = runMiniSpin(this.currentGame.settings.currentGamedata.bonus, betPerLines);
+                this.bonusResult = result
+                this.currentGame.settings._winData.totalWinningAmount += result.totalWinAmount;
+                
             }
             console.log("Bonus type",this.currentGame.settings.currentGamedata.bonus.type);
             if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.layerTap) {
@@ -109,8 +111,8 @@ export class CheckResult {
                 const result= this.currentGame.settings.bonus.game.setRandomStopIndex()
                 this.currentGame.settings._winData.totalWinningAmount += result.amount;
                 this.bonusResult=result.selectedIndex
-               
             }
+        
         }
     }
 
@@ -247,7 +249,7 @@ export class CheckResult {
 
     //payouts to user according to symbols count in matched lines
     private accessData(symbol, matchCount) {
-        try { 
+        try {
             // console.log("Symbol:",symbol);
 
             const symbolData = this.currentGame.settings.currentGamedata.Symbols.find(s => s.Id.toString() === symbol.toString());

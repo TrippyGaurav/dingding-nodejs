@@ -64,80 +64,16 @@ export class BonusGame {
     }
 
 
-    runMiniSpin (   ) {
-      console.log("run mini spin");
-      //NOTE: fruity cocktail bonus game 
-
-      //WARN: remove later
-      // if(this.parent.settings.currentGamedata.bonus.noOfItem < 3) return 
-      //
-      // let lives = this.parent.settings.currentGamedata.bonus.noOfItem > 5 ? 
-      //             3 :
-      //             this.parent.settings.currentGamedata.bonus.noOfItem - 2;
-      //TODO: - loop till lives  === 0
-      //         - 1*3 matrix generation
-      //         - rng on outer ring of symbols  
-      //         - check no. of matching symbols for outer ring and 1*3 (matchCount)
-      //         - add win amt based on matchCount 
-      //         - check if rng on outer ring lands on exit symbol if so decrement lives
-      //      - return total win amt
-
-      // let totalWinAmount = 0;
-  // let bonus = this.parent.settings.currentGamedata.bonus
-    
-      // const { symbols, miniSlotProb, outerRingProb, payout } = this.parent.settings.currentGamedata.bonus;
-      //
-      // // Helper function to get a random index based on probability array
-      // const getRandomIndex = (probArray) => {
-      //   const rand = Math.random() * 100;
-      //   let sum = 0;
-      //   for (let i = 0; i < probArray.length; i++) {
-      //     sum += probArray[i];
-      //     if (rand <= sum) return i;
-      //   }
-      //   return probArray.length - 1;
-      // };
-      //
-      // // Main game loop
-      // while (lives > 0) {
-      //   // Generate 1x3 matrix
-      //   const innerMatrix = Array(3).fill().map(() => symbols[getRandomIndex(miniSlotProb)]);
-      //
-      //   // Generate outer ring symbol
-      //   const outerRingSymbol = symbols[getRandomIndex(outerRingProb)];
-      //
-      //   // Count matches between outer ring and inner matrix
-      //   const matchCount = innerMatrix.filter(symbol => symbol === outerRingSymbol).length;
-      //
-      //   // Calculate and add win amount based on match count
-      //   totalWinAmount += payout[matchCount];
-      //
-      //   // Check if outer ring landed on exit symbol (symbol id 7)
-      //   if (outerRingSymbol === 7) {
-      //     lives--;
-      //   }
-      //
-      //   // You may want to add some visual feedback here, e.g.:
-      //   console.log(`Inner Matrix: ${innerMatrix.join(', ')}`);
-      //   console.log(`Outer Ring: ${outerRingSymbol}`);
-      //   console.log(`Matches: ${matchCount}, Win: ${payout[matchCount]}`);
-      //   console.log(`Lives remaining: ${lives}`);
-      // }
-      //
-      // // Return total win amount
-      // console.log(`Total Win Amount: ${totalWinAmount}`);
-      // return totalWinAmount;
-    }
 
     setRandomStopIndex() {
         let amount: number = 0;
 
         console.log("bonus: ", this.parent.settings.currentGamedata.bonus);
-    
+
         if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == bonusGameType.spin) {
             this.parent.settings.bonus.stopIndex = this.getRandomPayoutIndex(this.parent.settings.currentGamedata.bonus.payOutProb);
             amount = this.parent.settings.BetPerLines * this.result[this.parent.settings.bonus.stopIndex];
-         
+
         } else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == bonusGameType.tap) {
             for (let index = 0; index < this.result.length; index++) {
                 if (this.result[index] == 0)
@@ -209,4 +145,85 @@ export class BonusGame {
 
         return cumulativeProb.length - 1;
     }
+}
+
+/**
+ * Selects a random index from a probability array based on weighted probabilities.
+ * 
+ * @param probArray - An array of probabilities for each index. Each value represents the weight
+ *                    for selecting that index.
+ * @returns The index of the randomly selected item based on the probabilities.
+ */
+
+const getRandomIndex = (probArray: number[]): number => {
+    const totalProb = probArray.reduce((sum, prob) => sum + prob, 0);
+    const rand = Math.random() * totalProb;
+    let sum = 0;
+    for (let i = 0; i < probArray.length; i++) {
+        sum += probArray[i];
+        if (rand < sum) return i;
+    }
+    return probArray.length - 1;
+};
+
+const getRandomSymbol = (symbols: number[], probArray: number[]): number => {
+    const index = getRandomIndex(probArray);
+    return symbols[index];
+};
+
+const generateInnerMatrix = (symbols: number[], miniSlotProb: number[]): number[] => {
+    return Array.from({ length: 3 }, () => getRandomSymbol(symbols, miniSlotProb));
+};
+
+
+
+
+/**
+ * Simulates a mini slot game spin based on bonus information and the bet per line.
+ *
+ * @param bonus - The bonus object containing information about symbols, probabilities, payouts, etc.
+ * @param betPerLines - The amount of bet per line.
+ * @returns An object containing the result of the mini spin, including the inner matrix, outer ring symbols, winnings, and total win amount.
+ */
+export function runMiniSpin(bonus: any, betPerLines: number): any {
+    try {
+        if (bonus.noOfItem < 3) return;
+        let lives = bonus.noOfItem > 5 ? 3 : bonus.noOfItem - 2;
+        let totalWinAmount = 0;
+        const { symbols, miniSlotProb, outerRingProb, payOut } = bonus;
+        let result = {
+            innerMatrix: [],
+            outerRingSymbol: [],
+            totalWinAmount: 0,
+            winings: [] as string[],
+        }
+        console.log(`Lives: ${lives}`);
+        while (lives > 0) {
+            const innerMatrix = generateInnerMatrix(symbols, miniSlotProb);
+            const outerRingSymbol = getRandomSymbol(symbols, outerRingProb);
+            const matchCount = innerMatrix.filter(symbol => symbol === outerRingSymbol).length;
+            const winAmt = payOut[outerRingSymbol] * matchCount * betPerLines;
+            const win = winAmt.toFixed(1);
+            result.winings.push(win);
+            result.innerMatrix.push(innerMatrix);
+            result.outerRingSymbol.push(outerRingSymbol);
+            result.totalWinAmount += Number(win);
+            totalWinAmount += Number(win);
+            if (outerRingSymbol === 7) {
+                lives--;
+            }
+            console.log(`Inner Matrix: ${innerMatrix.join(', ')}`);
+            console.log(`Outer Ring: ${outerRingSymbol}`);
+            console.log(`Matches: ${matchCount}, Win: ${win}`);
+            console.log(`Lives remaining: ${lives}`);
+        }
+
+        console.log(`${JSON.stringify(result)}`);
+
+        return result;
+    } catch (error) {
+        console.error(error);
+    }
+
+
 }

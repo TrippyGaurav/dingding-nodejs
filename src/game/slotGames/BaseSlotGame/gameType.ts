@@ -56,11 +56,11 @@ export interface GameData {
   id: string;
   linesApiData: any[];
   Symbols: Symbol[];
-  bonus: Bonus ;
+  bonus: Bonus;
   bets: number[]; // Add this line to include bets property
   matrix: { x: number; y: number };
   linesCount: number; // Add this line to include linesCount property
-  
+
 }
 
 
