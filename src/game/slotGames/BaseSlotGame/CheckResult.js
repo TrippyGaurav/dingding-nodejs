@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CheckResult = void 0;
 const gameUtils_1 = require("../../Utils/gameUtils");
+const BonusGame_1 = require("./BonusGame");
 const WinData_1 = require("./WinData");
 class CheckResult {
     constructor(current) {
@@ -17,6 +18,7 @@ class CheckResult {
         this.jackpotWinSymbols = [];
         this.winSeq = null;
         this.bonusResult = [];
+        this.bonusGame = this.bonusGame;
         this.searchWinSymbols();
     }
     searchWinSymbols() {
@@ -55,6 +57,18 @@ class CheckResult {
             }
             if (this.currentGame.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.spin)
                 this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();
+            //NOTE: minispin for fruity cocktail
+            else if (this.currentGame.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.miniSpin) {
+                console.log("MINI SPIN");
+                const betPerLines = this.currentGame.settings.BetPerLines;
+                this.currentGame.settings.currentGamedata.bonus.noOfItem = temp.length;
+                // console.log(this.currentGame.settings.currentGamedata.bonus);
+                // const resp =  this.bonusGame?.runMiniSpin()
+                // console.log("resp",resp);
+                const result = (0, BonusGame_1.runMiniSpin)(this.currentGame.settings.currentGamedata.bonus, betPerLines);
+                this.bonusResult = result;
+                this.currentGame.settings._winData.totalWinningAmount += result.totalWinAmount;
+            }
         }
     }
     checkForFreeSpin() {
@@ -82,7 +96,7 @@ class CheckResult {
                     firstSymbol = this.findFirstNonWildSymbol(line);
                 }
                 if (Object.values(gameUtils_1.specialIcons).includes(this.currentGame.settings.currentGamedata.Symbols[firstSymbol].Name)) {
-                    console.log("Special Icon Matched : ", this.currentGame.settings.currentGamedata.Symbols[firstSymbol].Name);
+                    // console.log("Special Icon Matched : ", this.currentGame.settings.currentGamedata.Symbols[firstSymbol].Name)
                     return;
                 }
                 const { isWinningLine, matchCount, matchedIndices } = this.checkLineSymbols(firstSymbol, line);

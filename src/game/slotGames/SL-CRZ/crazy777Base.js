@@ -34,6 +34,7 @@ class SLCRZ {
             Symbols.push(Element);
         });
         return Symbols;
+        ``;
     }
     sendMessage(action, message) {
         this.currentGameData.sendMessage(action, message);
@@ -76,9 +77,9 @@ class SLCRZ {
                 }
                 if (!this.settings.isFreeSpin) {
                     yield this.deductPlayerBalance(this.settings.currentBet);
-                    this.playerData.totalbet += this.settings.currentBet;
+                    this.playerData.totalbet += this.settings.currentBet * 3;
                 }
-                if (this.settings.freeSpinCount === 0) {
+                if (this.settings.freeSpinCount === 1) {
                     this.settings.isFreeSpin = false;
                 }
                 if (this.settings.isFreeSpin &&

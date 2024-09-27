@@ -23,7 +23,6 @@ function initializeGameSettings(gameData, gameInstance) {
     return {
         id: gameData.gameSettings.id,
         isSpecial: gameData.gameSettings.isSpecial,
-        bonus: gameData.gameSettings.bonus,
         matrix: gameData.gameSettings.matrix,
         bets: gameData.gameSettings.bets,
         Symbols: gameInstance.initSymbols,
@@ -41,7 +40,11 @@ function initializeGameSettings(gameData, gameInstance) {
         isSpecialWof: gameData.gameSettings.isSpecialWof,
         symbolsCount: gameData.gameSettings.symbolsCount,
         isBonus: false,
-        bonusStopIndex: 0
+        bonusStopIndex: 0,
+        bonus: {
+            payOut: [],
+            payOutProb: []
+        }
     };
 }
 function generateInitialReel(gameSettings) {
@@ -65,14 +68,16 @@ function shuffleArray(array) {
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
-function triggerBonusGame(gameInstance, settings) {
-    const { payOut, payOutProb } = settings.bonus;
+function triggerBonusGame(gameInstance) {
+    const { settings } = gameInstance;
+    const { payOut, payOutProb } = settings.currentGamedata.bonus;
+    console.log(payOut, payOutProb);
     const randomValue = Math.random() * 100;
     let cumulativeProbability = 0;
     for (let i = 0; i < payOut.length; i++) {
         cumulativeProbability += payOutProb[i];
         if (randomValue <= cumulativeProbability) {
-            console.log(`Bonus Game: Selected payout is ${payOut[i]} and index is ${i} `);
+            console.log(`Bonus Game: Selected payout is ${payOut[i] * settings.currentBet} and index is ${i} `);
             gameInstance.settings.bonusStopIndex = i;
             return payOut[i];
         }
@@ -86,10 +91,13 @@ function sendInitData(gameInstance) {
     const credits = gameInstance.getPlayerData().credits;
     const Balance = credits.toFixed(2);
     const reels = generateInitialReel(gameInstance.settings);
+    const { payOut } = gameInstance.settings.currentGamedata.bonus;
     gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
             Bets: gameInstance.settings.currentGamedata.bets,
+            BonusPayout: payOut,
+            Lines: gameInstance.settings.currentGamedata.linesApiData
         },
         UIData: gameUtils_1.UiInitData,
         PlayerData: {
@@ -161,16 +169,16 @@ function makeResultJson(gameInstance, winningRows) {
         const credits = gameInstance.getPlayerData().credits;
         const Balance = credits.toFixed(2);
         const sendData = {
-            gameData: {
+            GameData: {
                 resultSymbols: settings.resultSymbolMatrix,
-                linestoemit: winningRows
+                linestoemit: winningRows,
+                isbonus: settings.isBonus,
+                BonusIndex: settings.bonusStopIndex,
             },
             PlayerData: {
                 Balance: Balance,
                 currentWining: playerData.currentWining,
                 totalbet: playerData.totalbet,
-                Bonus: settings.isBonus,
-                BonusIndex: settings.bonusStopIndex,
                 haveWon: playerData.haveWon,
             }
         };

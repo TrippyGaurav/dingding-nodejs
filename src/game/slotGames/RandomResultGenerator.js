@@ -12,13 +12,13 @@ class RandomResultGenerator {
                 matrix[y][x] = current.settings.reels[x][(startPosition + y) % current.settings.reels[x].length];
             }
         }
-        console.log(matrix, 'MATRIX');
+        matrix.forEach(row => console.log(row.join(' ')));
         // matrix.pop();
         // matrix.pop();
         // matrix.pop();
-        // matrix.push(['10', '0', '0', '8', '8'])
-        // matrix.push(['10', '2', '0', '2', '4'])
-        // matrix.push(['10', '0', '0', '7', '1'])
+        // matrix.push(['11', '4', '2', '7', '8'])
+        // matrix.push(['11', '11', '12', '4', '8'])
+        // matrix.push(['4', '4', '4', '5', '11'])
         current.settings.resultReelIndex = matrix;
         current.settings.resultSymbolMatrix = matrix;
     }

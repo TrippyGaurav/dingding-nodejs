@@ -90,22 +90,22 @@ class SLWOF {
             try {
                 const resultMatrix = this.settings.resultSymbolMatrix;
                 console.log("Result Matrix:", resultMatrix);
-                const rows = resultMatrix.slice(1, 4);
+                const rows = resultMatrix;
                 const winningRows = [];
                 let totalPayout = 0;
                 for (let index = 0; index < rows.length; index++) {
                     const row = rows[index];
-                    console.log(`Checking Row ${index + 2}:`, row);
+                    console.log(`Checking Row ${index + 0}:`, row);
                     if (row.includes(0)) {
-                        console.log(`No win: '0' present in row ${index + 2}.`);
+                        console.log(`No win: '0' present in row ${index + 0}.`);
                         continue;
                     }
                     const isWinning = yield (0, helper_1.checkWinningCondition)(this, row);
                     let payout = yield this.calculateRowPayout(row, isWinning);
                     payout = this.applySpecialSymbolMultipliers(row, payout);
                     if (payout > 0)
-                        winningRows.push(index + 1);
-                    console.log(`Row ${index + 2} Adjusted Payout:`, payout);
+                        winningRows.push(index + 0);
+                    console.log(`Row ${index + 1} Adjusted Payout:`, payout);
                     totalPayout += payout;
                 }
                 totalPayout += this.checkForBonusGame(rows);
@@ -114,7 +114,7 @@ class SLWOF {
                 console.log("Total Payout for all rows:", this.playerData.currentWining);
                 this.updatePlayerBalance(this.playerData.currentWining);
                 (0, helper_1.makeResultJson)(this, winningRows);
-                this.settings.bonus = false;
+                this.settings.isBonus = false;
                 this.settings.bonusStopIndex = 0;
             }
             catch (error) {
@@ -169,9 +169,10 @@ class SLWOF {
         if (bonusSymbolsInRows >= 2) {
             console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
             this.settings.isBonus = true;
-            const bonusWin = (0, helper_1.triggerBonusGame)(this, this.settings);
+            console.log(this.settings.isBonus);
+            const bonusWin = (0, helper_1.triggerBonusGame)(this);
             console.log(`Bonus Payout: ${bonusWin}`);
-            return bonusWin;
+            return bonusWin * this.settings.currentBet;
         }
         return 0;
     }

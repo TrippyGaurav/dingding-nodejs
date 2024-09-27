@@ -60,76 +60,73 @@ class GameController {
                 if (!platform) {
                     throw (0, http_errors_1.default)(400, "Platform query parameter is required");
                 }
-                if (role === "player") {
-                    if (category === "fav") {
-                        const player = yield userModel_1.Player.findOne({ username });
-                        if (!player || player.status === 'inactive') {
-                            return next((0, http_errors_1.default)(404, "Player not found or player is inactive"));
-                        }
-                        const favoriteGameIds = player.favouriteGames.map((game) => new mongoose_1.default.Types.ObjectId(game));
-                        const favoriteGames = yield gameModel_1.Platform.aggregate([
-                            { $match: { name: platform } },
-                            { $unwind: "$games" },
-                            { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
-                            { $sort: { "games.createdAt": -1 } },
-                            {
-                                $group: {
-                                    _id: "$_id",
-                                    games: { $push: "$games" },
+                switch (role) {
+                    case "player":
+                        if (category === "fav") {
+                            const player = yield userModel_1.Player.findOne({ username });
+                            if (!player || player.status === 'inactive') {
+                                return next((0, http_errors_1.default)(404, "Player not found or player is inactive"));
+                            }
+                            const favoriteGameIds = player.favouriteGames.map((game) => new mongoose_1.default.Types.ObjectId(game));
+                            const favoriteGames = yield gameModel_1.Platform.aggregate([
+                                { $match: { name: platform } },
+                                { $unwind: "$games" },
+                                { $match: { "games._id": { $in: favoriteGameIds }, "games.status": { $ne: "inactive" } } },
+                                { $sort: { "games.createdAt": -1 } },
+                                {
+                                    $group: {
+                                        _id: "$_id",
+                                        games: { $push: "$games" },
+                                    },
                                 },
-                            },
-                            { $project: { "games.url": 0 } },
-                        ]);
-                        if (!favoriteGames.length) {
-                            return res.status(200).json({ featured: [], others: [] });
+                                { $project: { "games.url": 0 } },
+                            ]);
+                            if (!favoriteGames.length) {
+                                return res.status(200).json({ featured: [], others: [] });
+                            }
+                            return res.status(200).json({ featured: [], others: (_a = favoriteGames[0]) === null || _a === void 0 ? void 0 : _a.games });
                         }
-                        return res
-                            .status(200)
-                            .json({ featured: [], others: (_a = favoriteGames[0]) === null || _a === void 0 ? void 0 : _a.games });
-                    }
-                    else {
+                        else {
+                            const platformDoc = yield gameModel_1.Platform.aggregate([
+                                { $match: { name: platform } },
+                                { $unwind: "$games" },
+                                { $sort: { "games.createdAt": -1 } },
+                                { $match: Object.assign({ "games.status": { $ne: "inactive" } }, (category !== "all" ? { "games.category": category } : {})) },
+                                {
+                                    $group: {
+                                        _id: "$_id",
+                                        games: { $push: "$games" },
+                                    },
+                                },
+                                { $project: { "games.url": 0 } },
+                            ]);
+                            if (!platformDoc.length) {
+                                return res.status(200).json([]); // Return an empty array if no games are found
+                            }
+                            const games = platformDoc[0].games;
+                            const featured = games.slice(0, 5);
+                            const others = platformDoc[0].games;
+                            return res.status(200).json({ featured, others });
+                        }
+                    case "company":
                         const platformDoc = yield gameModel_1.Platform.aggregate([
-                            { $match: { name: platform } },
+                            {
+                                $match: category !== "all" ? { name: category } : {},
+                            },
                             { $unwind: "$games" },
                             { $sort: { "games.createdAt": -1 } },
-                            { $match: Object.assign({ "games.status": { $ne: "inactive" } }, (category !== "all" ? { "games.category": category } : {})) },
                             {
                                 $group: {
                                     _id: "$_id",
                                     games: { $push: "$games" },
                                 },
                             },
-                            { $project: { "games.url": 0 } },
                         ]);
-                        if (!platformDoc.length) {
-                            return res.status(200).json([]); // Return an empty array if no games are found
-                        }
-                        const games = platformDoc[0].games;
-                        const featured = games.slice(0, 5);
-                        const others = platformDoc[0].games;
-                        return res.status(200).json({ featured, others });
-                    }
-                }
-                else if (role === "company") {
-                    const platformDoc = yield gameModel_1.Platform.aggregate([
-                        {
-                            $match: category !== "all" ? { name: category } : {},
-                        },
-                        { $unwind: "$games" },
-                        { $sort: { "games.createdAt": -1 } },
-                        {
-                            $group: {
-                                _id: "$_id",
-                                games: { $push: "$games" },
-                            },
-                        },
-                    ]);
-                    // Flatten the array of games from multiple platforms if category is "all"
-                    const allGames = platformDoc.reduce((acc, platform) => acc.concat(platform.games), []);
-                    return res.status(200).json(allGames);
-                }
-                else {
-                    return next((0, http_errors_1.default)(403, "Access denied: You don't have permission to access this resource."));
+                        // Flatten the array of games from multiple platforms if category is "all"
+                        const allGames = platformDoc.reduce((acc, platform) => acc.concat(platform.games), []);
+                        return res.status(200).json(allGames);
+                    default:
+                        return next((0, http_errors_1.default)(403, "Access denied: You don't have permission to access this resource."));
                 }
             }
             catch (error) {
