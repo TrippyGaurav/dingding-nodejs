@@ -71,13 +71,12 @@ function shuffleArray(array) {
 function triggerBonusGame(gameInstance) {
     const { settings } = gameInstance;
     const { payOut, payOutProb } = settings.currentGamedata.bonus;
-    console.log(payOut, payOutProb);
     const randomValue = Math.random() * 100;
     let cumulativeProbability = 0;
     for (let i = 0; i < payOut.length; i++) {
         cumulativeProbability += payOutProb[i];
         if (randomValue <= cumulativeProbability) {
-            console.log(`Bonus Game: Selected payout is ${payOut[i] * settings.currentBet} and index is ${i} `);
+            console.log(`Bonus Game: Selected payout is ${payOut[i] * settings.BetPerLines} and index is ${i} `);
             gameInstance.settings.bonusStopIndex = i;
             return payOut[i];
         }
@@ -115,7 +114,7 @@ function checkWinningCondition(gameInstance, row) {
             throw new Error("Row is empty, cannot check winning condition.");
         }
         const firstSymbolId = row[0];
-        const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id === firstSymbolId);
+        const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id == firstSymbolId);
         if (!firstSymbol) {
             throw new Error(`Symbol with Id ${firstSymbolId} not found.`);
         }
@@ -140,7 +139,7 @@ function checkWinningCondition(gameInstance, row) {
 function calculatePayout(gameInstance, symbols, symbolId, winType) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const symbol = gameInstance.settings.Symbols.find(sym => sym.Id === symbolId);
+            const symbol = gameInstance.settings.Symbols.find(sym => sym.Id == symbolId);
             if (!symbol) {
                 throw new Error(`Symbol with Id ${symbolId} not found.`);
             }

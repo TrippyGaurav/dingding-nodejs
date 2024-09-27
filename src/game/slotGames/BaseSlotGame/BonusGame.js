@@ -66,9 +66,27 @@ class BonusGame {
             console.log("amount", amount);
             console.log("current bet", this.parent.settings.BetPerLines);
         }
+        else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.layerTap) {
+            let totalWinAmount = 0;
+            const bonusData = this.parent.settings.currentGamedata.bonus;
+            var selectedIndex = [];
+            for (let layerIndex = 0; layerIndex < bonusData.payOut.length; layerIndex++) {
+                const layerPayOuts = bonusData.payOut[layerIndex];
+                const layerPayOutProb = bonusData.payOutProb[layerIndex];
+                selectedIndex[layerIndex] = this.getRandomPayoutIndex(layerPayOutProb);
+                const selectedPayOut = layerPayOuts[selectedIndex[layerIndex]];
+                if (selectedPayOut === 0) {
+                    console.log(`Payout is 0 at layer ${layerIndex}, exiting...`);
+                    break;
+                }
+                totalWinAmount += this.parent.settings.BetPerLines * selectedPayOut;
+            }
+            console.log("Bonus Index", selectedIndex);
+            amount += totalWinAmount;
+        }
         if (!amount || amount < 0)
             amount = 0;
-        return amount;
+        return { selectedIndex, amount };
     }
     shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -86,7 +104,6 @@ class BonusGame {
             cumulativeProb[index] = acc + prob;
             return cumulativeProb[index];
         }, 0);
-        console.log("cumulative array", cumulativeProb);
         const randomNum = Math.random();
         for (let i = 0; i < cumulativeProb.length; i++) {
             if (randomNum <= cumulativeProb[i]) {
@@ -131,9 +148,9 @@ const generateInnerMatrix = (symbols, miniSlotProb) => {
  */
 function runMiniSpin(bonus, betPerLines) {
     try {
-        if (bonus.noOfItem < 3)
+        if (bonus.noOfItem < bonus.symbolCount)
             return;
-        let lives = bonus.noOfItem > 5 ? 3 : bonus.noOfItem - 2;
+        let lives = bonus.noOfItem > 5 ? 3 : bonus.noOfItem - ((bonus.winningValue).length + 1);
         let totalWinAmount = 0;
         const { symbols, miniSlotProb, outerRingProb, payOut } = bonus;
         let result = {

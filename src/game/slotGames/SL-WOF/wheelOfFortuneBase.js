@@ -57,7 +57,7 @@ class SLWOF {
         switch (response.id) {
             case "SPIN":
                 this.prepareSpin(response.data);
-                this.spinResult();
+                this.getRTP(response.data.spins || 1);
                 break;
         }
     }
@@ -75,13 +75,39 @@ class SLWOF {
                     return;
                 }
                 yield this.deductPlayerBalance(this.settings.currentBet);
-                this.playerData.totalbet += this.settings.currentBet;
+                this.playerData.totalbet += this.settings.currentBet * 3;
+                this.updatePlayerBalance(this.playerData.currentWining);
                 new RandomResultGenerator_1.RandomResultGenerator(this);
-                this.checkResult();
+                yield this.checkResult();
             }
             catch (error) {
                 this.sendError("Spin error");
                 console.error("Failed to generate spin results:", error);
+            }
+        });
+    }
+    getRTP(spins) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let spend = 0;
+                let won = 0;
+                this.playerData.rtpSpinCount = spins;
+                for (let i = 0; i < this.playerData.rtpSpinCount; i++) {
+                    yield this.spinResult();
+                    spend += this.playerData.totalbet;
+                    won += this.playerData.haveWon;
+                    console.log(`Spin ${i + 1} completed. Bet: ${this.playerData.totalbet}, Won: ${this.playerData.haveWon}`);
+                }
+                let rtp = 0;
+                if (spend > 0) {
+                    rtp = (won / spend) * 100;
+                }
+                console.log('RTP calculated after', spins, 'spins:', rtp.toFixed(2) + '%');
+                return;
+            }
+            catch (error) {
+                console.error("Failed to calculate RTP:", error);
+                this.sendError("RTP calculation error");
             }
         });
     }
@@ -165,14 +191,14 @@ class SLWOF {
         return payout;
     }
     checkForBonusGame(rows) {
-        const bonusSymbolsInRows = rows.flat().filter(symbolId => symbolId === 12).length;
+        const bonusSymbolsInRows = rows.flat().filter(symbolId => symbolId == 12).length;
         if (bonusSymbolsInRows >= 2) {
             console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
             this.settings.isBonus = true;
             console.log(this.settings.isBonus);
             const bonusWin = (0, helper_1.triggerBonusGame)(this);
             console.log(`Bonus Payout: ${bonusWin}`);
-            return bonusWin * this.settings.currentBet;
+            return bonusWin * this.settings.BetPerLines;
         }
         return 0;
     }

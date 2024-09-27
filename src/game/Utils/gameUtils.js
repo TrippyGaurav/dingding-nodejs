@@ -29,6 +29,7 @@ var bonusGameType;
     bonusGameType["spin"] = "spin";
     bonusGameType["default"] = "default";
     bonusGameType["miniSpin"] = "miniSpin";
+    bonusGameType["layerTap"] = "layerTap";
 })(bonusGameType || (exports.bonusGameType = bonusGameType = {}));
 exports.PlayerData = {
     Balance: 0,
