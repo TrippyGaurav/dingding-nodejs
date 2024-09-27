@@ -180,7 +180,7 @@ export class SLWOF {
       console.log(this.settings.isBonus)
       const bonusWin = triggerBonusGame(this);
       console.log(`Bonus Payout: ${bonusWin}`);
-      return bonusWin * this.settings.currentBet;
+      return bonusWin * this.settings.BetPerLines;
     }
     return 0;
   }

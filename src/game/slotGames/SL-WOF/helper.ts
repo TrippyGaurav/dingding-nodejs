@@ -67,7 +67,7 @@ export function triggerBonusGame(gameInstance: SLWOF): number {
     for (let i = 0; i < payOut.length; i++) {
         cumulativeProbability += payOutProb[i];
         if (randomValue <= cumulativeProbability) {
-            console.log(`Bonus Game: Selected payout is ${payOut[i] * settings.currentBet} and index is ${i} `);
+            console.log(`Bonus Game: Selected payout is ${payOut[i] * settings.BetPerLines} and index is ${i} `);
             gameInstance.settings.bonusStopIndex = i
             return payOut[i];
         }
