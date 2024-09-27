@@ -67,51 +67,51 @@ export class SLWOF {
     this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
     this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
   }
-  
-private async spinResult(): Promise<void> {
-  try {
+
+  private async spinResult(): Promise<void> {
+    try {
       const playerData = this.getPlayerData();
       if (this.settings.currentBet > playerData.credits) {
-          this.sendError("Low Balance");
-          return;
+        this.sendError("Low Balance");
+        return;
       }
-      await this.deductPlayerBalance(this.settings.currentBet);
+      await this.deductPlayerBalance(this.settings.currentBet * 3);
       this.playerData.totalbet += this.settings.currentBet * 3;
       this.updatePlayerBalance(this.playerData.currentWining);
       new RandomResultGenerator(this);
       await this.checkResult();
 
-  } catch (error) {
+    } catch (error) {
       this.sendError("Spin error");
       console.error("Failed to generate spin results:", error);
+    }
   }
-}
-private async getRTP(spins: number): Promise<void> {
-  try {
+  private async getRTP(spins: number): Promise<void> {
+    try {
       let spend: number = 0;
       let won: number = 0;
 
       this.playerData.rtpSpinCount = spins;
       for (let i = 0; i < this.playerData.rtpSpinCount; i++) {
-          await this.spinResult(); 
-          
-          spend += this.playerData.totalbet;
-          won += this.playerData.haveWon;
+        await this.spinResult();
 
-          console.log(`Spin ${i + 1} completed. Bet: ${this.playerData.totalbet}, Won: ${this.playerData.haveWon}`);
+        spend += this.playerData.totalbet;
+        won += this.playerData.haveWon;
+
+        console.log(`Spin ${i + 1} completed. Bet: ${this.playerData.totalbet}, Won: ${this.playerData.haveWon}`);
       }
       let rtp = 0;
       if (spend > 0) {
-          rtp = (won / spend) * 100;
+        rtp = (won / spend) * 100;
       }
 
       console.log('RTP calculated after', spins, 'spins:', rtp.toFixed(2) + '%');
       return;
-  } catch (error) {
+    } catch (error) {
       console.error("Failed to calculate RTP:", error);
       this.sendError("RTP calculation error");
+    }
   }
-}
 
   private async checkResult() {
     try {
