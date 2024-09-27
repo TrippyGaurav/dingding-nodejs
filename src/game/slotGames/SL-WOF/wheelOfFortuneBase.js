@@ -74,7 +74,7 @@ class SLWOF {
                     this.sendError("Low Balance");
                     return;
                 }
-                yield this.deductPlayerBalance(this.settings.currentBet);
+                yield this.deductPlayerBalance(this.settings.currentBet * 3);
                 this.playerData.totalbet += this.settings.currentBet * 3;
                 this.updatePlayerBalance(this.playerData.currentWining);
                 new RandomResultGenerator_1.RandomResultGenerator(this);
