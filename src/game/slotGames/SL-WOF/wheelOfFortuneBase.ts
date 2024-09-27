@@ -76,7 +76,7 @@ private async spinResult(): Promise<void> {
           return;
       }
       await this.deductPlayerBalance(this.settings.currentBet);
-      this.playerData.totalbet += this.settings.currentBet;
+      this.playerData.totalbet += this.settings.currentBet * 3;
       this.updatePlayerBalance(this.playerData.currentWining);
       new RandomResultGenerator(this);
       await this.checkResult();

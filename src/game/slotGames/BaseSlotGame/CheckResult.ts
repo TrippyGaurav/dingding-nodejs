@@ -83,6 +83,7 @@ export class CheckResult {
             this.currentGame.settings.bonus.start = true;
             this.currentGame.settings.noOfBonus++;
 
+            
             if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.tap) {
                 this.bonusResult = this.currentGame.settings.bonus.game.generateData();
                 this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();

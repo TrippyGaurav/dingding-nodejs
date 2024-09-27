@@ -187,8 +187,9 @@ const generateInnerMatrix = (symbols: number[], miniSlotProb: number[]): number[
  */
 export function runMiniSpin(bonus: any, betPerLines: number): any {
     try {
-        if (bonus.noOfItem < 3) return;
-        let lives = bonus.noOfItem > 5 ? 3 : bonus.noOfItem - 2;
+    
+        if (bonus.noOfItem < bonus.symbolCount) return;
+        let lives = bonus.noOfItem > 5 ? 3 : bonus.noOfItem - ((bonus.winningValue).length + 1);
         let totalWinAmount = 0;
         const { symbols, miniSlotProb, outerRingProb, payOut } = bonus;
         let result = {
