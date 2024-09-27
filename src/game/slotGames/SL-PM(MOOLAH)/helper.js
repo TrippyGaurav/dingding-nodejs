@@ -310,8 +310,6 @@ function cascadeSymbols(gameInstance) {
     const { settings } = gameInstance;
     let tempReelIndex = 0;
     let totalEmptySlots = 0;
-    settings.tempReelSym.push(settings.tempReelSym.slice(0, totalEmptySlots));
-    const tempSymbols = settings.tempReelSym.flat();
     for (let col = 0; col < settings.lastReel[0].length; col++) {
         let emptySlots = 0;
         for (let row = settings.lastReel.length - 1; row >= 0; row--) {
@@ -324,21 +322,20 @@ function cascadeSymbols(gameInstance) {
                 settings.lastReel[row][col] = -1;
             }
         }
-        // console.log(settings.lastReel, 'before ')
         for (let row = 0; row < emptySlots; row++) {
+            const tempSymbols = settings.tempReelSym.flat().slice(0, totalEmptySlots);
+            console.log(tempSymbols, 'tempSymbols');
             if (tempReelIndex < tempSymbols.length) {
                 const symbolData = tempSymbols[tempReelIndex++];
                 settings.lastReel[row][col] = symbolData;
             }
             else {
-                settings.lastReel[row][col] = 0;
+                // settings.lastReel[row][col] = 0; 
             }
         }
     }
     settings.resultSymbolMatrix = settings.lastReel;
-    console.log(settings.cascadingNo, 'CASCADING');
-    console.log(tempSymbols, 'totalEmptySlots');
-    console.log(settings.lastReel, 'after cascading');
+    settings._winData.winningSymbols = [];
     settings.tempReelSym = [];
     settings.tempReel = [];
     settings.lastReel = [];
