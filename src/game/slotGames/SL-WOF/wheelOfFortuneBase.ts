@@ -2,6 +2,7 @@ import { currentGamedata } from "../../../Player";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { WOFSETTINGS, WINNINGTYPE } from "./types";
 import { initializeGameSettings, generateInitialReel, sendInitData, checkWinningCondition, calculatePayout, makeResultJson, triggerBonusGame } from "./helper";
+import { log } from "console";
 
 export class SLWOF {
   public settings: WOFSETTINGS;
@@ -57,7 +58,7 @@ export class SLWOF {
     switch (response.id) {
       case "SPIN":
         this.prepareSpin(response.data);
-        this.spinResult();
+        this.getRTP(response.data.spins || 1);
         break;
     }
   }
@@ -66,24 +67,51 @@ export class SLWOF {
     this.settings.BetPerLines = this.settings.currentGamedata.bets[data.currentBet];
     this.settings.currentBet = this.settings.BetPerLines * this.settings.currentLines;
   }
-
-  private async spinResult() {
-    try {
+  
+private async spinResult(): Promise<void> {
+  try {
       const playerData = this.getPlayerData();
       if (this.settings.currentBet > playerData.credits) {
-        this.sendError("Low Balance");
-        return;
+          this.sendError("Low Balance");
+          return;
       }
-
       await this.deductPlayerBalance(this.settings.currentBet);
-      this.playerData.totalbet += this.settings.currentBet;
+      this.playerData.totalbet += this.settings.currentBet * 3;
+      this.updatePlayerBalance(this.playerData.currentWining);
       new RandomResultGenerator(this);
-      this.checkResult();
-    } catch (error) {
+      await this.checkResult();
+
+  } catch (error) {
       this.sendError("Spin error");
       console.error("Failed to generate spin results:", error);
-    }
   }
+}
+private async getRTP(spins: number): Promise<void> {
+  try {
+      let spend: number = 0;
+      let won: number = 0;
+
+      this.playerData.rtpSpinCount = spins;
+      for (let i = 0; i < this.playerData.rtpSpinCount; i++) {
+          await this.spinResult(); 
+          
+          spend += this.playerData.totalbet;
+          won += this.playerData.haveWon;
+
+          console.log(`Spin ${i + 1} completed. Bet: ${this.playerData.totalbet}, Won: ${this.playerData.haveWon}`);
+      }
+      let rtp = 0;
+      if (spend > 0) {
+          rtp = (won / spend) * 100;
+      }
+
+      console.log('RTP calculated after', spins, 'spins:', rtp.toFixed(2) + '%');
+      return;
+  } catch (error) {
+      console.error("Failed to calculate RTP:", error);
+      this.sendError("RTP calculation error");
+  }
+}
 
   private async checkResult() {
     try {
@@ -173,7 +201,7 @@ export class SLWOF {
   }
 
   private checkForBonusGame(rows: number[][]): number {
-    const bonusSymbolsInRows = rows.flat().filter(symbolId => symbolId === 12).length;
+    const bonusSymbolsInRows = rows.flat().filter(symbolId => symbolId == 12).length;
     if (bonusSymbolsInRows >= 2) {
       console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
       this.settings.isBonus = true

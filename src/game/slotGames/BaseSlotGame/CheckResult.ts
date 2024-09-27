@@ -73,13 +73,17 @@ export class CheckResult {
 
         let temp = this.findSymbol(specialIcons.bonus);
 
+        
+
         console.log("Bonus Found Length :  ", temp.length, " Game Type : ", this.currentGame.settings.currentGamedata.bonus.type);
         if (this.currentGame.settings.bonus.symbolCount <= temp.length) {
-
+            console.log("zhghzvbjhvbhjgsjhfvun");
+            
             this.currentGame.settings._winData.winningSymbols.push(temp);
             this.currentGame.settings.bonus.start = true;
             this.currentGame.settings.noOfBonus++;
 
+            
             if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.tap) {
                 this.bonusResult = this.currentGame.settings.bonus.game.generateData();
                 this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();
@@ -88,7 +92,8 @@ export class CheckResult {
                 this.currentGame.settings._winData.totalWinningAmount += this.currentGame.settings.bonus.game.setRandomStopIndex();
 
             //NOTE: minispin for fruity cocktail
-            else if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.miniSpin) {
+              // console.log(this.currentGame.settings.currentGamedata.bonus);
+            if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.miniSpin) {
                 console.log("MINI SPIN");
                 const betPerLines = this.currentGame.settings.BetPerLines;
                 this.currentGame.settings.currentGamedata.bonus.noOfItem = temp.length;
@@ -99,7 +104,16 @@ export class CheckResult {
                 const result = runMiniSpin(this.currentGame.settings.currentGamedata.bonus, betPerLines);
                 this.bonusResult = result
                 this.currentGame.settings._winData.totalWinningAmount += result.totalWinAmount;
+                
             }
+            console.log("Bonus type",this.currentGame.settings.currentGamedata.bonus.type);
+            if (this.currentGame.settings.currentGamedata.bonus.type == bonusGameType.layerTap) {
+                console.log("LAYER TAP BONUS");
+                const result= this.currentGame.settings.bonus.game.setRandomStopIndex()
+                this.currentGame.settings._winData.totalWinningAmount += result.amount;
+                this.bonusResult=result.selectedIndex
+            }
+        
         }
     }
 

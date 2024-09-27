@@ -14,9 +14,9 @@ export class RandomResultGenerator {
         // matrix.pop();
         // matrix.pop();
         // matrix.pop();
-        // matrix.push(['1', '1', '4', '10', '0'])
-        // matrix.push(['6', '8', '3', '0', '1'])
-        // matrix.push(['3', '3', '1', '1', '1'])
+        // matrix.push(['4', '4', '5', '4', '2'])
+        // matrix.push(['1', '6', '2', '4', '2'])
+        // matrix.push(['11', '11', '1', '11', '2'])
         current.settings.resultReelIndex = matrix;
         current.settings.resultSymbolMatrix = matrix;
 

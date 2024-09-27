@@ -50,6 +50,7 @@ export interface MiniSpinBonus {
   payOut: number[];
   miniSlotProb: number[];
   outerRingProb: number[];
+  winningValue: any[];
 }
 
 export interface GameData {
@@ -94,7 +95,7 @@ export interface GameSettings {
     id: number;
     symbolCount: number,
     pay: number,
-    useBonus: boolean
+    useBonus: boolean,
   };
   freeSpin: {
     symbolID: string,
