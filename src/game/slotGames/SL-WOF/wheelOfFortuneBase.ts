@@ -90,16 +90,16 @@ export class SLWOF {
       const resultMatrix = this.settings.resultSymbolMatrix;
       console.log("Result Matrix:", resultMatrix);
 
-      const rows = resultMatrix.slice(1, 4);
+      const rows = resultMatrix
       const winningRows: number[] = [];
       let totalPayout = 0;
 
       for (let index = 0; index < rows.length; index++) {
         const row = rows[index];
-        console.log(`Checking Row ${index + 2}:`, row);
+        console.log(`Checking Row ${index + 0}:`, row);
 
         if (row.includes(0)) {
-          console.log(`No win: '0' present in row ${index + 2}.`);
+          console.log(`No win: '0' present in row ${index + 0}.`);
           continue;
         }
 
@@ -107,9 +107,9 @@ export class SLWOF {
         let payout = await this.calculateRowPayout(row, isWinning);
 
         payout = this.applySpecialSymbolMultipliers(row, payout);
-        if (payout > 0) winningRows.push(index + 1);
+        if (payout > 0) winningRows.push(index + 0);
 
-        console.log(`Row ${index + 2} Adjusted Payout:`, payout);
+        console.log(`Row ${index + 1} Adjusted Payout:`, payout);
         totalPayout += payout;
       }
 
@@ -119,7 +119,7 @@ export class SLWOF {
       console.log("Total Payout for all rows:", this.playerData.currentWining);
       this.updatePlayerBalance(this.playerData.currentWining)
       makeResultJson(this, winningRows);
-      this.settings.bonus = false
+      this.settings.isBonus = false
       this.settings.bonusStopIndex = 0
     } catch (error) {
       console.error("Error in checkResult:", error);
@@ -177,9 +177,10 @@ export class SLWOF {
     if (bonusSymbolsInRows >= 2) {
       console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
       this.settings.isBonus = true
-      const bonusWin = triggerBonusGame(this, this.settings);
+      console.log(this.settings.isBonus)
+      const bonusWin = triggerBonusGame(this);
       console.log(`Bonus Payout: ${bonusWin}`);
-      return bonusWin;
+      return bonusWin * this.settings.currentBet;
     }
     return 0;
   }

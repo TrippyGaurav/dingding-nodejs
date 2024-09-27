@@ -257,7 +257,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
 
     if (
       this.settings.currentGamedata.bonus.isEnabled &&
-      this.settings.currentGamedata.bonus.type == bonusGameType.spin
+      this.settings.currentGamedata.bonus.type == bonusGameType.spin || this.settings.currentGamedata.bonus.isEnabled && this.settings.currentGamedata.bonus.type == bonusGameType.miniSpin
     ) {
       this.settings.bonus.game = new BonusGame(
         this.settings.currentGamedata.bonus.noOfItem,
@@ -291,7 +291,6 @@ export default class BaseSlotGame implements RequiredSocketMethods {
       },
       maxGambleBet: 300,
     };
-
     this.sendMessage("InitData", dataToSend);
   }
 

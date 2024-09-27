@@ -21,6 +21,7 @@ export enum bonusGameType {
     tap = "tap",
     spin = "spin",
     default = "default",
+    miniSpin = "miniSpin"
 }
 
 export const PlayerData: UserData = {
