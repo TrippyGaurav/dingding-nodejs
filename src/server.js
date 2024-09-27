@@ -28,6 +28,7 @@ const socket_1 = __importDefault(require("./socket"));
 const checkAdmin_1 = require("./dashboard/middleware/checkAdmin");
 const payoutRoutes_1 = __importDefault(require("./dashboard/payouts/payoutRoutes"));
 const checkUser_1 = require("./dashboard/middleware/checkUser");
+const ToggleRoutes_1 = __importDefault(require("./dashboard/Toggle/ToggleRoutes"));
 const app = (0, express_1.default)();
 //Cloudinary configs
 app.use(express_1.default.json({ limit: "25mb" }));
@@ -75,6 +76,8 @@ app.use("/api/users", userRoutes_1.default);
 app.use("/api/transactions", transactionRoutes_1.default);
 app.use("/api/games", gameRoutes_1.default);
 app.use("/api/payouts", checkUser_1.checkUser, checkAdmin_1.checkAdmin, payoutRoutes_1.default);
+// app.use("/api/toggle",checkUser,checkAdmin, toggleRoutes);
+app.use("/api/toggle", ToggleRoutes_1.default);
 const io = new socket_io_1.Server(server, {
     cors: {
         origin: "*",

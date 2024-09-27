@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BonusGame = void 0;
+exports.runMiniSpin = runMiniSpin;
 const gameUtils_1 = require("../../Utils/gameUtils");
 class BonusGame {
     constructor(nosOfItem, parent) {
@@ -45,6 +46,7 @@ class BonusGame {
     }
     setRandomStopIndex() {
         let amount = 0;
+        console.log("bonus: ", this.parent.settings.currentGamedata.bonus);
         if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.spin) {
             this.parent.settings.bonus.stopIndex = this.getRandomPayoutIndex(this.parent.settings.currentGamedata.bonus.payOutProb);
             amount = this.parent.settings.BetPerLines * this.result[this.parent.settings.bonus.stopIndex];
@@ -95,3 +97,75 @@ class BonusGame {
     }
 }
 exports.BonusGame = BonusGame;
+/**
+ * Selects a random index from a probability array based on weighted probabilities.
+ *
+ * @param probArray - An array of probabilities for each index. Each value represents the weight
+ *                    for selecting that index.
+ * @returns The index of the randomly selected item based on the probabilities.
+ */
+const getRandomIndex = (probArray) => {
+    const totalProb = probArray.reduce((sum, prob) => sum + prob, 0);
+    const rand = Math.random() * totalProb;
+    let sum = 0;
+    for (let i = 0; i < probArray.length; i++) {
+        sum += probArray[i];
+        if (rand < sum)
+            return i;
+    }
+    return probArray.length - 1;
+};
+const getRandomSymbol = (symbols, probArray) => {
+    const index = getRandomIndex(probArray);
+    return symbols[index];
+};
+const generateInnerMatrix = (symbols, miniSlotProb) => {
+    return Array.from({ length: 3 }, () => getRandomSymbol(symbols, miniSlotProb));
+};
+/**
+ * Simulates a mini slot game spin based on bonus information and the bet per line.
+ *
+ * @param bonus - The bonus object containing information about symbols, probabilities, payouts, etc.
+ * @param betPerLines - The amount of bet per line.
+ * @returns An object containing the result of the mini spin, including the inner matrix, outer ring symbols, winnings, and total win amount.
+ */
+function runMiniSpin(bonus, betPerLines) {
+    try {
+        if (bonus.noOfItem < 3)
+            return;
+        let lives = bonus.noOfItem > 5 ? 3 : bonus.noOfItem - 2;
+        let totalWinAmount = 0;
+        const { symbols, miniSlotProb, outerRingProb, payOut } = bonus;
+        let result = {
+            innerMatrix: [],
+            outerRingSymbol: [],
+            totalWinAmount: 0,
+            winings: [],
+        };
+        console.log(`Lives: ${lives}`);
+        while (lives > 0) {
+            const innerMatrix = generateInnerMatrix(symbols, miniSlotProb);
+            const outerRingSymbol = getRandomSymbol(symbols, outerRingProb);
+            const matchCount = innerMatrix.filter(symbol => symbol === outerRingSymbol).length;
+            const winAmt = payOut[outerRingSymbol] * matchCount * betPerLines;
+            const win = winAmt.toFixed(1);
+            result.winings.push(win);
+            result.innerMatrix.push(innerMatrix);
+            result.outerRingSymbol.push(outerRingSymbol);
+            result.totalWinAmount += Number(win);
+            totalWinAmount += Number(win);
+            if (outerRingSymbol === 7) {
+                lives--;
+            }
+            console.log(`Inner Matrix: ${innerMatrix.join(', ')}`);
+            console.log(`Outer Ring: ${outerRingSymbol}`);
+            console.log(`Matches: ${matchCount}, Win: ${win}`);
+            console.log(`Lives remaining: ${lives}`);
+        }
+        console.log(`${JSON.stringify(result)}`);
+        return result;
+    }
+    catch (error) {
+        console.error(error);
+    }
+}
