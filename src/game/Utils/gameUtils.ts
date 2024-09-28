@@ -104,7 +104,7 @@ export function convertSymbols(data) {
             "increaseValue": element.increaseValue || {},
             "freeSpin": element.freeSpin,
             "description": element.description || {},
-            "payout": element.payout || {},
+            "payout": element.payout || 0,
             "mixedPayout": element.mixedPayout || {},
             "defaultPayout": element.defaultPayout || {}
         };
