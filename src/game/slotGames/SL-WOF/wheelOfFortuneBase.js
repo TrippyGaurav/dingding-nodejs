@@ -45,6 +45,7 @@ class SLWOF {
         this.currentGameData.sendAlert(message);
     }
     updatePlayerBalance(amount) {
+        console.log(amount, 'updatePlayerBalance');
         this.currentGameData.updatePlayerBalance(amount);
     }
     deductPlayerBalance(amount) {
@@ -76,7 +77,6 @@ class SLWOF {
                 }
                 yield this.deductPlayerBalance(this.settings.currentBet * 3);
                 this.playerData.totalbet += this.settings.currentBet * 3;
-                this.updatePlayerBalance(this.playerData.currentWining);
                 new RandomResultGenerator_1.RandomResultGenerator(this);
                 yield this.checkResult();
             }
