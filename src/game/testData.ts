@@ -16,18 +16,25 @@ export const gameData = [
     ],
 
     "linesApiData": [],
+
     "scatterBlue": {
       "isEnabled": true,
       // "symbols":      [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15],
-      "symbolsProbs": [250,14,13,12,12,11,11,11,11, 9, 9, 8, 5, 2, 0, 0],
+      "symbolsProbs": [250, 14, 13, 12, 12, 11, 11, 11, 11, 9, 9, 8, 5, 2, 0, 0], // probability of each symbol
+      "featureProbs": [0, 10, 40] // probability of each feature . index : 0 - no feature, 1 - level up, 2 - booster
     },
-    "booster":{
+    "booster": {
       "isEnabledSimple": true,
       "isEnabledExhaustive": true,
-      "type":"",
-      "typeProb":[100,150,150],
-      "multiplier":     [ 1, 2, 3, 5,10,15,20,25],
-      "multiplierProb": [90,70,40,20,10, 4, 3, 1],
+      "type": "",
+      "typeProbs": [100, 15, 15], // index : 0 - no booster, 1 - simple booster, 2 - exhaustive booster
+      "multiplier": [1, 2, 3, 5, 10, 15, 20, 25],// multiplier amt
+      "multiplierProbs": [90, 70, 40, 20, 10, 4, 3, 1], // multiplier probability
+    },
+    "levelUp": {
+      "isEnabled": true,
+      "level":      [ 0, 1, 2, 3, 4, 5, 6, 7],//increment symbol amounts . 0 - no level up
+      "levelProbs": [ 9,50,40,30,20,15,14,12],// increment symbol probability 
     },
     // bonus: {
     //   isEnabled: true,
@@ -42,6 +49,7 @@ export const gameData = [
         //empty
         "Name": "empty",
         "Id": 0,
+        "isSpecial": false,
         "reelInstance": {
           "0": 9,
           "1": 9,
@@ -56,6 +64,7 @@ export const gameData = [
         //banana
         "Name": "banana",
         "Id": 1,
+        "isSpecial": false,
         "reelInstance": {
           "0": 9,
           "1": 9,
@@ -70,6 +79,7 @@ export const gameData = [
         //watermelon
         "Name": "watermelon",
         "Id": 2,
+        "isSpecial": false,
         "reelInstance": {
           "0": 9,
           "1": 9,
@@ -84,6 +94,7 @@ export const gameData = [
         //cherry
         "Name": "cherry",
         "Id": 3,
+        "isSpecial": false,
         "reelInstance": {
           "0": 9,
           "1": 9,
@@ -98,6 +109,7 @@ export const gameData = [
         //grapes
         "Name": "grapes",
         "Id": 4,
+        "isSpecial": false,
         "reelInstance": {
           "0": 9,
           "1": 9,
@@ -112,6 +124,7 @@ export const gameData = [
         //lemon
         "Name": "lemon",
         "Id": 5,
+        "isSpecial": false,
         "reelInstance": {
           "0": 4,
           "1": 4,
@@ -126,6 +139,7 @@ export const gameData = [
         //orange
         "Name": "orange",
         "Id": 6,
+        "isSpecial": false,
         "reelInstance": {
           "0": 4,
           "1": 4,
@@ -140,6 +154,7 @@ export const gameData = [
         //bell
         "Name": "bell",
         "Id": 7,
+        "isSpecial": false,
         "reelInstance": {
           "0": 4,
           "1": 4,
@@ -148,13 +163,13 @@ export const gameData = [
           "4": 4
         },
         "freeSpinCount": 2,
-        "useWildSub": true,
         "payout": 5,
       },
       {
         //bar
         "Name": "bar",
         "Id": 8,
+        "isSpecial": false,
         "reelInstance": {
           "0": 4,
           "1": 4,
@@ -169,6 +184,7 @@ export const gameData = [
         //7
         "Name": "7",
         "Id": 9,
+        "isSpecial": false,
         "reelInstance": {
           "0": 4,
           "1": 4,
@@ -184,6 +200,7 @@ export const gameData = [
         //double bar
         "Name": "doubleBar",
         "Id": 10,
+        "isSpecial": false,
         "reelInstance": {
           "0": 4,
           "1": 4,
@@ -194,11 +211,11 @@ export const gameData = [
         "freeSpinCount": 2,
         "payout": 20,
       },
-
       {
         //double 7
         "Name": "double7",
         "Id": 11,
+        "isSpecial": false,
         "reelInstance": {
           "0": 4,
           "1": 4,
@@ -214,6 +231,7 @@ export const gameData = [
         //triple bar
         "Name": "tripleBar",
         "Id": 12,
+        "isSpecial": false,
         "reelInstance": {
           "0": 4,
           "1": 4,
@@ -229,6 +247,7 @@ export const gameData = [
         //triple 7
         "Name": "triple7",
         "Id": 13,
+        "isSpecial": false,
         "reelInstance": {
           "0": 4,
           "1": 4,
@@ -242,6 +261,7 @@ export const gameData = [
       {
         "Name": "ScatterBlue",
         "Id": 14,
+        "isSpecial": true,
         "reelInstance": {
           "0": 1,
           "1": 1,
@@ -256,6 +276,7 @@ export const gameData = [
       {
         "Name": "ScatterPurple",
         "Id": 15,
+        "isSpecial": true,
         "reelInstance": {
           "0": 2,
           "1": 2,

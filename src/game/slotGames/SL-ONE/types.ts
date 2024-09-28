@@ -7,6 +7,7 @@ export interface Symbol {
   payout: number;
   reelInstance: { [key: string]: number };
   freeSpinCount: number;
+  isSpecial: boolean;
 }
 
 export interface SLONESETTINGS {
@@ -23,6 +24,7 @@ export interface SLONESETTINGS {
   scatterBlue: {
     isEnabled: boolean;
     symbolsProbs: number[];
+    featureProbs: number[]
   };
   currentBet: number;
   currentLines: number;
@@ -37,9 +39,14 @@ export interface SLONESETTINGS {
     isEnabledSimple: boolean;
     isEnabledExhaustive: boolean;
     type: string;
-    typeProb: number[];
+    typeProbs: number[];
     multiplier: number[];
-    multiplierProb: number[];
+    multiplierProbs: number[];
+  };
+  levelUp:{
+    isEnabled: boolean;
+    level: number[];
+    levelProbs: number[];
   }
 }
 

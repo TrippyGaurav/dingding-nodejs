@@ -77,7 +77,6 @@ export class SLONE {
         console.log('Current Bet', this.settings.currentBet);
         this.sendError("Low Balance");
         return
-
       }
       //TODO: bonus games 
       //free spins n boosters
@@ -125,7 +124,7 @@ export class SLONE {
       const resultmatrix = this.settings.resultSymbolMatrix
       console.log("Result Matrix:", resultmatrix);
       console.log("base Pay", this.settings.Symbols[resultmatrix[0]].payout);
-      calculatePayout(this, resultmatrix[0])
+      calculatePayout(this )
 
       const playerData = this.settings._winData.slotGame.getPlayerData()
       console.log('playerCredits', playerData.credits);

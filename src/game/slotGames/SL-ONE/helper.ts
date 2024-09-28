@@ -1,10 +1,15 @@
 import { convertSymbols, UiInitData } from "../../Utils/gameUtils";
 import { WinData } from "../BaseSlotGame/WinData";
 import { SLONE } from "./OneOfAKindBase";
+import { Symbol } from "./types";
 
 interface BoosterResult {
   type: 'NONE' | 'SIMPLE' | 'EXHAUSTIVE';
   multipliers: number[];
+}
+interface LevelUpResult {
+  level: number;
+  isLevelUp: boolean;
 }
 
 
@@ -24,6 +29,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLONE) {
     reels: [],
     scatterBlue: gameData.gameSettings.scatterBlue,
     booster: gameData.gameSettings.booster,
+    levelUp: gameData.gameSettings.levelUp,
     defaultPayout: gameData.gameSettings.defaultPayout,
     SpecialType: gameData.gameSettings.SpecialType,
     freeSpinCount: 0,
@@ -101,15 +107,62 @@ export function makeResultJson(gameInstance: SLONE) {
   }
 }
 
+function getNonSpecialSymbols(symbols: Symbol[]): Symbol[] {
+  return symbols.filter(symbol => !symbol.isSpecial && symbol.Id !== 0)
+    .sort((a, b) => a.payout - b.payout);
+}
+
+function findNextSymbol(currentSymbol: Symbol, levelUp: number, nonSpecialSymbols: Symbol[]): Symbol {
+  const currentIndex = nonSpecialSymbols.findIndex(s => s.Id === currentSymbol.Id);
+  if (currentIndex === -1) return currentSymbol; // If not found, return the current symbol
+
+  const targetIndex = Math.min(currentIndex + levelUp, nonSpecialSymbols.length - 1);
+  return nonSpecialSymbols[targetIndex];
+}
+
+export function checkForLevelUp(gameInstance: SLONE): LevelUpResult {
+  try {
+    const { resultSymbolMatrix, Symbols, levelUp } = gameInstance.settings;
+    const resultSymbolIndex = resultSymbolMatrix[0]
+    const resultSymbol = Symbols[resultSymbolIndex];
+
+    // Check if the result symbol is eligible for level up
+    if (resultSymbol.isSpecial || resultSymbol.Id === 0) {
+      return { level: 0, isLevelUp: false };
+    }
+
+    const nonSpecialSymbols = getNonSpecialSymbols(Symbols);
+    const { levelProbs, level } = levelUp;
+
+    const idx = getRandomIndex(levelProbs);
+    const levelUpAmount = level[idx];
+
+    if (levelUpAmount === 0) {
+      return { level: 0, isLevelUp: false };
+    }
+
+    const newSymbol = findNextSymbol(resultSymbol, levelUpAmount, nonSpecialSymbols);
+
+    return {
+      isLevelUp: newSymbol.Id !== resultSymbol.Id,
+      level: newSymbol.Id
+    };
+  } catch (error) {
+    console.error("Error in checkForLevelUp:", error);
+    return { level: 0, isLevelUp: false };
+  }
+}
+
+//NOTE: for booster
 function getSimpleMultiplier(multipliers: number[], multiplierProb: number[]): number {
   const idx = getRandomIndex(multiplierProb);
   return multipliers[idx];
 }
 
+//NOTE: for booster
 function getExhaustiveMultipliers(multipliers: number[], multiplierProb: number[]): number[] {
   const allMultipliers: number[] = [];
   const usedIndices = new Set<number>();
-
   while (true) {
     const index = getRandomIndex(multiplierProb);
     if (usedIndices.has(index)) {
@@ -118,29 +171,44 @@ function getExhaustiveMultipliers(multipliers: number[], multiplierProb: number[
     usedIndices.add(index);
     allMultipliers.push(multipliers[index]);
   }
-
   return allMultipliers;
 }
 
-//NOTE: check for booster
+//NOTE: check for booster feature (multiplier)
 export function checkForBooster(gameInstance: SLONE): BoosterResult {
   try {
-    const { typeProb, multiplier, multiplierProb } = gameInstance.settings.booster;
-    const boosterType = getRandomIndex(typeProb);
+    if(gameInstance.settings.resultSymbolMatrix[0] === 0) return { type: 'NONE', multipliers: [] };
+
+    const { typeProbs, multiplier, multiplierProbs } = gameInstance.settings.booster;
+    const boosterType = getRandomIndex(typeProbs);
 
     switch (boosterType) {
       case 0:
         return { type: 'NONE', multipliers: [] };
       case 1:
-        return {
-          type: 'SIMPLE',
-          multipliers: [getSimpleMultiplier(multiplier, multiplierProb)],
-        };
+        if (gameInstance.settings.booster.isEnabledSimple) {
+          return {
+            type: 'SIMPLE',
+            multipliers: [getSimpleMultiplier(multiplier, multiplierProbs)],
+          };
+        } else {
+          return {
+            type: 'SIMPLE',
+            multipliers: []
+          }
+        }
       case 2:
-        return {
-          type: 'EXHAUSTIVE',
-          multipliers: getExhaustiveMultipliers(multiplier, multiplierProb),
-        };
+        if (gameInstance.settings.booster.isEnabledExhaustive) {
+          return {
+            type: 'EXHAUSTIVE',
+            multipliers: getExhaustiveMultipliers(multiplier, multiplierProbs),
+          };
+        } else {
+          return {
+            type: 'EXHAUSTIVE',
+            multipliers: []
+          }
+        }
       default:
         return { type: 'NONE', multipliers: [] };
     }
@@ -151,15 +219,26 @@ export function checkForBooster(gameInstance: SLONE): BoosterResult {
 }
 
 
-export function calculatePayout(gameInstance: SLONE, symbolId: number): number {
+export function calculatePayout(gameInstance: SLONE): number {
   try {
-    const symbol = gameInstance.settings.Symbols.find(sym => sym.Id === symbolId);
-    if (!symbol) {
-      throw new Error(`Symbol with Id ${symbolId} not found.`);
+
+    let payout = 0;
+    //NOTE: check for level up before scatter
+    const { level: newIndex, isLevelUp } = checkForLevelUp(gameInstance);
+    if (isLevelUp) {
+      gameInstance.settings.resultSymbolMatrix[0] = newIndex
+      console.log("levelup", { newIndex, isLevelUp });
+      console.log("new result matrix ", gameInstance.settings.resultSymbolMatrix);
     }
 
 
-    let payout = 0;
+    const symbol = gameInstance.settings.Symbols.find(sym => sym.Id === gameInstance.settings.resultSymbolMatrix[0]);
+    if (!symbol) {
+      throw new Error(`Symbol with Id ${gameInstance.settings.resultSymbolMatrix[0]} not found.`);
+    }
+
+
+
     //NOTE: scatter
     switch (symbol.Name) {
       case "ScatterBlue":
@@ -202,19 +281,16 @@ export function calculatePayout(gameInstance: SLONE, symbolId: number): number {
       default:
         const multiplierResponse = checkForBooster(gameInstance)
         if (multiplierResponse.type === "NONE") {
-
           console.log("multipliers", multiplierResponse);
           payout = symbol.payout * gameInstance.settings.BetPerLines;
           gameInstance.playerData.currentWining = payout
         } else {
-
           //sum of multipliers
           const multiplier = multiplierResponse.multipliers.reduce((a, b) => a + b, 0);
           console.log("multipliers", multiplierResponse, multiplier);
           payout = symbol.payout * gameInstance.settings.BetPerLines * multiplier;
           gameInstance.playerData.currentWining = payout
         }
-
 
         if (payout > 0 && !gameInstance.settings.isFreeSpin) {
           gameInstance.playerData.currentWining = payout
