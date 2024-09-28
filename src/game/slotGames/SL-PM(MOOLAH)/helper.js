@@ -308,33 +308,24 @@ function setToMinusOne(gameInstance) {
  */
 function cascadeSymbols(gameInstance) {
     const { settings } = gameInstance;
+    let flattenedReel = settings.lastReel.flat();
+    const totalEmptySlots = flattenedReel.filter(value => value === -1).length;
+    let tempSymbols = settings.tempReelSym.flat().slice(0, totalEmptySlots);
+    console.log(tempSymbols, 'asd');
     let tempReelIndex = 0;
-    let totalEmptySlots = 0;
-    for (let col = 0; col < settings.lastReel[0].length; col++) {
-        let emptySlots = 0;
-        for (let row = settings.lastReel.length - 1; row >= 0; row--) {
-            if (settings.lastReel[row][col] === -1) {
-                emptySlots++;
-                totalEmptySlots++;
-            }
-            else if (emptySlots > 0) {
-                settings.lastReel[row + emptySlots][col] = settings.lastReel[row][col];
-                settings.lastReel[row][col] = -1;
-            }
+    flattenedReel = flattenedReel.map((value) => {
+        if (value === -1 && tempReelIndex < tempSymbols.length) {
+            return tempSymbols[tempReelIndex++];
         }
-        for (let row = 0; row < emptySlots; row++) {
-            const tempSymbols = settings.tempReelSym.flat().slice(0, totalEmptySlots);
-            console.log(tempSymbols, 'tempSymbols');
-            if (tempReelIndex < tempSymbols.length) {
-                const symbolData = tempSymbols[tempReelIndex++];
-                settings.lastReel[row][col] = symbolData;
-            }
-            else {
-                // settings.lastReel[row][col] = 0; 
-            }
-        }
+        return value;
+    });
+    const rows = settings.lastReel.length;
+    const cols = settings.lastReel[0].length;
+    let updatedReel = [];
+    for (let i = 0; i < rows; i++) {
+        updatedReel.push(flattenedReel.slice(i * cols, (i + 1) * cols));
     }
-    settings.resultSymbolMatrix = settings.lastReel;
+    settings.resultSymbolMatrix = updatedReel;
     settings._winData.winningSymbols = [];
     settings.tempReelSym = [];
     settings.tempReel = [];
