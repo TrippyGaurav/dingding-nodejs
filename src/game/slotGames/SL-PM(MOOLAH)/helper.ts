@@ -129,8 +129,7 @@ export function checkForWin(gameInstance: SLPM) {
             const firstSymbolPosition = line[0];
             let firstSymbol = settings.resultSymbolMatrix[firstSymbolPosition][0];
             // Handle wild symbols
-            if (settings.wild.useWild && firstSymbol === settings.wild.SymbolID.toString()) {
-                console.log('afdfsfsdfsdfsdf')
+            if (settings.wild.useWild && firstSymbol === settings.wild.SymbolID) {
                 firstSymbol = findFirstNonWildSymbol(line, gameInstance);
             }
             // Handle special icons
@@ -216,7 +215,7 @@ function checkLineSymbols(firstSymbol: string, line: number[], gameInstance: SLP
                 return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
             }
             switch (true) {
-                case symbol === currentSymbol || symbol === wildSymbol:
+                case symbol == currentSymbol || symbol === wildSymbol:
                     matchCount++;
                     matchedIndices.push({ col: i, row: rowIndex });
                     break;
@@ -319,11 +318,32 @@ function setToMinusOne(gameInstance: SLPM) {
  */
 function cascadeSymbols(gameInstance) {
     const { settings } = gameInstance;
+    const rows = settings.lastReel.length;
+    const cols = settings.lastReel[0].length;
+
+    for (let col = 0; col < cols; col++) {
+        let columnSymbols = [];
+        for (let row = rows - 1; row >= 0; row--) {
+            if (settings.lastReel[row][col] !== -1) {
+                columnSymbols.push(settings.lastReel[row][col]);
+            }
+        }
+        let index = rows - 1;
+        for (let symbol of columnSymbols) {
+            settings.lastReel[index--][col] = symbol;
+        }
+        while (index >= 0) {
+            settings.lastReel[index--][col] = -1;
+        }
+    }
+
     let flattenedReel = settings.lastReel.flat();
+    console.log(flattenedReel, 'after down')
     const totalEmptySlots = flattenedReel.filter(value => value === -1).length;
     let tempSymbols = settings.tempReelSym.flat().slice(0, totalEmptySlots);
-
-    console.log(tempSymbols, 'asd')
+    console.log(
+        tempSymbols, 'tempSymbols'
+    )
     let tempReelIndex = 0;
     flattenedReel = flattenedReel.map((value) => {
         if (value === -1 && tempReelIndex < tempSymbols.length) {
@@ -332,8 +352,6 @@ function cascadeSymbols(gameInstance) {
         return value;
     });
 
-    const rows = settings.lastReel.length;
-    const cols = settings.lastReel[0].length;
     let updatedReel = [];
     for (let i = 0; i < rows; i++) {
         updatedReel.push(flattenedReel.slice(i * cols, (i + 1) * cols));
@@ -344,8 +362,12 @@ function cascadeSymbols(gameInstance) {
     settings.tempReelSym = [];
     settings.tempReel = [];
     settings.lastReel = [];
+
     checkForWin(gameInstance);
 }
+
+
+
 
 
 
