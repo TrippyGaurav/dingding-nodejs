@@ -43,6 +43,8 @@ export class SLWOF {
   }
 
   updatePlayerBalance(amount: number) {
+
+    console.log(amount, 'updatePlayerBalance')
     this.currentGameData.updatePlayerBalance(amount);
   }
 
@@ -77,7 +79,6 @@ export class SLWOF {
       }
       await this.deductPlayerBalance(this.settings.currentBet * 3);
       this.playerData.totalbet += this.settings.currentBet * 3;
-      this.updatePlayerBalance(this.playerData.currentWining);
       new RandomResultGenerator(this);
       await this.checkResult();
 
