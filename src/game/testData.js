@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.gameData = exports.moolahPayOut = void 0;
-exports.moolahPayOut = [5, 10, 15, 20];
+exports.gameData = void 0;
 exports.gameData = [{
         "id": "SL-PM",
         "matrix": {
@@ -47,11 +46,11 @@ exports.gameData = [{
                 "Name": "0",
                 "Id": 0,
                 "reelInstance": {
-                    "0": 20,
-                    "1": 20,
-                    "2": 20,
-                    "3": 20,
-                    "4": 20
+                    "0": 9,
+                    "1": 9,
+                    "2": 9,
+                    "3": 9,
+                    "4": 9
                 },
                 "useWildSub": true,
                 "multiplier": [
@@ -308,11 +307,11 @@ exports.gameData = [{
                 "Name": "Wild",
                 "Id": 10,
                 "reelInstance": {
-                    "0": 20,
-                    "1": 20,
-                    "2": 20,
-                    "3": 20,
-                    "4": 20
+                    "0": 40,
+                    "1": 40,
+                    "2": 40,
+                    "3": 40,
+                    "4": 40
                 },
                 "description": "Substitutes for all symbols except Jackpot, Free Spin, Bonus, and Scatter.",
                 "useWildSub": false,

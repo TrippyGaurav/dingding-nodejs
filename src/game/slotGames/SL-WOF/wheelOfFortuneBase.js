@@ -57,7 +57,7 @@ class SLWOF {
         switch (response.id) {
             case "SPIN":
                 this.prepareSpin(response.data);
-                this.spinResult();
+                this.getRTP(response.data.spins || 1);
                 break;
         }
     }
@@ -74,14 +74,40 @@ class SLWOF {
                     this.sendError("Low Balance");
                     return;
                 }
-                yield this.deductPlayerBalance(this.settings.currentBet);
-                this.playerData.totalbet += this.settings.currentBet;
+                yield this.deductPlayerBalance(this.settings.currentBet * 3);
+                this.playerData.totalbet += this.settings.currentBet * 3;
+                this.updatePlayerBalance(this.playerData.currentWining);
                 new RandomResultGenerator_1.RandomResultGenerator(this);
-                this.checkResult();
+                yield this.checkResult();
             }
             catch (error) {
                 this.sendError("Spin error");
                 console.error("Failed to generate spin results:", error);
+            }
+        });
+    }
+    getRTP(spins) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let spend = 0;
+                let won = 0;
+                this.playerData.rtpSpinCount = spins;
+                for (let i = 0; i < this.playerData.rtpSpinCount; i++) {
+                    yield this.spinResult();
+                    spend += this.playerData.totalbet;
+                    won += this.playerData.haveWon;
+                    console.log(`Spin ${i + 1} completed. Bet: ${this.playerData.totalbet}, Won: ${this.playerData.haveWon}`);
+                }
+                let rtp = 0;
+                if (spend > 0) {
+                    rtp = (won / spend) * 100;
+                }
+                console.log('RTP calculated after', spins, 'spins:', rtp.toFixed(2) + '%');
+                return;
+            }
+            catch (error) {
+                console.error("Failed to calculate RTP:", error);
+                this.sendError("RTP calculation error");
             }
         });
     }
@@ -90,22 +116,22 @@ class SLWOF {
             try {
                 const resultMatrix = this.settings.resultSymbolMatrix;
                 console.log("Result Matrix:", resultMatrix);
-                const rows = resultMatrix.slice(1, 4);
+                const rows = resultMatrix;
                 const winningRows = [];
                 let totalPayout = 0;
                 for (let index = 0; index < rows.length; index++) {
                     const row = rows[index];
-                    console.log(`Checking Row ${index + 2}:`, row);
+                    console.log(`Checking Row ${index + 0}:`, row);
                     if (row.includes(0)) {
-                        console.log(`No win: '0' present in row ${index + 2}.`);
+                        console.log(`No win: '0' present in row ${index + 0}.`);
                         continue;
                     }
                     const isWinning = yield (0, helper_1.checkWinningCondition)(this, row);
                     let payout = yield this.calculateRowPayout(row, isWinning);
                     payout = this.applySpecialSymbolMultipliers(row, payout);
                     if (payout > 0)
-                        winningRows.push(index + 1);
-                    console.log(`Row ${index + 2} Adjusted Payout:`, payout);
+                        winningRows.push(index + 0);
+                    console.log(`Row ${index + 1} Adjusted Payout:`, payout);
                     totalPayout += payout;
                 }
                 totalPayout += this.checkForBonusGame(rows);
@@ -114,7 +140,7 @@ class SLWOF {
                 console.log("Total Payout for all rows:", this.playerData.currentWining);
                 this.updatePlayerBalance(this.playerData.currentWining);
                 (0, helper_1.makeResultJson)(this, winningRows);
-                this.settings.bonus = false;
+                this.settings.isBonus = false;
                 this.settings.bonusStopIndex = 0;
             }
             catch (error) {
@@ -165,13 +191,14 @@ class SLWOF {
         return payout;
     }
     checkForBonusGame(rows) {
-        const bonusSymbolsInRows = rows.flat().filter(symbolId => symbolId === 12).length;
+        const bonusSymbolsInRows = rows.flat().filter(symbolId => symbolId == 12).length;
         if (bonusSymbolsInRows >= 2) {
             console.log(`Bonus Game Triggered! Bonus symbol count: ${bonusSymbolsInRows}`);
             this.settings.isBonus = true;
-            const bonusWin = (0, helper_1.triggerBonusGame)(this, this.settings);
+            console.log(this.settings.isBonus);
+            const bonusWin = (0, helper_1.triggerBonusGame)(this);
             console.log(`Bonus Payout: ${bonusWin}`);
-            return bonusWin;
+            return bonusWin * this.settings.BetPerLines;
         }
         return 0;
     }

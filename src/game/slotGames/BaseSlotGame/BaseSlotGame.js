@@ -235,7 +235,7 @@ class BaseSlotGame {
         this.settings.lineData = this.settings.currentGamedata.linesApiData;
         this.settings.reels = this.generateInitialreel();
         if (this.settings.currentGamedata.bonus.isEnabled &&
-            this.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.spin) {
+            this.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.spin || this.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.layerTap || this.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.miniSpin) {
             this.settings.bonus.game = new BonusGame_1.BonusGame(this.settings.currentGamedata.bonus.noOfItem, this);
         }
         // let specialSymbols = this.settings.currentGamedata.Symbols.filter(
@@ -304,7 +304,7 @@ class BaseSlotGame {
                     this.settings.freeSpin.freeSpinCount > 0) {
                     this.settings.freeSpin.freeSpinCount--;
                     this.settings.freeSpin.freeSpinsAdded = false;
-                    this.settings.currentBet = 0;
+                    // this.settings.currentBet = 0;
                     console.log(this.settings.freeSpin.freeSpinCount, "this.settings.freeSpinCount");
                     if (this.settings.freeSpin.freeSpinCount <= 0) {
                         this.settings.freeSpin.freeSpinStarted = false;

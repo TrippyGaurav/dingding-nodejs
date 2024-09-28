@@ -6,10 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const userController_1 = require("./userController");
 const checkUser_1 = require("../middleware/checkUser");
+const checkToggle_1 = require("../middleware/checkToggle");
 const userController = new userController_1.UserController();
 const userRoutes = express_1.default.Router();
 // LOGIN
-userRoutes.post("/login", userController.loginUser);
+userRoutes.post("/login", checkToggle_1.checkToggle, userController.loginUser);
 // LOGOUT
 userRoutes.post("/logout", checkUser_1.checkUser, userController.logoutUser);
 // ADD User

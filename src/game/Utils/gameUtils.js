@@ -28,6 +28,8 @@ var bonusGameType;
     bonusGameType["tap"] = "tap";
     bonusGameType["spin"] = "spin";
     bonusGameType["default"] = "default";
+    bonusGameType["miniSpin"] = "miniSpin";
+    bonusGameType["layerTap"] = "layerTap";
 })(bonusGameType || (exports.bonusGameType = bonusGameType = {}));
 exports.PlayerData = {
     Balance: 0,
@@ -77,7 +79,7 @@ function convertSymbols(data) {
             "increaseValue": element.increaseValue || {},
             "freeSpin": element.freeSpin,
             "description": element.description || {},
-            "payout": element.payout || {},
+            "payout": element.payout || 0,
             "mixedPayout": element.mixedPayout || {},
             "defaultPayout": element.defaultPayout || {}
         };

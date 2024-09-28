@@ -23,7 +23,6 @@ function initializeGameSettings(gameData, gameInstance) {
     return {
         id: gameData.gameSettings.id,
         isSpecial: gameData.gameSettings.isSpecial,
-        bonus: gameData.gameSettings.bonus,
         matrix: gameData.gameSettings.matrix,
         bets: gameData.gameSettings.bets,
         Symbols: gameInstance.initSymbols,
@@ -41,7 +40,11 @@ function initializeGameSettings(gameData, gameInstance) {
         isSpecialWof: gameData.gameSettings.isSpecialWof,
         symbolsCount: gameData.gameSettings.symbolsCount,
         isBonus: false,
-        bonusStopIndex: 0
+        bonusStopIndex: 0,
+        bonus: {
+            payOut: [],
+            payOutProb: []
+        }
     };
 }
 function generateInitialReel(gameSettings) {
@@ -65,14 +68,15 @@ function shuffleArray(array) {
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
-function triggerBonusGame(gameInstance, settings) {
-    const { payOut, payOutProb } = settings.bonus;
+function triggerBonusGame(gameInstance) {
+    const { settings } = gameInstance;
+    const { payOut, payOutProb } = settings.currentGamedata.bonus;
     const randomValue = Math.random() * 100;
     let cumulativeProbability = 0;
     for (let i = 0; i < payOut.length; i++) {
         cumulativeProbability += payOutProb[i];
         if (randomValue <= cumulativeProbability) {
-            console.log(`Bonus Game: Selected payout is ${payOut[i]} and index is ${i} `);
+            console.log(`Bonus Game: Selected payout is ${payOut[i] * settings.BetPerLines} and index is ${i} `);
             gameInstance.settings.bonusStopIndex = i;
             return payOut[i];
         }
@@ -86,10 +90,13 @@ function sendInitData(gameInstance) {
     const credits = gameInstance.getPlayerData().credits;
     const Balance = credits.toFixed(2);
     const reels = generateInitialReel(gameInstance.settings);
+    const { payOut } = gameInstance.settings.currentGamedata.bonus;
     gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
             Bets: gameInstance.settings.currentGamedata.bets,
+            BonusPayout: payOut,
+            Lines: gameInstance.settings.currentGamedata.linesApiData
         },
         UIData: gameUtils_1.UiInitData,
         PlayerData: {
@@ -107,7 +114,7 @@ function checkWinningCondition(gameInstance, row) {
             throw new Error("Row is empty, cannot check winning condition.");
         }
         const firstSymbolId = row[0];
-        const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id === firstSymbolId);
+        const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id == firstSymbolId);
         if (!firstSymbol) {
             throw new Error(`Symbol with Id ${firstSymbolId} not found.`);
         }
@@ -132,7 +139,7 @@ function checkWinningCondition(gameInstance, row) {
 function calculatePayout(gameInstance, symbols, symbolId, winType) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const symbol = gameInstance.settings.Symbols.find(sym => sym.Id === symbolId);
+            const symbol = gameInstance.settings.Symbols.find(sym => sym.Id == symbolId);
             if (!symbol) {
                 throw new Error(`Symbol with Id ${symbolId} not found.`);
             }
@@ -161,16 +168,16 @@ function makeResultJson(gameInstance, winningRows) {
         const credits = gameInstance.getPlayerData().credits;
         const Balance = credits.toFixed(2);
         const sendData = {
-            gameData: {
+            GameData: {
                 resultSymbols: settings.resultSymbolMatrix,
-                linestoemit: winningRows
+                linestoemit: winningRows,
+                isbonus: settings.isBonus,
+                BonusIndex: settings.bonusStopIndex,
             },
             PlayerData: {
                 Balance: Balance,
                 currentWining: playerData.currentWining,
                 totalbet: playerData.totalbet,
-                Bonus: settings.isBonus,
-                BonusIndex: settings.bonusStopIndex,
                 haveWon: playerData.haveWon,
             }
         };

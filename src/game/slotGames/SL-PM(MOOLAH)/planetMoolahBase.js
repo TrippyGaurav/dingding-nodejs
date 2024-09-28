@@ -71,6 +71,7 @@ class SLPM {
             try {
                 const playerData = this.getPlayerData();
                 if (this.settings.hasCascading) {
+                    // await new RandomResultGenerator(this);
                     this.checkMoolahResult();
                     return;
                 }
@@ -117,7 +118,7 @@ class SLPM {
     checkMoolahResult() {
         return __awaiter(this, void 0, void 0, function* () {
             (0, helper_1.checkForWin)(this);
-            console.log(this.settings.cascadingNo, 'CASCADING');
+            // console.log(this.settings.cascadingNo, 'CASCADING')
             // console.log(this.settings.lastReel, 'settings.lastReel')
             // console.log(this.settings.tempReel, ' this.settings.tempReel')
         });
