@@ -31,6 +31,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLPM) {
     reels: [],
     hasCascading: false,
     cascadingNo: 0,
+    cascadingResult: [],
     lastReel: [],
     tempReel: [],
     tempReelSym: [],
@@ -164,7 +165,7 @@ export function checkForWin(gameInstance: SLPM) {
           switch (true) {
             case symbolMultiplier > 0:
               totalPayout += symbolMultiplier;
-              settings._winData.winningLines.push(index);
+              settings._winData.winningLines.push(index + 1);
               winningLines.push({
                 line,
                 symbol: firstSymbol,
@@ -324,9 +325,6 @@ function ExtractTempReelsWiningSym(gameInstance) {
   setToMinusOne(gameInstance);
 }
 
-
-
-
 function setToMinusOne(gameInstance: SLPM) {
   const { settings } = gameInstance;
   const valuesWithIndices = settings._winData.winningSymbols.flatMap(
@@ -350,6 +348,11 @@ function setToMinusOne(gameInstance: SLPM) {
  * @param gameInstance - The game instance to apply cascading to.
  */
 function cascadeSymbols(gameInstance) {
+  const data = {
+    symbolsToFill: [],
+    winingSymbols: [],
+    lineToEmit: []
+  }
   const { settings } = gameInstance;
   const rows = settings.lastReel.length;
   const cols = settings.lastReel[0].length;
@@ -384,33 +387,35 @@ function cascadeSymbols(gameInstance) {
         totalEmptySlots++;
       }
     }
-
     let symbolsToUse = tempSymbols.slice(0, totalEmptySlots);
     tempSymbols = tempSymbols.slice(totalEmptySlots);
-
     for (let row = 0; row < rows; row++) {
       if (flattenedReel[row][col] === -1 && symbolsToUse.length > 0) {
         flattenedReel[row][col] = symbolsToUse.shift();
         assignedSymbols.push(flattenedReel[row][col]);
       }
     }
-
     assignedSymbolsByCol.push(assignedSymbols);
   }
 
   console.log("Assigned Symbols by Column:", assignedSymbolsByCol);
-
+  data.symbolsToFill = assignedSymbolsByCol;
+  data.lineToEmit = settings._winData.winningLines;
+  data.winingSymbols = settings._winData.winningSymbols;
+  settings.cascadingResult.push({ ...data });
+  console.log(settings.cascadingResult)
+  data.symbolsToFill = [];
+  data.lineToEmit = [];
+  data.winingSymbols = [];
   settings.resultSymbolMatrix = flattenedReel;
   settings._winData.winningSymbols = [];
   settings.tempReelSym = [];
   settings.tempReel = [];
   settings.lastReel = [];
-
+  settings._winData.winningLines = []
   checkForWin(gameInstance);
 }
 
-//
-//
 /**
  * Sends the initial game and player data to the client.
  * @param gameInstance - The instance of the SLCM class containing the game settings and player data.
