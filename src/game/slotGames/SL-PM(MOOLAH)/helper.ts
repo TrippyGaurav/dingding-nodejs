@@ -310,27 +310,22 @@ function accessData(symbol, matchCount, gameInstance: SLPM) {
   }
 }
 //
-function ExtractTempReelsWiningSym(gameInstance: SLPM) {
-  const { settings } = gameInstance;
-  const valuesWithIndices = settings._winData.winningSymbols.flatMap(
-    (symbolIndices) => {
-      return symbolIndices.map((indexStr) => {
-        const [row, col] = indexStr.split(",").map(Number);
-        const symbolValues = settings.tempReel[row][col];
-        settings.tempReelSym.push(symbolValues);
-        return {
-          index: { row, col },
-          value: symbolValues,
-        };
-      });
-    }
-  );
-
-  setToMinusOne(gameInstance);
-
-  // console.log(valuesWithIndices, 'Winning symbols with their indices');
-  return valuesWithIndices;
+function shuffleTempArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 }
+function ExtractTempReelsWiningSym(gameInstance) {
+  const { settings } = gameInstance;
+  settings.tempReel = shuffleTempArray(settings.tempReel.flat());
+  settings.tempReelSym = settings.tempReel
+  setToMinusOne(gameInstance);
+}
+
+
+
 
 function setToMinusOne(gameInstance: SLPM) {
   const { settings } = gameInstance;
@@ -380,9 +375,9 @@ function cascadeSymbols(gameInstance) {
   console.log(flattenedReel, "after down");
 
   let tempSymbols = settings.tempReelSym.flat();
-  const assignedSymbolsByCol = []; 
+  const assignedSymbolsByCol = [];
   for (let col = 0; col < cols; col++) {
-    let assignedSymbols = []; 
+    let assignedSymbols = [];
     let totalEmptySlots = 0;
     for (let row = 0; row < rows; row++) {
       if (flattenedReel[row][col] === -1) {
@@ -391,7 +386,7 @@ function cascadeSymbols(gameInstance) {
     }
 
     let symbolsToUse = tempSymbols.slice(0, totalEmptySlots);
-    tempSymbols = tempSymbols.slice(totalEmptySlots); 
+    tempSymbols = tempSymbols.slice(totalEmptySlots);
 
     for (let row = 0; row < rows; row++) {
       if (flattenedReel[row][col] === -1 && symbolsToUse.length > 0) {
@@ -400,7 +395,7 @@ function cascadeSymbols(gameInstance) {
       }
     }
 
-    assignedSymbolsByCol.push(assignedSymbols); 
+    assignedSymbolsByCol.push(assignedSymbols);
   }
 
   console.log("Assigned Symbols by Column:", assignedSymbolsByCol);
