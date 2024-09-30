@@ -25,6 +25,7 @@ export interface SLPMSETTINGS {
     lastReel: any[],
     tempReel: any[],
     tempReelSym: any[],
+    pmFreeSPin: any[],
     jackpot: {
         symbolName: string;
         symbolsCount: number;

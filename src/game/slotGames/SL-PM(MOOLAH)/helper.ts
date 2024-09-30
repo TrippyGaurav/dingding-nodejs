@@ -6,7 +6,7 @@ import {
   UiInitData,
 } from "../../Utils/gameUtils";
 import { SLPM } from "./planetMoolahBase";
-import { specialIcons } from "./types";
+import { specialIcons,SLPMSETTINGS } from "./types";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 
 /**
@@ -34,6 +34,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLPM) {
     lastReel: [],
     tempReel: [],
     tempReelSym: [],
+    pmFreeSPin: [],
     jackpot: {
       symbolName: "",
       symbolsCount: 0,
@@ -132,89 +133,66 @@ export function checkForWin(gameInstance: SLPM) {
     settings.lineData.forEach((line, index) => {
       const firstSymbolPosition = line[0];
       let firstSymbol = settings.resultSymbolMatrix[firstSymbolPosition][0];
+      
       // Handle wild symbols
       if (settings.wild.useWild && firstSymbol === settings.wild.SymbolID) {
         firstSymbol = findFirstNonWildSymbol(line, gameInstance);
       }
+
       // Handle special icons
       if (
         Object.values(specialIcons).includes(
           settings.Symbols[firstSymbol].Name as specialIcons
         )
       ) {
-        console.log(
-          "Special Icon Matched : ",
-          settings.Symbols[firstSymbol].Name
-        );
+        console.log("Special Icon Matched:", settings.Symbols[firstSymbol].Name);
         return;
       }
-      const { isWinningLine, matchCount, matchedIndices } = checkLineSymbols(
-        firstSymbol,
-        line,
-        gameInstance
-      );
-      switch (true) {
-        case isWinningLine && matchCount >= 3:
-          const symbolMultiplier = accessData(
-            firstSymbol,
+
+      const { isWinningLine, matchCount, matchedIndices } = checkLineSymbols(firstSymbol, line, gameInstance);
+      if (isWinningLine && matchCount >= 3) {
+        const symbolMultiplier = accessData(firstSymbol, matchCount, gameInstance);
+        settings.lastReel = settings.resultSymbolMatrix;
+
+        if (symbolMultiplier > 0) {
+          totalPayout += symbolMultiplier;
+          settings._winData.winningLines.push(index);
+          winningLines.push({
+            line,
+            symbol: firstSymbol,
+            multiplier: symbolMultiplier,
             matchCount,
-            gameInstance
-          );
-          settings.lastReel = settings.resultSymbolMatrix;
-          switch (true) {
-            case symbolMultiplier > 0:
-              totalPayout += symbolMultiplier;
-              settings._winData.winningLines.push(index);
-              winningLines.push({
-                line,
-                symbol: firstSymbol,
-                multiplier: symbolMultiplier,
-                matchCount,
-              });
-              console.log(`Line ${index + 1}:`, line);
-              console.log(
-                `Payout for Line ${index + 1}:`,
-                "payout",
-                symbolMultiplier
-              );
-              const formattedIndices = matchedIndices.map(
-                ({ col, row }) => `${row},${col}`
-              );
-              const validIndices = formattedIndices.filter(
-                (index) => index.length > 2
-              );
-              if (validIndices.length > 0) {
-                // console.log(settings.lastReel, 'settings.lastReel')
-                console.log(validIndices);
-                settings._winData.winningSymbols.push(validIndices);
-              }
-              break;
-            default:
-              break;
+          });
+
+          console.log(`Line ${index + 1}:`, line);
+          console.log(`Payout for Line ${index + 1}:`, symbolMultiplier);
+
+          const formattedIndices = matchedIndices.map(({ col, row }) => `${row},${col}`);
+          const validIndices = formattedIndices.filter(index => index.length > 2);
+          if (validIndices.length > 0) {
+            settings._winData.winningSymbols.push(validIndices);
           }
-          break;
-        default:
-          break;
+        }
       }
     });
+
     settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
-    switch (true) {
-      case winningLines.length >= 1 && settings.cascadingNo < 4:
-        settings.cascadingNo += 1;
-        settings.hasCascading = true;
-        new RandomResultGenerator(gameInstance);
-        settings.tempReel = settings.resultSymbolMatrix;
-        ExtractTempReelsWiningSym(gameInstance);
-        break;
-      default:
-        console.log("NO PAYLINE MATCH");
-        settings.cascadingNo = 0;
-        settings.hasCascading = false;
-        settings.resultSymbolMatrix = [];
-        settings.tempReelSym = [];
-        settings.tempReel = [];
-        settings.lastReel = [];
-        break;
+
+    // Check cascading win and free spin logic
+    if (winningLines.length >= 1) {
+      settings.cascadingNo += 1;
+      settings.hasCascading = true;
+      
+      // Award free spins based on cascading count
+      awardFreeSpins(settings);
+
+      // Generate a new result and process cascading
+      new RandomResultGenerator(gameInstance);
+      settings.tempReel = settings.resultSymbolMatrix;
+      ExtractTempReelsWiningSym(gameInstance);
+    } else {
+      console.log("NO PAYLINE MATCH");
+      resetCascading(settings);
     }
 
     return winningLines;
@@ -223,7 +201,40 @@ export function checkForWin(gameInstance: SLPM) {
     return [];
   }
 }
-
+/**
+ * Awards free spins based on the current cascading count.
+ * @param settings - The game settings object.
+ */
+function awardFreeSpins(settings: SLPMSETTINGS) {
+    const pmFreeSPin = settings.pmFreeSPin; // Free spin matrix
+    console.log("bfgskahsjkhfjkhu",pmFreeSPin);
+    
+    // Loop through pmFreeSPin to check if cascading count matches and award free spins
+    for (const [cascadeCount, freeSpins] of pmFreeSPin) {
+      if (settings.cascadingNo === cascadeCount) {
+        settings.freeSpin.freeSpinCount += freeSpins;
+        settings.freeSpin.useFreeSpin = true;
+        settings.freeSpin.freeSpinStarted = true;
+  
+        console.log(`Awarded ${freeSpins} free spins for ${cascadeCount} cascades!`);
+        break; // Exit after awarding free spins
+      }
+    }
+  }
+  
+  /**
+   * Resets cascading state when there are no further cascades.
+   * @param settings - The game settings object.
+   */
+  function resetCascading(settings: SLPMSETTINGS) {
+    settings.cascadingNo = 0;
+    settings.hasCascading = false;
+    settings.resultSymbolMatrix = [];
+    settings.tempReelSym = [];
+    settings.tempReel = [];
+    settings.lastReel = [];
+    console.log("Cascading reset");
+  }
 //checking matching lines with first symbol and wild subs
 function checkLineSymbols(
   firstSymbol: string,

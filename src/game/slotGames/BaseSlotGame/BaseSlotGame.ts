@@ -257,7 +257,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
 
     if (
       this.settings.currentGamedata.bonus.isEnabled &&
-      this.settings.currentGamedata.bonus.type == bonusGameType.spin || this.settings.currentGamedata.bonus.type == bonusGameType.layerTap || this.settings.currentGamedata.bonus.type == bonusGameType.miniSpin
+      this.settings.currentGamedata.bonus.type == bonusGameType.tap || this.settings.currentGamedata.bonus.type == bonusGameType.spin || this.settings.currentGamedata.bonus.type == bonusGameType.layerTap || this.settings.currentGamedata.bonus.type == bonusGameType.miniSpin
     ) {
       this.settings.bonus.game = new BonusGame(
         this.settings.currentGamedata.bonus.noOfItem,
