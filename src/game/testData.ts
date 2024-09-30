@@ -19,22 +19,21 @@ export const gameData = [
 
     "scatterBlue": {
       "isEnabled": true,
-      // "symbols":      [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15],
       "symbolsProbs": [250, 14, 13, 12, 12, 11, 11, 11, 11, 9, 9, 8, 5, 2, 0, 0], // probability of each symbol
-      "featureProbs": [0, 10, 40] // probability of each feature . index : 0 - no feature, 1 - level up, 2 - booster
+      "featureProbs": [0, 40, 40 ,40] // probability of each feature . index : 0 - no feature, 1 - level up, 2 - booster ,3 - both levelup and booster
     },
     "booster": {
       "isEnabledSimple": true,
       "isEnabledExhaustive": true,
       "type": "",
-      "typeProbs": [100, 15, 15], // index : 0 - no booster, 1 - simple booster, 2 - exhaustive booster
+      "typeProbs": [10, 15, 15], // index : 0 - no booster, 1 - simple booster, 2 - exhaustive booster
       "multiplier": [1, 2, 3, 5, 10, 15, 20, 25],// multiplier amt
       "multiplierProbs": [90, 70, 40, 20, 10, 4, 3, 1], // multiplier probability
     },
     "levelUp": {
       "isEnabled": true,
       "level":      [ 0, 1, 2, 3, 4, 5, 6, 7],//increment symbol amounts . 0 - no level up
-      "levelProbs": [ 9,50,40,30,20,15,14,12],// increment symbol probability 
+      "levelProbs": [6,50,40,30,20,15,14,12],// increment symbol probability 
     },
     // bonus: {
     //   isEnabled: true,
@@ -263,11 +262,11 @@ export const gameData = [
         "Id": 14,
         "isSpecial": true,
         "reelInstance": {
-          "0": 1,
-          "1": 1,
-          "2": 1,
-          "3": 1,
-          "4": 1
+          "0": 50,
+          "1": 50,
+          "2": 50,
+          "3": 50,
+          "4": 50
         },
         "description": "Scatter: Respin free games",
         "freeSpinCount": 0,
