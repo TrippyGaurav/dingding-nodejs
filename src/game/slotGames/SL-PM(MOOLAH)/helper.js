@@ -5,16 +5,17 @@ exports.generateInitialReel = generateInitialReel;
 exports.makePayLines = makePayLines;
 exports.checkForWin = checkForWin;
 exports.sendInitData = sendInitData;
+exports.makeResultJson = makeResultJson;
 const WinData_1 = require("../BaseSlotGame/WinData");
 const gameUtils_1 = require("../../Utils/gameUtils");
 const types_1 = require("./types");
 const RandomResultGenerator_1 = require("../RandomResultGenerator");
 /**
-* Initializes the game settings using the provided game data and game instance.
-* @param gameData - The data used to configure the game settings.
-* @param gameInstance - The instance of the SLCM class that manages the game logic.
-* @returns An object containing initialized game settings.
-*/
+ * Initializes the game settings using the provided game data and game instance.
+ * @param gameData - The data used to configure the game settings.
+ * @param gameInstance - The instance of the SLCM class that manages the game logic.
+ * @returns An object containing initialized game settings.
+ */
 function initializeGameSettings(gameData, gameInstance) {
     return {
         id: gameData.gameSettings.id,
@@ -31,6 +32,7 @@ function initializeGameSettings(gameData, gameInstance) {
         reels: [],
         hasCascading: false,
         cascadingNo: 0,
+        cascadingResult: [],
         lastReel: [],
         tempReel: [],
         tempReelSym: [],
@@ -65,7 +67,7 @@ function initializeGameSettings(gameData, gameInstance) {
  */
 function generateInitialReel(gameSettings) {
     const reels = [[], [], [], [], []];
-    gameSettings.Symbols.forEach(symbol => {
+    gameSettings.Symbols.forEach((symbol) => {
         for (let i = 0; i < 5; i++) {
             const count = symbol.reelInstance[i] || 0;
             for (let j = 0; j < count; j++) {
@@ -73,7 +75,7 @@ function generateInitialReel(gameSettings) {
             }
         }
     });
-    reels.forEach(reel => {
+    reels.forEach((reel) => {
         shuffleArray(reel);
     });
     return reels;
@@ -118,8 +120,6 @@ function handleSpecialSymbols(symbol, gameInstance) {
 //CHECK WINS ON PAYLINES WITH OR WITHOUT WILD
 //check for win function
 function checkForWin(gameInstance) {
-    console.log(gameInstance.settings.resultSymbolMatrix, 'dfdfd');
-    console.log(gameInstance.settings.cascadingNo, 'CASCADING');
     try {
         const { settings } = gameInstance;
         const winningLines = [];
@@ -144,21 +144,23 @@ function checkForWin(gameInstance) {
                     switch (true) {
                         case symbolMultiplier > 0:
                             totalPayout += symbolMultiplier;
-                            settings._winData.winningLines.push(index);
+                            settings._winData.winningLines.push(index + 1);
                             winningLines.push({
                                 line,
                                 symbol: firstSymbol,
                                 multiplier: symbolMultiplier,
-                                matchCount
+                                matchCount,
                             });
                             console.log(`Line ${index + 1}:`, line);
-                            console.log(`Payout for Line ${index + 1}:`, 'payout', symbolMultiplier);
+                            console.log(`Payout for Line ${index + 1}:`, "payout", symbolMultiplier);
                             const formattedIndices = matchedIndices.map(({ col, row }) => `${row},${col}`);
-                            const validIndices = formattedIndices.filter(index => index.length > 2);
+                            const validIndices = formattedIndices.filter((index) => index.length > 2);
                             if (validIndices.length > 0) {
                                 // console.log(settings.lastReel, 'settings.lastReel')
                                 console.log(validIndices);
                                 settings._winData.winningSymbols.push(validIndices);
+                                settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
+                                console.log(settings._winData.totalWinningAmount);
                             }
                             break;
                         default:
@@ -169,7 +171,6 @@ function checkForWin(gameInstance) {
                     break;
             }
         });
-        settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
         switch (true) {
             case winningLines.length >= 1 && settings.cascadingNo < 4:
                 settings.cascadingNo += 1;
@@ -179,13 +180,14 @@ function checkForWin(gameInstance) {
                 ExtractTempReelsWiningSym(gameInstance);
                 break;
             default:
-                console.log('NO PAYLINE MATCH');
+                makeResultJson(gameInstance);
                 settings.cascadingNo = 0;
                 settings.hasCascading = false;
                 settings.resultSymbolMatrix = [];
                 settings.tempReelSym = [];
                 settings.tempReel = [];
                 settings.lastReel = [];
+                console.log("NO PAYLINE MATCH");
                 break;
         }
         return winningLines;
@@ -202,7 +204,9 @@ function checkLineSymbols(firstSymbol, line, gameInstance) {
         const wildSymbol = settings.wild.SymbolID || "";
         let matchCount = 1;
         let currentSymbol = firstSymbol;
-        const matchedIndices = [{ col: 0, row: line[0] }];
+        const matchedIndices = [
+            { col: 0, row: line[0] },
+        ];
         for (let i = 1; i < line.length; i++) {
             const rowIndex = line[i];
             const symbol = settings.resultSymbolMatrix[rowIndex][i];
@@ -227,7 +231,7 @@ function checkLineSymbols(firstSymbol, line, gameInstance) {
         return { isWinningLine: matchCount >= 3, matchCount, matchedIndices };
     }
     catch (error) {
-        console.error('Error in checkLineSymbols:', error);
+        console.error("Error in checkLineSymbols:", error);
         return { isWinningLine: false, matchCount: 0, matchedIndices: [] };
     }
 }
@@ -235,7 +239,7 @@ function checkLineSymbols(firstSymbol, line, gameInstance) {
 function findFirstNonWildSymbol(line, gameInstance) {
     try {
         const { settings } = gameInstance;
-        const wildSymbol = settings.wild.SymbolID.toString();
+        const wildSymbol = settings.wild.SymbolID;
         for (let i = 0; i < line.length; i++) {
             const rowIndex = line[i];
             const symbol = settings.resultSymbolMatrix[rowIndex][i];
@@ -254,7 +258,7 @@ function findFirstNonWildSymbol(line, gameInstance) {
 function accessData(symbol, matchCount, gameInstance) {
     const { settings } = gameInstance;
     try {
-        const symbolData = settings.currentGamedata.Symbols.find(s => s.Id.toString() === symbol.toString());
+        const symbolData = settings.currentGamedata.Symbols.find((s) => s.Id.toString() === symbol.toString());
         if (symbolData) {
             const multiplierArray = symbolData.multiplier;
             if (multiplierArray && multiplierArray[5 - matchCount]) {
@@ -269,35 +273,31 @@ function accessData(symbol, matchCount, gameInstance) {
     }
 }
 //
+function shuffleTempArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
 function ExtractTempReelsWiningSym(gameInstance) {
     const { settings } = gameInstance;
-    const valuesWithIndices = settings._winData.winningSymbols.flatMap(symbolIndices => {
-        return symbolIndices.map(indexStr => {
-            const [row, col] = indexStr.split(',').map(Number);
-            const symbolValues = settings.tempReel[row][col];
-            settings.tempReelSym.push(symbolValues);
-            return {
-                index: { row, col },
-                value: symbolValues
-            };
-        });
-    });
+    settings.tempReel = shuffleTempArray(settings.tempReel.flat());
+    settings.tempReelSym = settings.tempReel;
     setToMinusOne(gameInstance);
-    // console.log(valuesWithIndices, 'Winning symbols with their indices');
-    return valuesWithIndices;
 }
 function setToMinusOne(gameInstance) {
     const { settings } = gameInstance;
-    const valuesWithIndices = settings._winData.winningSymbols.flatMap(symbolIndices => {
-        return symbolIndices.map(indexStr => {
-            const [row, col] = indexStr.split(',').map(Number);
-            const symbolValues = settings.lastReel[row][col] = -1;
+    const valuesWithIndices = settings._winData.winningSymbols.flatMap((symbolIndices) => {
+        return symbolIndices.map((indexStr) => {
+            const [row, col] = indexStr.split(",").map(Number);
+            const symbolValues = (settings.lastReel[row][col] = -1);
             return {
-                value: symbolValues
+                value: symbolValues,
             };
         });
     });
-    console.log(settings.lastReel, 'Winning symbols set to -1');
+    console.log(settings.lastReel, "Winning symbols set to -1");
     cascadeSymbols(gameInstance);
     return valuesWithIndices;
 }
@@ -306,6 +306,12 @@ function setToMinusOne(gameInstance) {
  * @param gameInstance - The game instance to apply cascading to.
  */
 function cascadeSymbols(gameInstance) {
+    const data = {
+        symbolsToFill: [],
+        winingSymbols: [],
+        lineToEmit: [],
+        currentWining: 0
+    };
     const { settings } = gameInstance;
     const rows = settings.lastReel.length;
     const cols = settings.lastReel[0].length;
@@ -324,37 +330,49 @@ function cascadeSymbols(gameInstance) {
             settings.lastReel[index--][col] = -1;
         }
     }
-    let flattenedReel = settings.lastReel.flat();
-    console.log(flattenedReel, 'after down');
-    const totalEmptySlots = flattenedReel.filter(value => value === -1).length;
-    let tempSymbols = settings.tempReelSym.flat().slice(0, totalEmptySlots);
-    console.log(tempSymbols, 'tempSymbols');
-    let tempReelIndex = 0;
-    flattenedReel = flattenedReel.map((value) => {
-        if (value === -1 && tempReelIndex < tempSymbols.length) {
-            return tempSymbols[tempReelIndex++];
+    const flattenedReel = settings.lastReel;
+    let tempSymbols = settings.tempReelSym.flat();
+    const assignedSymbolsByCol = [];
+    for (let col = 0; col < cols; col++) {
+        let assignedSymbols = [];
+        let totalEmptySlots = 0;
+        for (let row = 0; row < rows; row++) {
+            if (flattenedReel[row][col] === -1) {
+                totalEmptySlots++;
+            }
         }
-        return value;
-    });
-    let updatedReel = [];
-    for (let i = 0; i < rows; i++) {
-        updatedReel.push(flattenedReel.slice(i * cols, (i + 1) * cols));
+        let symbolsToUse = tempSymbols.slice(0, totalEmptySlots);
+        tempSymbols = tempSymbols.slice(totalEmptySlots);
+        for (let row = 0; row < rows; row++) {
+            if (flattenedReel[row][col] === -1 && symbolsToUse.length > 0) {
+                flattenedReel[row][col] = symbolsToUse.shift();
+                assignedSymbols.push(flattenedReel[row][col]);
+            }
+        }
+        assignedSymbolsByCol.push(assignedSymbols);
     }
-    settings.resultSymbolMatrix = updatedReel;
+    data.symbolsToFill = assignedSymbolsByCol;
+    data.lineToEmit = settings._winData.winningLines;
+    data.winingSymbols = settings._winData.winningSymbols;
+    settings.cascadingResult.push(Object.assign({}, data));
+    console.log(settings.cascadingResult);
+    data.symbolsToFill = [];
+    data.lineToEmit = [];
+    data.winingSymbols = [];
+    settings.resultSymbolMatrix = flattenedReel;
     settings._winData.winningSymbols = [];
     settings.tempReelSym = [];
     settings.tempReel = [];
-    settings.lastReel = [];
+    settings._winData.winningLines = [];
     checkForWin(gameInstance);
 }
-//
-//
 /**
  * Sends the initial game and player data to the client.
  * @param gameInstance - The instance of the SLCM class containing the game settings and player data.
  */
 function sendInitData(gameInstance) {
-    gameInstance.settings.lineData = gameInstance.settings.currentGamedata.linesApiData;
+    gameInstance.settings.lineData =
+        gameInstance.settings.currentGamedata.linesApiData;
     gameUtils_1.UiInitData.paylines = (0, gameUtils_1.convertSymbols)(gameInstance.settings.Symbols);
     const reels = generateInitialReel(gameInstance.settings);
     gameInstance.settings.reels = reels;
@@ -372,4 +390,31 @@ function sendInitData(gameInstance) {
         },
     };
     gameInstance.sendMessage("InitData", dataToSend);
+}
+function makeResultJson(gameInstance) {
+    try {
+        const { settings, playerData } = gameInstance;
+        const credits = gameInstance.getPlayerData().credits;
+        const Balance = credits.toFixed(2);
+        const sendData = {
+            GameData: {
+                resultSymbols: settings.lastReel,
+                linesToEmit: settings._winData.winningLines,
+                symbolsToEmit: settings._winData.winningSymbols,
+                jackpot: settings._winData.jackpotwin,
+                cascading: settings.cascadingResult,
+                isCascading: settings.hasCascading
+            },
+            PlayerData: {
+                Balance: Balance,
+                currentWining: settings._winData.totalWinningAmount,
+                totalbet: playerData.totalbet,
+                haveWon: playerData.haveWon,
+            }
+        };
+        gameInstance.sendMessage('ResultData', sendData);
+    }
+    catch (error) {
+        console.error("Error generating result JSON or sending message:", error);
+    }
 }
