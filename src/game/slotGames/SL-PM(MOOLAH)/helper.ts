@@ -240,7 +240,6 @@ export function checkForWin(gameInstance: SLPM) {
         settings.tempReelSym = [];
         settings.tempReel = [];
         settings.lastReel = [];
-        console.log("NO PAYLINE MATCH");
         break;
     }
     return winningLines;
@@ -448,7 +447,9 @@ export function sendInitData(gameInstance: SLPM) {
   const dataToSend = {
     GameData: {
       Reel: reels,
+      linesApiData: gameInstance.settings.currentGamedata.linesApiData,
       Bets: gameInstance.settings.currentGamedata.bets,
+      freeSpinData: gameInstance.settings.currentGamedata.freeSpinData,
     },
     UIData: UiInitData,
     PlayerData: {
@@ -473,7 +474,9 @@ export function makeResultJson(gameInstance: SLPM) {
         symbolsToEmit: settings._winData.winningSymbols,
         jackpot: settings._winData.jackpotwin,
         cascading: settings.cascadingResult,
-        isCascading: settings.hasCascading
+        isCascading: settings.hasCascading,
+        isFreeSpin: settings.freeSpin.useFreeSpin,
+        freeSpinCount: settings.freeSpin.freeSpinCount,
       },
       PlayerData: {
         Balance: Balance,
