@@ -16,11 +16,18 @@ export const gameData = [
     ],
 
     "linesApiData": [],
-
+    "scatterPurple": {
+      "isEnabled": true,
+      "topSymbolProbs": [0, 140, 130, 120, 120, 110, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+      //make sure special symbols and empty have 0
+      "symbolsProbs": [5, 140, 130, 120, 120, 110, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0], // probability of each symbol
+      //make sure special symbols have 0
+      "featureProbs": [0, 40, 40, 40] // probability of each feature . index : 0 - no feature, 1 - level up, 2 - booster ,3 - both levelup and booster
+    },
     "scatterBlue": {
       "isEnabled": true,
-      "symbolsProbs": [250, 14, 13, 12, 12, 11, 11, 11, 11, 9, 9, 8, 5, 2, 0, 0], // probability of each symbol
-      "featureProbs": [0, 40, 40 ,40] // probability of each feature . index : 0 - no feature, 1 - level up, 2 - booster ,3 - both levelup and booster
+      "symbolsProbs": [250, 14, 13, 12, 12, 11, 11, 11, 11, 9, 9, 8, 5, 2, 0, 0, 0], // probability of each symbol
+      "featureProbs": [0, 40, 40, 40] // probability of each feature . index : 0 - no feature, 1 - level up, 2 - booster ,3 - both levelup and booster
     },
     "booster": {
       "isEnabledSimple": true,
@@ -32,8 +39,19 @@ export const gameData = [
     },
     "levelUp": {
       "isEnabled": true,
-      "level":      [ 0, 1, 2, 3, 4, 5, 6, 7],//increment symbol amounts . 0 - no level up
-      "levelProbs": [6,50,40,30,20,15,14,12],// increment symbol probability 
+      "level": [0, 1, 2, 3, 4, 5, 6, 7],//increment symbol amounts . 0 - no level up
+      "levelProbs": [6, 50, 40, 30, 20, 15, 14, 12],// increment symbol probability 
+    },
+    "joker": {
+      "isEnabled": true,
+      "payout":[50,500,5000],
+      "blueRound": [8, 70, 60, 150],// 0 - no matches , 1 - only one match ...
+      "greenRound": [8, 70, 60, 150],// 0 - no matches , 1 - only one match ...
+      "redRound": [8, 70, 60, 50],// 0 - no matches , 1 - only one match ...
+      // "blueRound": [100, 1, 100, 1, 100, 1, 100, 1, 100, 1, 100, 10], // all even including 0 is joker - 0,2,4,6,8,10
+      // "greenRound": [100, 1, 1, 100, 1, 1, 100, 1, 1, 100, 1, 1],//all numbers divisible by 3 including 0 is joker - 0,3,6,9
+      // "redRound": [100, 1, 1, 1, 1, 100, 1, 1, 1, 1, 100, 10],//all numbers divisible by 5 including 0 is joker - 0,5,10
+
     },
     // bonus: {
     //   isEnabled: true,
@@ -262,11 +280,11 @@ export const gameData = [
         "Id": 14,
         "isSpecial": true,
         "reelInstance": {
-          "0": 50,
-          "1": 50,
-          "2": 50,
-          "3": 50,
-          "4": 50
+          "0": 1,
+          "1": 1,
+          "2": 1,
+          "3": 1,
+          "4": 1
         },
         "description": "Scatter: Respin free games",
         "freeSpinCount": 0,
@@ -284,6 +302,22 @@ export const gameData = [
           "4": 2
         },
         "description": "Scatter: fruit free games",
+        "freeSpinCount": 0,
+        "payout": 0,
+      },
+
+      {
+        "Name": "Joker",
+        "Id": 16,
+        "isSpecial": true,
+        "reelInstance": {
+          "0": 62,
+          "1": 62,
+          "2": 62,
+          "3": 62,
+          "4": 62
+        },
+        "description": "Joker",
         "freeSpinCount": 0,
         "payout": 0,
       },

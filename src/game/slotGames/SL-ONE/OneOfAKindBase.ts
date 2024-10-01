@@ -1,5 +1,5 @@
 import { currentGamedata } from "../../../Player";
-import { calculatePayout, generateInitialReel, initializeGameSettings, sendInitData } from "./helper2";
+import { calculatePayout, generateInitialReel, initializeGameSettings, sendInitData } from "./helper";
 import { SLONESETTINGS } from "./types";
 
 export class SLONE {

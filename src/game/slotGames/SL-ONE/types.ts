@@ -19,6 +19,12 @@ export interface SLONESETTINGS {
   _winData: WinData | undefined;
   defaultPayout: number;
   SpecialType: string[];
+  scatterPurple: {
+    isEnabled: boolean;
+    topSymbolProbs: number[];
+    symbolsProbs: number[];
+    featureProbs: number[]
+  };
   scatterBlue: {
     isEnabled: boolean;
     symbolsProbs: number[];
@@ -33,6 +39,13 @@ export interface SLONESETTINGS {
   freeSpinCount: number;
   freeSpinType: "NONE" | "BLUE" | "PURPLE";
   multiplierType:  'NONE' | 'SIMPLE' | 'EXHAUSTIVE';
+  joker: {
+    isEnabled: boolean;
+    payout: number[];
+    blueRound: number[];
+    greenRound: number[];
+    redRound: number[];
+  },
   booster: {
     isEnabledSimple: boolean;
     isEnabledExhaustive: boolean;
@@ -56,6 +69,15 @@ export interface LevelUpResult {
   level: number;
   isLevelUp: boolean;
 }
+export interface ScatterPurpleResult {
+  isTriggered: boolean;
+  symbols:number[];
+  payout: number;
+  levelUp: LevelUpResult[];
+  booster: BoosterResult[];
+  topSymbols: number[][];
+  reTriggered: number[] //0 - not reTriggered, 1 - reTriggered
+}
 export interface ScatterBlueResult {
   isTriggered: boolean;
   symbols:number[];
@@ -71,3 +93,10 @@ export interface SpinResult {
   // scatterBlue: ScatterBlueResult[];
 }
 
+export interface JokerResponse {
+  isTriggered: boolean;
+  payout: number[];
+  blueRound: number; //no. of matches
+  greenRound: number; //no. of matches
+  redRound: number; //no. of matches
+}
