@@ -209,6 +209,7 @@ export function checkForWin(gameInstance: SLPM) {
         break;
       default:
         console.log("NO PAYLINE MATCH");
+        makeResultJson(gameInstance)
         settings.cascadingNo = 0;
         settings.hasCascading = false;
         settings.resultSymbolMatrix = [];
@@ -351,7 +352,8 @@ function cascadeSymbols(gameInstance) {
   const data = {
     symbolsToFill: [],
     winingSymbols: [],
-    lineToEmit: []
+    lineToEmit: [],
+    currentWining: 0
   }
   const { settings } = gameInstance;
   const rows = settings.lastReel.length;
@@ -411,7 +413,6 @@ function cascadeSymbols(gameInstance) {
   settings._winData.winningSymbols = [];
   settings.tempReelSym = [];
   settings.tempReel = [];
-  settings.lastReel = [];
   settings._winData.winningLines = []
   checkForWin(gameInstance);
 }
@@ -440,4 +441,30 @@ export function sendInitData(gameInstance: SLPM) {
     },
   };
   gameInstance.sendMessage("InitData", dataToSend);
+}
+
+export function makeResultJson(gameInstance: SLPM) {
+  try {
+    const { settings, playerData } = gameInstance;
+    const credits = gameInstance.getPlayerData().credits
+    const Balance = credits.toFixed(2)
+    const sendData = {
+      GameData: {
+        resultSymbols: settings.lastReel,
+        cascading: settings.cascadingResult,
+        isCascading: settings.hasCascading
+      },
+      PlayerData: {
+        Balance: Balance,
+        currentWining: playerData.currentWining,
+        totalbet: playerData.totalbet,
+        haveWon: playerData.haveWon,
+
+      }
+    };
+
+    gameInstance.sendMessage('ResultData', sendData);
+  } catch (error) {
+    console.error("Error generating result JSON or sending message:", error);
+  }
 }
