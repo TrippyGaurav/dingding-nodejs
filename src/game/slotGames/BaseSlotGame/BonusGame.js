@@ -50,6 +50,7 @@ class BonusGame {
         if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.spin) {
             this.parent.settings.bonus.stopIndex = this.getRandomPayoutIndex(this.parent.settings.currentGamedata.bonus.payOutProb);
             amount = this.parent.settings.BetPerLines * this.result[this.parent.settings.bonus.stopIndex];
+            return amount;
         }
         else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.tap) {
             for (let index = 0; index < this.result.length; index++) {
@@ -57,14 +58,14 @@ class BonusGame {
                     break;
                 else
                     amount += this.parent.settings.BetPerLines * this.result[index];
+                return amount;
             }
         }
         else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == "slot") {
             for (let index = 1; index < 4; index++) {
                 amount += this.parent.settings.BetPerLines * this.result[this.result.length - index];
+                return amount;
             }
-            console.log("amount", amount);
-            console.log("current bet", this.parent.settings.BetPerLines);
         }
         else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == gameUtils_1.bonusGameType.layerTap) {
             let totalWinAmount = 0;
@@ -81,12 +82,12 @@ class BonusGame {
                 }
                 totalWinAmount += this.parent.settings.BetPerLines * selectedPayOut;
             }
-            console.log("Bonus Index", selectedIndex);
             amount += totalWinAmount;
+            return { selectedIndex, amount };
         }
         if (!amount || amount < 0)
             amount = 0;
-        return { selectedIndex, amount };
+        return amount;
     }
     shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
