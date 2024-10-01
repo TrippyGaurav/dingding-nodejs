@@ -22,10 +22,11 @@ export interface SLPMSETTINGS {
     Symbols: Symbol[];
     hasCascading: boolean,
     cascadingNo: number,
+    cascadingResult: any[];
     lastReel: any[],
     tempReel: any[],
     tempReelSym: any[],
-    pmFreeSPin: any[],
+    freeSpinData: any[][],
     jackpot: {
         symbolName: string;
         symbolsCount: number;

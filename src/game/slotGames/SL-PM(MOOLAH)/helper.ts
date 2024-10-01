@@ -6,7 +6,7 @@ import {
   UiInitData,
 } from "../../Utils/gameUtils";
 import { SLPM } from "./planetMoolahBase";
-import { specialIcons,SLPMSETTINGS } from "./types";
+import { specialIcons } from "./types";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 
 /**
@@ -31,10 +31,11 @@ export function initializeGameSettings(gameData: any, gameInstance: SLPM) {
     reels: [],
     hasCascading: false,
     cascadingNo: 0,
+    cascadingResult: [],
     lastReel: [],
     tempReel: [],
     tempReelSym: [],
-    pmFreeSPin: [],
+    freeSpinData: [],
     jackpot: {
       symbolName: "",
       symbolsCount: 0,
@@ -133,66 +134,114 @@ export function checkForWin(gameInstance: SLPM) {
     settings.lineData.forEach((line, index) => {
       const firstSymbolPosition = line[0];
       let firstSymbol = settings.resultSymbolMatrix[firstSymbolPosition][0];
-      
       // Handle wild symbols
       if (settings.wild.useWild && firstSymbol === settings.wild.SymbolID) {
         firstSymbol = findFirstNonWildSymbol(line, gameInstance);
       }
-
       // Handle special icons
       if (
         Object.values(specialIcons).includes(
           settings.Symbols[firstSymbol].Name as specialIcons
         )
       ) {
-        console.log("Special Icon Matched:", settings.Symbols[firstSymbol].Name);
+        console.log(
+          "Special Icon Matched : ",
+          settings.Symbols[firstSymbol].Name
+        );
         return;
       }
-
-      const { isWinningLine, matchCount, matchedIndices } = checkLineSymbols(firstSymbol, line, gameInstance);
-      if (isWinningLine && matchCount >= 3) {
-        const symbolMultiplier = accessData(firstSymbol, matchCount, gameInstance);
-        settings.lastReel = settings.resultSymbolMatrix;
-
-        if (symbolMultiplier > 0) {
-          totalPayout += symbolMultiplier;
-          settings._winData.winningLines.push(index);
-          winningLines.push({
-            line,
-            symbol: firstSymbol,
-            multiplier: symbolMultiplier,
+      const { isWinningLine, matchCount, matchedIndices } = checkLineSymbols(
+        firstSymbol,
+        line,
+        gameInstance
+      );
+      switch (true) {
+        case isWinningLine && matchCount >= 3:
+          const symbolMultiplier = accessData(
+            firstSymbol,
             matchCount,
-          });
-
-          console.log(`Line ${index + 1}:`, line);
-          console.log(`Payout for Line ${index + 1}:`, symbolMultiplier);
-
-          const formattedIndices = matchedIndices.map(({ col, row }) => `${row},${col}`);
-          const validIndices = formattedIndices.filter(index => index.length > 2);
-          if (validIndices.length > 0) {
-            settings._winData.winningSymbols.push(validIndices);
+            gameInstance
+          );
+          settings.lastReel = settings.resultSymbolMatrix;
+          switch (true) {
+            case symbolMultiplier > 0:
+              totalPayout += symbolMultiplier;
+              settings._winData.winningLines.push(index + 1);
+              winningLines.push({
+                line,
+                symbol: firstSymbol,
+                multiplier: symbolMultiplier,
+                matchCount,
+              });
+              console.log(`Line ${index + 1}:`, line);
+              console.log(
+                `Payout for Line ${index + 1}:`,
+                "payout",
+                symbolMultiplier
+              );
+              const formattedIndices = matchedIndices.map(
+                ({ col, row }) => `${row},${col}`
+              );
+              const validIndices = formattedIndices.filter(
+                (index) => index.length > 2
+              );
+              if (validIndices.length > 0) {
+                // console.log(settings.lastReel, 'settings.lastReel')
+                console.log(validIndices);
+                settings._winData.winningSymbols.push(validIndices);
+              }
+              break;
+            default:
+              break;
           }
-        }
+          break;
+        default:
+          break;
       }
     });
-
     settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
-
-    // Check cascading win and free spin logic
-    if (winningLines.length >= 1) {
-      settings.cascadingNo += 1;
-      settings.hasCascading = true;
-      
-      // Award free spins based on cascading count
-      awardFreeSpins(settings);
-
-      // Generate a new result and process cascading
-      new RandomResultGenerator(gameInstance);
-      settings.tempReel = settings.resultSymbolMatrix;
-      ExtractTempReelsWiningSym(gameInstance);
-    } else {
-      console.log("NO PAYLINE MATCH");
-      resetCascading(settings);
+    switch (true) {
+      case winningLines.length >= 1 :
+        settings.cascadingNo += 1;
+        settings.hasCascading = true;
+        new RandomResultGenerator(gameInstance);
+        settings.tempReel = settings.resultSymbolMatrix;
+        ExtractTempReelsWiningSym(gameInstance);
+        break;
+      default:
+        console.log("NO PAYLINE MATCH");
+        if (settings.cascadingNo >= 4 ) {
+          console.log("Cascading Count:", settings.cascadingNo);
+          console.log("FreeSpin Data:", settings.currentGamedata.freeSpinData);
+          const freeSpinData = settings.currentGamedata.freeSpinData;
+          for (let i = 0; i < freeSpinData.length; i++) {
+            const [requiredCascadingCount, awardedFreeSpins] = freeSpinData[i];
+        
+            if (settings.cascadingNo == requiredCascadingCount) {
+              settings.freeSpin.useFreeSpin = true;
+              settings.freeSpin.freeSpinCount += awardedFreeSpins;
+        
+              console.log(`Free spins awarded: ${awardedFreeSpins}`);
+              break;
+            }
+            if (settings.cascadingNo > 8)
+            {
+              settings.freeSpin.useFreeSpin = true;
+              settings.freeSpin.freeSpinCount = 25;
+        
+              console.log(`Free spins awarded: ${settings.freeSpin.freeSpinCount }`);
+              break;
+            }
+          }
+        }
+        makeResultJson(gameInstance)
+        settings.cascadingNo = 0;
+        settings.hasCascading = false;
+        settings.resultSymbolMatrix = [];
+        settings.tempReelSym = [];
+        settings.tempReel = [];
+        settings.lastReel = [];
+        break;
     }
 
     return winningLines;
@@ -201,40 +250,7 @@ export function checkForWin(gameInstance: SLPM) {
     return [];
   }
 }
-/**
- * Awards free spins based on the current cascading count.
- * @param settings - The game settings object.
- */
-function awardFreeSpins(settings: SLPMSETTINGS) {
-    const pmFreeSPin = settings.pmFreeSPin; // Free spin matrix
-    console.log("bfgskahsjkhfjkhu",pmFreeSPin);
-    
-    // Loop through pmFreeSPin to check if cascading count matches and award free spins
-    for (const [cascadeCount, freeSpins] of pmFreeSPin) {
-      if (settings.cascadingNo === cascadeCount) {
-        settings.freeSpin.freeSpinCount += freeSpins;
-        settings.freeSpin.useFreeSpin = true;
-        settings.freeSpin.freeSpinStarted = true;
-  
-        console.log(`Awarded ${freeSpins} free spins for ${cascadeCount} cascades!`);
-        break; // Exit after awarding free spins
-      }
-    }
-  }
-  
-  /**
-   * Resets cascading state when there are no further cascades.
-   * @param settings - The game settings object.
-   */
-  function resetCascading(settings: SLPMSETTINGS) {
-    settings.cascadingNo = 0;
-    settings.hasCascading = false;
-    settings.resultSymbolMatrix = [];
-    settings.tempReelSym = [];
-    settings.tempReel = [];
-    settings.lastReel = [];
-    console.log("Cascading reset");
-  }
+
 //checking matching lines with first symbol and wild subs
 function checkLineSymbols(
   firstSymbol: string,
@@ -335,9 +351,6 @@ function ExtractTempReelsWiningSym(gameInstance) {
   setToMinusOne(gameInstance);
 }
 
-
-
-
 function setToMinusOne(gameInstance: SLPM) {
   const { settings } = gameInstance;
   const valuesWithIndices = settings._winData.winningSymbols.flatMap(
@@ -361,6 +374,12 @@ function setToMinusOne(gameInstance: SLPM) {
  * @param gameInstance - The game instance to apply cascading to.
  */
 function cascadeSymbols(gameInstance) {
+  const data = {
+    symbolsToFill: [],
+    winingSymbols: [],
+    lineToEmit: [],
+    currentWining: 0
+  }
   const { settings } = gameInstance;
   const rows = settings.lastReel.length;
   const cols = settings.lastReel[0].length;
@@ -395,33 +414,34 @@ function cascadeSymbols(gameInstance) {
         totalEmptySlots++;
       }
     }
-
     let symbolsToUse = tempSymbols.slice(0, totalEmptySlots);
     tempSymbols = tempSymbols.slice(totalEmptySlots);
-
     for (let row = 0; row < rows; row++) {
       if (flattenedReel[row][col] === -1 && symbolsToUse.length > 0) {
         flattenedReel[row][col] = symbolsToUse.shift();
         assignedSymbols.push(flattenedReel[row][col]);
       }
     }
-
     assignedSymbolsByCol.push(assignedSymbols);
   }
 
   console.log("Assigned Symbols by Column:", assignedSymbolsByCol);
-
+  data.symbolsToFill = assignedSymbolsByCol;
+  data.lineToEmit = settings._winData.winningLines;
+  data.winingSymbols = settings._winData.winningSymbols;
+  settings.cascadingResult.push({ ...data });
+  console.log(settings.cascadingResult)
+  data.symbolsToFill = [];
+  data.lineToEmit = [];
+  data.winingSymbols = [];
   settings.resultSymbolMatrix = flattenedReel;
   settings._winData.winningSymbols = [];
   settings.tempReelSym = [];
   settings.tempReel = [];
-  settings.lastReel = [];
-
+  settings._winData.winningLines = []
   checkForWin(gameInstance);
 }
 
-//
-//
 /**
  * Sends the initial game and player data to the client.
  * @param gameInstance - The instance of the SLCM class containing the game settings and player data.
@@ -446,4 +466,30 @@ export function sendInitData(gameInstance: SLPM) {
     },
   };
   gameInstance.sendMessage("InitData", dataToSend);
+}
+
+export function makeResultJson(gameInstance: SLPM) {
+  try {
+    const { settings, playerData } = gameInstance;
+    const credits = gameInstance.getPlayerData().credits
+    const Balance = credits.toFixed(2)
+    const sendData = {
+      GameData: {
+        resultSymbols: settings.lastReel,
+        cascading: settings.cascadingResult,
+        isCascading: settings.hasCascading
+      },
+      PlayerData: {
+        Balance: Balance,
+        currentWining: playerData.currentWining,
+        totalbet: playerData.totalbet,
+        haveWon: playerData.haveWon,
+
+      }
+    };
+
+    gameInstance.sendMessage('ResultData', sendData);
+  } catch (error) {
+    console.error("Error generating result JSON or sending message:", error);
+  }
 }

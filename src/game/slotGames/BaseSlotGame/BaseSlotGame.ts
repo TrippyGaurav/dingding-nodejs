@@ -25,6 +25,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
         id: "",
         matrix: { x: 0, y: 0 },
         linesApiData: [],
+        freeSpinData : [],
         Symbols: [
           {
             Name: "",
@@ -35,7 +36,9 @@ export default class BaseSlotGame implements RequiredSocketMethods {
             defaultAmount: [],
             symbolsCount: [],
             increaseValue: [],
-            reelInstance: [], // Ensure reelInstance is initialized
+            reelInstance: [],
+
+            // Ensure reelInstance is initialized
           },
         ],
         bonus: {
