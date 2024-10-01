@@ -13,8 +13,6 @@ export interface Symbol {
 export interface SLONESETTINGS {
   id: string;
   isSpecial: boolean;
-  isMultiplier: boolean;
-  multiplierType: string;
   matrix: { x: number, y: number };
   currentGamedata: GameData;
   resultSymbolMatrix: any[];
@@ -33,8 +31,8 @@ export interface SLONESETTINGS {
   reels: string[];
   Symbols: Symbol[];
   freeSpinCount: number;
-  isFreeSpin: boolean;
-  freeSpinType: string;
+  freeSpinType: "NONE" | "BLUE" | "PURPLE";
+  multiplierType:  'NONE' | 'SIMPLE' | 'EXHAUSTIVE';
   booster: {
     isEnabledSimple: boolean;
     isEnabledExhaustive: boolean;
@@ -48,5 +46,28 @@ export interface SLONESETTINGS {
     level: number[];
     levelProbs: number[];
   }
+}
+
+export interface BoosterResult {
+  type: 'NONE' | 'SIMPLE' | 'EXHAUSTIVE';
+  multipliers: number[];
+}
+export interface LevelUpResult {
+  level: number;
+  isLevelUp: boolean;
+}
+export interface ScatterBlueResult {
+  isTriggered: boolean;
+  symbols:number[];
+  payout: number;
+  levelUp: LevelUpResult[];
+  booster: BoosterResult[];
+}
+export interface SpinResult {
+  results : number[];
+  payouts: number[];
+  booster: BoosterResult[];
+  levelUp: LevelUpResult[];
+  // scatterBlue: ScatterBlueResult[];
 }
 

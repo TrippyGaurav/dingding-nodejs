@@ -82,7 +82,7 @@ export class SLONE {
       //free spins n boosters
 
       //NOTE: deduct balance
-      if(!this.settings.isFreeSpin && 
+      if(this.settings.freeSpinType !== "NONE" && 
         this.settings.freeSpinCount === 0 
       ){
         this.deductPlayerBalance(this.settings.currentBet);
