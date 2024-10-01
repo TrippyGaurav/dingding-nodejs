@@ -240,6 +240,7 @@ export function checkForWin(gameInstance: SLPM) {
         settings.tempReelSym = [];
         settings.tempReel = [];
         settings.lastReel = [];
+        totalPayout = 0;
         break;
     }
     return winningLines;
@@ -374,7 +375,7 @@ function cascadeSymbols(gameInstance) {
     symbolsToFill: [],
     winingSymbols: [],
     lineToEmit: [],
-    currentWining: 0
+    currentWining: 0,
   }
   const { settings } = gameInstance;
   const rows = settings.lastReel.length;
@@ -421,6 +422,7 @@ function cascadeSymbols(gameInstance) {
   data.symbolsToFill = assignedSymbolsByCol;
   data.lineToEmit = settings._winData.winningLines;
   data.winingSymbols = settings._winData.winningSymbols;
+  data.currentWining = settings._winData.totalWinningAmount;
   settings.cascadingResult.push({ ...data });
   console.log(settings.cascadingResult)
   data.symbolsToFill = [];
