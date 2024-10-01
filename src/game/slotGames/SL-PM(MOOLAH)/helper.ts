@@ -123,9 +123,6 @@ function handleSpecialSymbols(symbol: any, gameInstance: SLPM) {
 //CHECK WINS ON PAYLINES WITH OR WITHOUT WILD
 //check for win function
 export function checkForWin(gameInstance: SLPM) {
-  console.log(gameInstance.settings.resultSymbolMatrix, "dfdfd");
-  console.log(gameInstance.settings.cascadingNo, "CASCADING");
-
   try {
     const { settings } = gameInstance;
     const winningLines = [];
@@ -188,6 +185,8 @@ export function checkForWin(gameInstance: SLPM) {
                 // console.log(settings.lastReel, 'settings.lastReel')
                 console.log(validIndices);
                 settings._winData.winningSymbols.push(validIndices);
+                settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
+                console.log(settings._winData.totalWinningAmount)
               }
               break;
             default:
@@ -198,7 +197,7 @@ export function checkForWin(gameInstance: SLPM) {
           break;
       }
     });
-    settings._winData.totalWinningAmount = totalPayout * settings.BetPerLines;
+
     switch (true) {
       case winningLines.length >= 1 && settings.cascadingNo < 4:
         settings.cascadingNo += 1;
@@ -208,7 +207,6 @@ export function checkForWin(gameInstance: SLPM) {
         ExtractTempReelsWiningSym(gameInstance);
         break;
       default:
-        console.log("NO PAYLINE MATCH");
         makeResultJson(gameInstance)
         settings.cascadingNo = 0;
         settings.hasCascading = false;
@@ -216,16 +214,15 @@ export function checkForWin(gameInstance: SLPM) {
         settings.tempReelSym = [];
         settings.tempReel = [];
         settings.lastReel = [];
+        console.log("NO PAYLINE MATCH");
         break;
     }
-
     return winningLines;
   } catch (error) {
     console.error("Error in checkForWin", error);
     return [];
   }
 }
-
 //checking matching lines with first symbol and wild subs
 function checkLineSymbols(
   firstSymbol: string,
@@ -307,7 +304,6 @@ function accessData(symbol, matchCount, gameInstance: SLPM) {
     return 0;
   } catch (error) {
     // console.error("Error in accessData:");
-
     return 0;
   }
 }
@@ -377,8 +373,6 @@ function cascadeSymbols(gameInstance) {
   }
 
   const flattenedReel = settings.lastReel;
-  console.log(flattenedReel, "after down");
-
   let tempSymbols = settings.tempReelSym.flat();
   const assignedSymbolsByCol = [];
   for (let col = 0; col < cols; col++) {
@@ -399,8 +393,6 @@ function cascadeSymbols(gameInstance) {
     }
     assignedSymbolsByCol.push(assignedSymbols);
   }
-
-  console.log("Assigned Symbols by Column:", assignedSymbolsByCol);
   data.symbolsToFill = assignedSymbolsByCol;
   data.lineToEmit = settings._winData.winningLines;
   data.winingSymbols = settings._winData.winningSymbols;
@@ -451,15 +443,17 @@ export function makeResultJson(gameInstance: SLPM) {
     const sendData = {
       GameData: {
         resultSymbols: settings.lastReel,
+        linesToEmit: settings._winData.winningLines,
+        symbolsToEmit: settings._winData.winningSymbols,
+        jackpot: settings._winData.jackpotwin,
         cascading: settings.cascadingResult,
         isCascading: settings.hasCascading
       },
       PlayerData: {
         Balance: Balance,
-        currentWining: playerData.currentWining,
+        currentWining: settings._winData.totalWinningAmount,
         totalbet: playerData.totalbet,
         haveWon: playerData.haveWon,
-
       }
     };
 
