@@ -26,6 +26,7 @@ export interface SLPMSETTINGS {
     cascadingResult: any[];
     lastReel: any[],
     tempReel: any[],
+    firstReel: any[],
     tempReelSym: any[],
     freeSpinData: any[][],
     jackpot: {

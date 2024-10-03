@@ -35,6 +35,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLPM) {
     cascadingResult: [],
     lastReel: [],
     tempReel: [],
+    firstReel: [],
     tempReelSym: [],
     freeSpinData: [],
     jackpot: {
@@ -127,6 +128,9 @@ function handleSpecialSymbols(symbol: any, gameInstance: SLPM) {
 export function checkForWin(gameInstance: SLPM) {
   try {
     const { settings } = gameInstance;
+    if (settings.cascadingNo === 0) {
+    settings.firstReel = [...settings.resultSymbolMatrix.map(row => [...row])]; // Deep copy to preserve the original matrix
+  }
     const winningLines = [];
     let totalPayout = 0;
     settings.lineData.forEach((line, index) => {
@@ -242,7 +246,7 @@ export function checkForWin(gameInstance: SLPM) {
         settings.tempReel = [];
         settings.lastReel = [];
         settings.payoutAfterCascading = 0;
-        gameInstance.playerData.payoutafterCascading = 0;
+        settings.cascadingResult=[]
         break;
     }
     return winningLines;
@@ -428,16 +432,16 @@ function cascadeSymbols(gameInstance) {
   settings.payoutAfterCascading +=  settings._winData.totalWinningAmount;
   gameInstance.playerData.payoutAfterCascading += settings._winData.totalWinningAmount;
   settings.cascadingResult.push({ ...data });
-  console.log(settings.cascadingResult)
   data.symbolsToFill = [];
   data.lineToEmit = [];
   data.winingSymbols = [];
+  data.currentWining = 0;
   settings.resultSymbolMatrix = flattenedReel;
   settings._winData.winningSymbols = [];
   settings.tempReelSym = [];
   settings.tempReel = [];
-  settings._winData.winningLines = []
-  checkForWin(gameInstance);
+  settings._winData.winningLines = [];
+  checkForWin(gameInstance)
 }
 
 /**
@@ -475,7 +479,7 @@ export function makeResultJson(gameInstance: SLPM) {
     const Balance = credits.toFixed(2)
     const sendData = {
       GameData: {
-        resultSymbols: settings.lastReel,
+        resultSymbols: settings.firstReel,
         linesToEmit: settings._winData.winningLines,
         symbolsToEmit: settings._winData.winningSymbols,
         jackpot: settings._winData.jackpotwin,
@@ -491,7 +495,6 @@ export function makeResultJson(gameInstance: SLPM) {
         haveWon: playerData.haveWon,
       }
     };
-
     gameInstance.sendMessage('ResultData', sendData);
   } catch (error) {
     console.error("Error generating result JSON or sending message:", error);
