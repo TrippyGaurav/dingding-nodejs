@@ -1,3 +1,4 @@
+import { CloudHSM } from "aws-sdk";
 import { bonusGameType } from "../../Utils/gameUtils";
 import SlotGame from "../slotGame";
 import BaseSlotGame from "./BaseSlotGame";
@@ -67,33 +68,30 @@ export class BonusGame {
 
     setRandomStopIndex() {
         let amount: number = 0;
-
         console.log("bonus: ", this.parent.settings.currentGamedata.bonus);
-
         if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == bonusGameType.spin) {
             this.parent.settings.bonus.stopIndex = this.getRandomPayoutIndex(this.parent.settings.currentGamedata.bonus.payOutProb);
             amount = this.parent.settings.BetPerLines * this.result[this.parent.settings.bonus.stopIndex];
-
+            return amount
         } else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == bonusGameType.tap) {
             for (let index = 0; index < this.result.length; index++) {
                 if (this.result[index] == 0)
                     break;
                 else
                     amount += this.parent.settings.BetPerLines * this.result[index];
+                return amount
             }
         } else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == "slot") {
             for (let index = 1; index < 4; index++) {
                 amount += this.parent.settings.BetPerLines * this.result[this.result.length - index];
+                return amount
             }
-            console.log("amount", amount);
-            console.log("current bet", this.parent.settings.BetPerLines);
         }
         else if (this.parent.settings.bonus.start && this.parent.settings.currentGamedata.bonus.type == bonusGameType.layerTap) {
             let totalWinAmount = 0;
             const bonusData = this.parent.settings.currentGamedata.bonus;
-            var selectedIndex =[];
+            var selectedIndex = [];
             for (let layerIndex = 0; layerIndex < bonusData.payOut.length; layerIndex++) {
-                
                 const layerPayOuts = bonusData.payOut[layerIndex];
                 const layerPayOutProb = bonusData.payOutProb[layerIndex];
                 selectedIndex[layerIndex] = this.getRandomPayoutIndex(layerPayOutProb);
@@ -104,13 +102,13 @@ export class BonusGame {
                 }
                 totalWinAmount += this.parent.settings.BetPerLines * selectedPayOut;
             }
-            console.log("Bonus Index",selectedIndex);
             amount += totalWinAmount;
+            return { selectedIndex, amount }
         }
         if (!amount || amount < 0)
             amount = 0;
-        
-        return { selectedIndex, amount };
+
+        return amount;
     }
 
     shuffle(array: number[]) {
@@ -133,7 +131,7 @@ export class BonusGame {
             return cumulativeProb[index];
         }, 0);
 
-        
+
 
         const randomNum = Math.random();
 
@@ -187,7 +185,7 @@ const generateInnerMatrix = (symbols: number[], miniSlotProb: number[]): number[
  */
 export function runMiniSpin(bonus: any, betPerLines: number): any {
     try {
-    
+
         if (bonus.noOfItem < bonus.symbolCount) return;
         let lives = bonus.noOfItem > 5 ? 3 : bonus.noOfItem - ((bonus.winningValue).length + 1);
         let totalWinAmount = 0;

@@ -264,7 +264,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
     ) {
       this.settings.bonus.game = new BonusGame(
         this.settings.currentGamedata.bonus.noOfItem,
-        this
+        this,
       );
     }
 

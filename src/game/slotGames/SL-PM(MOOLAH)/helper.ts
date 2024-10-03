@@ -165,6 +165,7 @@ export function checkForWin(gameInstance: SLPM) {
             gameInstance
           );
           settings.lastReel = settings.resultSymbolMatrix;
+          console.log(settings.lastReel, 'lastReel')
           switch (true) {
             case symbolMultiplier > 0:
               totalPayout += symbolMultiplier;
@@ -181,9 +182,7 @@ export function checkForWin(gameInstance: SLPM) {
                 "payout",
                 symbolMultiplier
               );
-              const formattedIndices = matchedIndices.map(
-                ({ col, row }) => `${row},${col}`
-              );
+              const formattedIndices = matchedIndices.map(({ col, row }) => `${col},${row}`);
               const validIndices = formattedIndices.filter(
                 (index) => index.length > 2
               );
@@ -205,7 +204,7 @@ export function checkForWin(gameInstance: SLPM) {
     });
 
     switch (true) {
-      case winningLines.length >= 1 :
+      case winningLines.length >= 1:
         settings.cascadingNo += 1;
         settings.hasCascading = true;
         new RandomResultGenerator(gameInstance);
@@ -214,26 +213,25 @@ export function checkForWin(gameInstance: SLPM) {
         break;
       default:
         console.log("NO PAYLINE MATCH");
-        if (settings.cascadingNo >= 4 ) {
+        if (settings.cascadingNo >= 4) {
           console.log("Cascading Count:", settings.cascadingNo);
           console.log("FreeSpin Data:", settings.currentGamedata.freeSpinData);
           const freeSpinData = settings.currentGamedata.freeSpinData;
           for (let i = 0; i < freeSpinData.length; i++) {
             const [requiredCascadingCount, awardedFreeSpins] = freeSpinData[i];
-        
+
             if (settings.cascadingNo == requiredCascadingCount) {
               settings.freeSpin.useFreeSpin = true;
               settings.freeSpin.freeSpinCount += awardedFreeSpins;
-        
+
               console.log(`Free spins awarded: ${awardedFreeSpins}`);
               break;
             }
-            if (settings.cascadingNo > 8)
-            {
+            if (settings.cascadingNo > 8) {
               settings.freeSpin.useFreeSpin = true;
               settings.freeSpin.freeSpinCount = 25;
-        
-              console.log(`Free spins awarded: ${settings.freeSpin.freeSpinCount }`);
+
+              console.log(`Free spins awarded: ${settings.freeSpin.freeSpinCount}`);
               break;
             }
           }
@@ -244,7 +242,6 @@ export function checkForWin(gameInstance: SLPM) {
         settings.resultSymbolMatrix = [];
         settings.tempReelSym = [];
         settings.tempReel = [];
-        settings.lastReel = [];
         settings.payoutAfterCascading = 0;
         settings.cascadingResult=[]
         break;
@@ -359,8 +356,8 @@ function setToMinusOne(gameInstance: SLPM) {
   const valuesWithIndices = settings._winData.winningSymbols.flatMap(
     (symbolIndices) => {
       return symbolIndices.map((indexStr) => {
-        const [row, col] = indexStr.split(",").map(Number);
-        const symbolValues = (settings.lastReel[row][col] = -1);
+        const [col, row] = indexStr.split(",").map(Number);
+        const symbolValues = (settings.lastReel[col][row] = -1);
         return {
           value: symbolValues,
         };
@@ -429,7 +426,7 @@ function cascadeSymbols(gameInstance) {
   data.lineToEmit = settings._winData.winningLines;
   data.winingSymbols = settings._winData.winningSymbols;
   data.currentWining = settings._winData.totalWinningAmount;
-  settings.payoutAfterCascading +=  settings._winData.totalWinningAmount;
+  settings.payoutAfterCascading += settings._winData.totalWinningAmount;
   gameInstance.playerData.payoutAfterCascading += settings._winData.totalWinningAmount;
   settings.cascadingResult.push({ ...data });
   data.symbolsToFill = [];
@@ -490,7 +487,7 @@ export function makeResultJson(gameInstance: SLPM) {
       },
       PlayerData: {
         Balance: Balance,
-        currentWining: settings.payoutAfterCascading ,
+        currentWining: settings.payoutAfterCascading,
         totalbet: playerData.totalbet,
         haveWon: playerData.haveWon,
       }
