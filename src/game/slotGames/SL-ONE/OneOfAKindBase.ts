@@ -72,7 +72,7 @@ export class SLONE {
       const playerData = this.settings._winData.slotGame.getPlayerData()
       // console.log('playerCredits', playerData.credits);
       //NOTE: low balance
-      if(this.settings.currentBet > playerData.credits){
+      if (this.settings.currentBet > playerData.credits) {
         console.log('Low Balance', playerData.credits);
         console.log('Current Bet', this.settings.currentBet);
         this.sendError("Low Balance");
@@ -82,12 +82,8 @@ export class SLONE {
       //free spins n boosters
 
       //NOTE: deduct balance
-      if(this.settings.freeSpinType !== "NONE" && 
-        this.settings.freeSpinCount === 0 
-      ){
-        this.deductPlayerBalance(this.settings.currentBet);
-        this.playerData.totalbet += this.settings.currentBet;
-      }
+      this.deductPlayerBalance(this.settings.currentBet);
+      this.playerData.totalbet += this.settings.currentBet;
 
       this.randomResultGenerator()
       this.checkResult()
@@ -120,12 +116,11 @@ export class SLONE {
   }
   private async checkResult() {
     try {
-    //TODO:
+      //TODO:
       const resultmatrix = this.settings.resultSymbolMatrix
       console.log("Result Matrix:", resultmatrix);
       console.log("base Pay", this.settings.Symbols[resultmatrix[0]].payout);
       calculatePayout(this)
-
       const playerData = this.settings._winData.slotGame.getPlayerData()
       console.log('playerCredits', playerData.credits);
     } catch (error) {

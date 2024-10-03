@@ -104,6 +104,9 @@ export function calculatePayout(gameInstance: SLONE) {
   const outerSymbol = gameInstance.settings.Symbols.find(sym => sym.Id === gameInstance.settings.resultSymbolMatrix[0]);
   if (!outerSymbol) throw new Error(`Symbol with Id ${gameInstance.settings.resultSymbolMatrix[0]} not found.`);
 
+  console.log("freespin" , gameInstance.settings.freeSpinCount, gameInstance.settings.freeSpinType);
+  
+
   switch (outerSymbol.Name) {
     case "ScatterBlue":
       console.log("Scatter Blue feature triggered");
@@ -270,6 +273,8 @@ function handleNonSpecialSymbol(gameInstance: SLONE) {
       gameInstance.playerData.currentWining = symbol.payout * gameInstance.settings.BetPerLines
     }
     gameInstance.playerData.haveWon += gameInstance.playerData.currentWining;
+    gameInstance.settings.freeSpinCount = 0;
+    gameInstance.settings.freeSpinType = "NONE"
 
     console.log("currWin:", gameInstance.playerData.currentWining);
   } catch (err) {
@@ -324,6 +329,7 @@ function handleScatterBlue(gameInstance: SLONE) {
     console.log("currWin:", gameInstance.playerData.currentWining);
     console.log("scatterBlueResponse:", blueResponse);
     gameInstance.settings.freeSpinType = "NONE" as "NONE" | "BLUE" | "PURPLE";
+    gameInstance.settings.freeSpinCount = 0;
   } catch (err) {
     console.log(err)
     console.log("Error in handleScatterBlue")
