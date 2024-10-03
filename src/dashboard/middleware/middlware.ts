@@ -20,6 +20,7 @@ export function extractRoleFromCookie(
   res: Response,
   next: NextFunction
 ) {
+
   const cookie = req.headers.cookie
     ?.split("; ")
     .find((row) => row.startsWith("userToken="))

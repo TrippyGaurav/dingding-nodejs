@@ -3,12 +3,12 @@ import { convertSymbols, UiInitData } from "../../Utils/gameUtils";
 import { SLWOF } from "./wheelOfFortuneBase";
 import { WINNINGTYPE } from "./types";
 import { CloudWatchLogs } from "aws-sdk";
+import { specialIcons } from "../../Utils/gameUtils";
 
 export function initializeGameSettings(gameData: any, gameInstance: SLWOF) {
     return {
         id: gameData.gameSettings.id,
         isSpecial: gameData.gameSettings.isSpecial,
-        bonus: gameData.gameSettings.bonus,
         matrix: gameData.gameSettings.matrix,
         bets: gameData.gameSettings.bets,
         Symbols: gameInstance.initSymbols,
@@ -26,7 +26,11 @@ export function initializeGameSettings(gameData: any, gameInstance: SLWOF) {
         isSpecialWof: gameData.gameSettings.isSpecialWof,
         symbolsCount: gameData.gameSettings.symbolsCount,
         isBonus: false,
-        bonusStopIndex: 0
+        bonusStopIndex: 0,
+        bonus: {
+            payOut: [],
+            payOutProb: []
+        }
     };
 }
 
@@ -53,15 +57,16 @@ function shuffleArray(array: any[]) {
     }
 }
 
-export function triggerBonusGame(gameInstance: SLWOF, settings: any): number {
-    const { payOut, payOutProb } = settings.bonus;
 
+export function triggerBonusGame(gameInstance: SLWOF): number {
+    const { settings } = gameInstance
+    const { payOut, payOutProb } = settings.currentGamedata.bonus;
     const randomValue = Math.random() * 100;
     let cumulativeProbability = 0;
     for (let i = 0; i < payOut.length; i++) {
         cumulativeProbability += payOutProb[i];
         if (randomValue <= cumulativeProbability) {
-            console.log(`Bonus Game: Selected payout is ${payOut[i]} and index is ${i} `);
+            console.log(`Bonus Game: Selected payout is ${payOut[i] * settings.BetPerLines} and index is ${i} `);
             gameInstance.settings.bonusStopIndex = i
             return payOut[i];
         }
@@ -77,10 +82,13 @@ export function sendInitData(gameInstance: SLWOF) {
     const credits = gameInstance.getPlayerData().credits
     const Balance = credits.toFixed(2)
     const reels = generateInitialReel(gameInstance.settings);
+    const { payOut } = gameInstance.settings.currentGamedata.bonus;
     gameInstance.settings.reels = reels;
     const dataToSend = {
         GameData: {
             Bets: gameInstance.settings.currentGamedata.bets,
+            BonusPayout: payOut,
+            Lines: gameInstance.settings.currentGamedata.linesApiData
         },
         UIData: UiInitData,
         PlayerData: {
@@ -94,12 +102,13 @@ export function sendInitData(gameInstance: SLWOF) {
 }
 
 export function checkWinningCondition(gameInstance: SLWOF, row: any[]): { winType: string; symbolId?: number } {
+
     try {
         if (row.length === 0) {
             throw new Error("Row is empty, cannot check winning condition.");
         }
         const firstSymbolId = row[0];
-        const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id === firstSymbolId);
+        const firstSymbol = gameInstance.settings.Symbols.find(sym => sym.Id ==firstSymbolId);
         if (!firstSymbol) {
             throw new Error(`Symbol with Id ${firstSymbolId} not found.`);
         }
@@ -125,7 +134,7 @@ export function checkWinningCondition(gameInstance: SLWOF, row: any[]): { winTyp
 
 export async function calculatePayout(gameInstance: SLWOF, symbols: any[], symbolId: number, winType: string): Promise<number> {
     try {
-        const symbol = gameInstance.settings.Symbols.find(sym => sym.Id === symbolId);
+        const symbol = gameInstance.settings.Symbols.find(sym => sym.Id == symbolId);
         if (!symbol) {
             throw new Error(`Symbol with Id ${symbolId} not found.`);
         }
@@ -156,16 +165,16 @@ export function makeResultJson(gameInstance: SLWOF, winningRows: number[]) {
         const credits = gameInstance.getPlayerData().credits
         const Balance = credits.toFixed(2)
         const sendData = {
-            gameData: {
+            GameData: {
                 resultSymbols: settings.resultSymbolMatrix,
-                linestoemit: winningRows
+                linestoemit: winningRows,
+                isbonus: settings.isBonus,
+                BonusIndex: settings.bonusStopIndex,
             },
             PlayerData: {
                 Balance: Balance,
                 currentWining: playerData.currentWining,
                 totalbet: playerData.totalbet,
-                Bonus: settings.isBonus,
-                BonusIndex: settings.bonusStopIndex,
                 haveWon: playerData.haveWon,
             }
         };

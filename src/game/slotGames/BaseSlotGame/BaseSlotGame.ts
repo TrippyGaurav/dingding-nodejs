@@ -257,11 +257,11 @@ export default class BaseSlotGame implements RequiredSocketMethods {
 
     if (
       this.settings.currentGamedata.bonus.isEnabled &&
-      this.settings.currentGamedata.bonus.type == bonusGameType.spin
+      this.settings.currentGamedata.bonus.type == bonusGameType.spin || this.settings.currentGamedata.bonus.type == bonusGameType.layerTap || this.settings.currentGamedata.bonus.type == bonusGameType.miniSpin
     ) {
       this.settings.bonus.game = new BonusGame(
         this.settings.currentGamedata.bonus.noOfItem,
-        this
+        this,
       );
     }
 
@@ -291,6 +291,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
       },
       maxGambleBet: 300,
     };
+
 
     this.sendMessage("InitData", dataToSend);
   }
@@ -347,7 +348,7 @@ export default class BaseSlotGame implements RequiredSocketMethods {
       ) {
         this.settings.freeSpin.freeSpinCount--;
         this.settings.freeSpin.freeSpinsAdded = false;
-        this.settings.currentBet = 0;
+        // this.settings.currentBet = 0;
         console.log(
           this.settings.freeSpin.freeSpinCount,
           "this.settings.freeSpinCount"

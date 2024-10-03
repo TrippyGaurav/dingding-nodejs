@@ -226,7 +226,7 @@ export class SLCM {
                 console.log('Payout is still zero, and 0 or 00 is present. Triggering another respin.');
                 this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0])
                 await this.handleZeroRespin();
-            } else if (matricesAreSame || newTotalPayout > 0 ) {
+            } else if (matricesAreSame || newTotalPayout > 0) {
                 console.log('Zero Respin stopped as matrix is the same or payout is greater than zero.');
                 console.log('Final Payout:', newTotalPayout);
                 this.settings.specialSpins.push(this.settings.resultSymbolMatrix[0]);

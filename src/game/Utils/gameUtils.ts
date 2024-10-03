@@ -21,7 +21,8 @@ export enum bonusGameType {
     tap = "tap",
     spin = "spin",
     default = "default",
-    miniSpin = "miniSpin"
+    miniSpin = "miniSpin",
+    layerTap = "layerTap"
 }
 
 export const PlayerData: UserData = {
@@ -103,7 +104,7 @@ export function convertSymbols(data) {
             "increaseValue": element.increaseValue || {},
             "freeSpin": element.freeSpin,
             "description": element.description || {},
-            "payout": element.payout || {},
+            "payout": element.payout || 0,
             "mixedPayout": element.mixedPayout || {},
             "defaultPayout": element.defaultPayout || {}
         };

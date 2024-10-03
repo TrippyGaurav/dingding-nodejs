@@ -2,6 +2,7 @@ import { currentGamedata } from "../../../Player";
 import { RandomResultGenerator } from "../RandomResultGenerator";
 import { CRZSETTINGS, WINNINGTYPE } from "./types";
 import { initializeGameSettings, generateInitialReel, sendInitData, calculatePayout, applyExtraSymbolEffect, checkWinningCondition, makeResultJson } from "./helper";
+import { log } from "console";
 
 export class SLCRZ {
   public settings: CRZSETTINGS;
@@ -25,7 +26,7 @@ export class SLCRZ {
     this.currentGameData.gameSettings.Symbols.forEach((Element: Symbol) => {
       Symbols.push(Element);
     });
-    return Symbols;
+    return Symbols;``
   }
 
 
@@ -77,9 +78,9 @@ export class SLCRZ {
 
       if (!this.settings.isFreeSpin) {
         await this.deductPlayerBalance(this.settings.currentBet);
-        this.playerData.totalbet += this.settings.currentBet;
+        this.playerData.totalbet += this.settings.currentBet*3 ;
       }
-      if (this.settings.freeSpinCount === 0) {
+      if (this.settings.freeSpinCount === 1) {
         this.settings.isFreeSpin = false;
 
       }
