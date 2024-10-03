@@ -357,7 +357,7 @@ function setToMinusOne(gameInstance: SLPM) {
     (symbolIndices) => {
       return symbolIndices.map((indexStr) => {
         const [col, row] = indexStr.split(",").map(Number);
-        const symbolValues = (settings.lastReel[col][row] = -1);
+        const symbolValues = (settings.lastReel[row][col] = -1);
         return {
           value: symbolValues,
         };
