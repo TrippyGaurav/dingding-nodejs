@@ -33,6 +33,7 @@ export const gameData = [
       [1, 2, 0, 2, 1],
     ],
     bets: [0.1, 0.25, 0.5, 0.75, 1],
+    freeSpinData : [[4,3],[5,5,],[6,7],[7,10],[8,25]],
     Symbols: [
       {
         Name: "0",
@@ -199,22 +200,19 @@ export const gameData = [
         },
         description:
           "Activates 3, 5, or 10 free spins when 3, 4, or 5 symbols appear anywhere on the result matrix.",
-        useWildSub: false,
+        useWildSub: false, 
         multiplier: [
-          [0, 10],
-          [0, 5],
-          [0, 3],
         ],
       },
       {
         Name: "Wild",
         Id: 10,
         reelInstance: {
-          "0": 4,
-          "1": 4,
-          "2": 4,
-          "3": 4,
-          "4": 4,
+          "0": 10,
+          "1": 10,
+          "2": 10,
+          "3": 10,
+          "4": 10,
         },
         description:
           "Substitutes for all symbols except Jackpot, Free Spin, Bonus, and Scatter.",
@@ -240,5 +238,5 @@ export const gameData = [
         increaseValue: 5,
       },
     ],
-  },
+  }
 ];
