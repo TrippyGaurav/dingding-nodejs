@@ -10,7 +10,8 @@ export class SLPM {
         totalbet: 0,
         rtpSpinCount: 0,
         totalSpin: 0,
-        currentPayout: 0
+        currentPayout: 0,
+        payoutafterCascading: 0,
     };
 
     constructor(public currentGameData: currentGamedata) {
@@ -114,7 +115,7 @@ export class SLPM {
         }
     }
     private async checkMoolahResult() {
-
+        
         checkForWin(this)
         // console.log(this.settings.cascadingNo, 'CASCADING')
 

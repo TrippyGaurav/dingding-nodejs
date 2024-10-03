@@ -31,6 +31,7 @@ export function initializeGameSettings(gameData: any, gameInstance: SLPM) {
     reels: [],
     hasCascading: false,
     cascadingNo: 0,
+    payoutAfterCascading: 0,
     cascadingResult: [],
     lastReel: [],
     tempReel: [],
@@ -240,7 +241,8 @@ export function checkForWin(gameInstance: SLPM) {
         settings.tempReelSym = [];
         settings.tempReel = [];
         settings.lastReel = [];
-        totalPayout = 0;
+        settings.payoutAfterCascading = 0;
+        gameInstance.playerData.payoutafterCascading = 0;
         break;
     }
     return winningLines;
@@ -423,6 +425,8 @@ function cascadeSymbols(gameInstance) {
   data.lineToEmit = settings._winData.winningLines;
   data.winingSymbols = settings._winData.winningSymbols;
   data.currentWining = settings._winData.totalWinningAmount;
+  settings.payoutAfterCascading +=  settings._winData.totalWinningAmount;
+  gameInstance.playerData.payoutAfterCascading += settings._winData.totalWinningAmount;
   settings.cascadingResult.push({ ...data });
   console.log(settings.cascadingResult)
   data.symbolsToFill = [];
@@ -482,7 +486,7 @@ export function makeResultJson(gameInstance: SLPM) {
       },
       PlayerData: {
         Balance: Balance,
-        currentWining: settings._winData.totalWinningAmount,
+        currentWining: settings.payoutAfterCascading ,
         totalbet: playerData.totalbet,
         haveWon: playerData.haveWon,
       }
