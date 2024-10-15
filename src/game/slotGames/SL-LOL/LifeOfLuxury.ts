@@ -59,92 +59,85 @@ class SlotGame {
     return Array(this.config.reels).fill(null).map((_, index) => this.spinReel(index));
   }
 
-checkWin(result: GameResult): { payout: number; winningCombinations: WinningCombination[] } {
-  let totalPayout = 0;
-  const winningCombinations: WinningCombination[] = [];
+  checkWin(result: GameResult): { payout: number; winningCombinations: WinningCombination[] } {
+    let totalPayout = 0;
+    const winningCombinations: WinningCombination[] = [];
 
-  const getSymbol = (id: number) => this.symbols.find(s => s.Id === id);
+    const getSymbol = (id: number) => this.symbols.find(s => s.Id === id);
 
-  // Check for horizontal wins
-  for (let startRow = 0; startRow < this.config.rows; startRow++) {
-    let currentSymbolId = result[0][startRow];
-    let count = 1;
-    let wildCount = 0;
-    const winMatrix: boolean[][] = Array(this.config.rows).fill(null).map(() => Array(this.config.reels).fill(false));
-    winMatrix[startRow][0] = true;
-    const way = [currentSymbolId];
+    const isMatchOrWild = (symbolId: number, targetId: number) => {
+      const symbol = getSymbol(symbolId);
+      return symbolId === targetId || (symbol?.Name === "Wild" && symbol.Id !== targetId);
+    };
 
-    for (let reel = 1; reel < this.config.reels; reel++) {
-      let matchFound = false;
+    // Helper function to create a new matrix
+    const createMatrix = () => Array(this.config.rows).fill(null).map(() => Array(this.config.reels).fill(false));
+
+    // Check all symbols in the first column
+    for (let startRow = 0; startRow < this.config.rows; startRow++) {
+      const startSymbolId = result[0][startRow];
+      const startSymbol = getSymbol(startSymbolId);
+      if (!startSymbol || startSymbol.Name === "Wild") continue;
+
+      // Initialize ways with all matching symbols in the first column
+      let ways: { path: number[]; matrix: boolean[][] }[] = [];
       for (let row = 0; row < this.config.rows; row++) {
-        const symbolId = result[reel][row];
-        const symbol = getSymbol(symbolId);
-
-        if (symbol?.Name === "Wild" || symbolId === currentSymbolId) {
-          if (symbol?.Name === "Wild") wildCount++;
-          count++;
-          way.push(symbolId);
-          winMatrix[row][reel] = true;
-          matchFound = true;
-          break;
+        if (isMatchOrWild(result[0][row], startSymbolId)) {
+          const matrix = createMatrix();
+          matrix[row][0] = true;
+          ways.push({ path: [result[0][row]], matrix });
         }
       }
 
-      if (!matchFound) break;
-    }
+      // Check subsequent columns
+      for (let col = 1; col < this.config.reels; col++) {
+        const newWays: typeof ways = [];
 
-    if (count >= this.config.minMatchCount) {
-      const symbol = getSymbol(currentSymbolId);
-      if (symbol) {
-        const payoutIndex = Math.min(count - this.config.minMatchCount, symbol.payout.length - 1);
-        const combinationPayout = symbol.payout[payoutIndex];
-        totalPayout += combinationPayout;
+        for (const way of ways) {
+          let matchFound = false;
+          for (let row = 0; row < this.config.rows; row++) {
+            const symbolId = result[col][row];
+            if (isMatchOrWild(symbolId, startSymbolId)) {
+              const newPath = [...way.path, symbolId];
+              const newMatrix = way.matrix.map(row => [...row]);
+              newMatrix[row][col] = true;
+              newWays.push({ path: newPath, matrix: newMatrix });
+              matchFound = true;
+            }
+          }
+          if (!matchFound) {
+            // If no match is found in this column, the current way ends here
+            if (way.path.length >= this.config.minMatchCount) {
+              newWays.push(way);
+            }
+          }
+        }
 
-        winningCombinations.push({
-          symbols: way,
-          count,
-          wildCount,
-          payout: combinationPayout,
-          matrix: winMatrix
-        });
+        if (newWays.length === 0) break;
+        ways = newWays;
       }
-    }
-  }
 
-  // Check for vertical wins
-  for (let reelIndex = 0; reelIndex < this.config.reels; reelIndex++) {
-    const symbolCounts: { [id: number]: number } = {};
-    const winMatrix: boolean[][] = Array(this.config.rows).fill(null).map(() => Array(this.config.reels).fill(false));
-
-    for (let row = 0; row < this.config.rows; row++) {
-      const symbolId = result[reelIndex][row];
-      symbolCounts[symbolId] = (symbolCounts[symbolId] || 0) + 1;
-      winMatrix[row][reelIndex] = true;
-    }
-
-    Object.entries(symbolCounts).forEach(([symbolIdStr, count]) => {
-      const symbolId = parseInt(symbolIdStr);
-      if (count >= this.config.minMatchCount) {
-        const symbol = getSymbol(symbolId);
-        if (symbol) {
-          const payoutIndex = Math.min(count - this.config.minMatchCount, symbol.payout.length - 1);
-          const combinationPayout = symbol.payout[payoutIndex];
+      // Process winning combinations
+      for (const way of ways) {
+        if (way.path.length >= this.config.minMatchCount) {
+          const wildCount = way.path.filter(id => getSymbol(id)?.Name === "Wild").length;
+          const payoutIndex = Math.min(way.path.length - this.config.minMatchCount, startSymbol.payout.length - 1);
+          const combinationPayout = startSymbol.payout[payoutIndex];
           totalPayout += combinationPayout;
 
           winningCombinations.push({
-            symbols: Array(count).fill(symbolId),
-            count,
-            wildCount: 0, // Adjust if Wild symbols are allowed in vertical wins
+            symbols: way.path,
+            count: way.path.length,
+            wildCount,
             payout: combinationPayout,
-            matrix: winMatrix
+            matrix: way.matrix
           });
         }
       }
-    });
-  }
+    }
 
-  return { payout: totalPayout, winningCombinations };
-}
+    return { payout: totalPayout, winningCombinations };
+  }
 
   play(): { result: GameResult; payout: number; winningCombinations: WinningCombination[] } {
     const result = this.spin();
@@ -195,7 +188,7 @@ const symbols: SymbolType[] = [
     Name: "JetPlane",
     Id: 0,
     isSpecial: false,
-    reelInstance: { 0: 2, 1: 2, 2: 2, 3: 2, 4: 2 },
+    reelInstance: { 0: 20, 1: 20, 2: 20, 3: 20, 4: 20 },
     payout: [1000, 500, 100],
   },
   {
