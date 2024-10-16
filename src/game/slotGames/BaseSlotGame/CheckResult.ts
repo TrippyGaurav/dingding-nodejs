@@ -108,17 +108,30 @@ export class CheckResult {
 
     private checkForFreeSpin() {
         let temp = this.findSymbol(specialIcons.FreeSpin);
-
+        const freeSpinMultiplier = Array.from(this.currentGame.settings.freeSpin.freeSpinMuiltiplier);
+        const freeSpinSymbolsCount = temp.length
         if (temp.length > (5 - this.currentGame.settings.freeSpin.freeSpinMuiltiplier.length)) {
             console.log("!!!! FREEE SPINNN !!!!!"
+            
             );
+            
 
             const freeSpins = this.accessData(this.currentGame.settings.freeSpin.symbolID, temp.length)
+            if(freeSpinSymbolsCount<6)
+                {
+                    this.currentGame.settings.freeSpin.freeSpinCount += freeSpins;
+                    this.currentGame.playerData.totalSpin += freeSpins;
+                } 
+            else
+            {
+                this.currentGame.settings.freeSpin.freeSpinCount += freeSpinMultiplier[0][1];                
+                this.currentGame.playerData.totalSpin += freeSpinMultiplier[0][1];
+
+            }
             this.currentGame.settings.freeSpin.freeSpinStarted = true;
             this.currentGame.settings.freeSpin.freeSpinsAdded = true;
 
-            this.currentGame.settings.freeSpin.freeSpinCount += freeSpins;
-            this.currentGame.playerData.totalSpin += freeSpins;
+            
             this.currentGame.playerData.rtpSpinCount += freeSpins;
             this.currentGame.settings._winData.winningSymbols.push(temp);
         }
