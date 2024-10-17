@@ -1,6 +1,7 @@
 export const gameData = [
   {
     "id": "SL-LOL",
+    "isSpecial": true,
     "matrix": {
       "x": 5,
       "y": 3
@@ -69,7 +70,7 @@ export const gameData = [
         "Name": "Wild",
         "Id": 6,
         "isSpecial": true,
-        "reelInstance": { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1 },
+        "reelInstance": { 0: 1, 1: 1, 2: 1, 3: 1  },
         "payout": [2000, 1000, 200],
       },
     ]
