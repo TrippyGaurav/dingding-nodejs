@@ -2,6 +2,7 @@ export const gameData = [
   {
     "id": "SL-LOL",
     "isSpecial": true,
+    "minMatchCount": 3,
     "matrix": {
       "x": 5,
       "y": 3
@@ -63,15 +64,15 @@ export const gameData = [
         "Name": "Champagne",
         "Id": 5,
         "isSpecial": false,
-        "reelInstance": { 0: 7, 1: 7, 2: 7, 3: 7, 4: 7 },
+        "reelInstance": { 0: 4, 1: 2 , 2: 2, 3: 2, 4: 2 },
         "payout": [25, 10, 3],
       },
       {
         "Name": "Wild",
         "Id": 6,
         "isSpecial": true,
-        "reelInstance": { 0: 1, 1: 1, 2: 1, 3: 1  },
-        "payout": [2000, 1000, 200],
+        "reelInstance": { 0: 0, 1: 1, 2: 2, 3: 2 },
+        "payout": [0, 0, 0],
       },
     ]
   }

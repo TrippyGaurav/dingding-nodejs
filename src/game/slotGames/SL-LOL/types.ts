@@ -8,11 +8,11 @@ export interface SymbolType {
 
 export type GameResult = number[][];
 
-export interface GameConfig {
-  rows: number;
-  reels: number;
-  minMatchCount: number;
-}
+// export interface GameConfig {
+//   rows: number;
+//   reels: number;
+//   minMatchCount: number;
+// }
 
 export interface WinningCombination {
   symbolId: number;
@@ -23,21 +23,18 @@ export interface WinningCombination {
 export interface SLLOLSETTINGS {
   id: string;
   isSpecial: boolean;
-  isEnabled:boolean;
-  matrix: number[][];
+  matrix: { x: number, y: number };
+  isEnabled: boolean;
   bets: number[];
   Symbols: SymbolType[];
   resultSymbolMatrix: number[][];
   currentGamedata: any;
   _winData: any;
-  // canmatch: any[];
-  // mixedPayout: number;
   currentBet: number;
   currentLines: number;
   BetPerLines: number;
   reels: number[][];
   defaultPayout: number;
-  // SpecialType: string;
-  // isSpecialLOL: boolean;
-  // symbolsCount: number;
+  minMatchCount: number;
+  
 }

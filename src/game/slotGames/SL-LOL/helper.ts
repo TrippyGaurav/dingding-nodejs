@@ -1,55 +1,75 @@
 import { SLLOL } from './LifeOfLuxury';
-import { SymbolType, GameResult, GameConfig, WinningCombination } from './types';
+import { SymbolType, GameResult, WinningCombination } from './types';
 import { WinData } from "../BaseSlotGame/WinData";
 import { convertSymbols, UiInitData } from '../../Utils/gameUtils';
 
 
 export function initializeGameSettings(gameData: any, gameInstance: SLLOL) {
-  return {
-    id: gameData.gameSettings.id,
-    isSpecial: gameData.gameSettings.isSpecial,
-    matrix: gameData.gameSettings.matrix,
-    isEnabled: gameData.gameSettings.isEnabled,
-    bets: gameData.gameSettings.bets,
+  // console.log("Entering initializeGameSettings function");
+  // console.log("gameData:", JSON.stringify(gameData, null, 2));
+
+  const gameSettings = gameData.gameSettings || gameData; // Handle both possible structures
+
+  const settings = {
+    id: gameSettings.id,
+    isSpecial: gameSettings.isSpecial,
+    matrix: gameSettings.matrix,
+    isEnabled: gameSettings.isEnabled ?? true,
+    bets: gameSettings.bets,
     Symbols: gameInstance.initSymbols,
     resultSymbolMatrix: [],
-    currentGamedata: gameData.gameSettings,
-    _winData: new WinData(gameInstance),
+    currentGamedata: gameSettings,
     currentBet: 0,
+    _winData: null,
     currentLines: 0,
     BetPerLines: 0,
     reels: [],
-    // scatterBlue: gameData.gameSettings.scatterBlue,
-    // scatterPurple: gameData.gameSettings.scatterPurple,
-    // joker: gameData.gameSettings.joker,
-    // booster: gameData.gameSettings.booster,
-    // levelUp: gameData.gameSettings.levelUp,
-    defaultPayout: gameData.gameSettings.defaultPayout,
-    // SpecialType: gameData.gameSettings.SpecialType,
-    // freeSpinCount: 0,
-    // freeSpinType: "NONE" as "NONE" | "BLUE" | "PURPLE",
-    // multiplierType: "NONE" as "NONE" | "SIMPLE" | "EXHAUSTIVE",
-  }
+    defaultPayout: gameSettings.defaultPayout || 0,
+    minMatchCount: gameSettings.minMatchCount || 3,
+  };
+
+  // Add WinData separately to avoid circular reference in logging
+  settings._winData = new WinData(gameInstance);
+
+  return settings;
 }
 
 export function generateInitialReel(gameSettings: any): number[][] {
-  const reels: number[][] = [];
-  const numReels = gameSettings.matrix[0].length; // Assuming matrix represents the game grid
+  try {
+    // console.log("Entering generateInitialReel function");
+    // console.log("gameSettings:", JSON.stringify(gameSettings, (key, value) => key === '_winData' ? undefined : value, 2));
 
-  for (let i = 0; i < numReels; i++) {
-    const reel: number[] = [];
-    gameSettings.Symbols.forEach(symbol => {
-      const count = symbol.reelInstance[i] || 0; // Using reelInstance[i] for frequency on each reel
-      for (let j = 0; j < count; j++) {
-        reel.push(symbol.Id);
-      }
-    });
+    if (!gameSettings || !gameSettings.matrix || !gameSettings.Symbols) {
+      console.error("Invalid gameSettings object:", gameSettings);
+      return [];
+    }
 
-    shuffleArray(reel);
-    reels.push(reel);
+    const reels: number[][] = [];
+    const numReels = gameSettings.matrix.x;
+    // console.log("Number of reels:", numReels);
+
+    for (let i = 0; i < numReels; i++) {
+      const reel: number[] = [];
+      gameSettings.Symbols.forEach((symbol: any) => {
+        if (!symbol || !symbol.reelInstance) {
+          // console.warn("Invalid symbol object:", symbol);
+          return;
+        }
+        const count = symbol.reelInstance[i] || 0;
+        // console.log(`Reel ${i}, Symbol ${symbol.Name}, Count: ${count}`);
+        for (let j = 0; j < count; j++) {
+          reel.push(symbol.Id);
+        }
+      });
+      shuffleArray(reel);
+      reels.push(reel);
+    }
+    // console.log("Generated reels:", reels);
+    return reels;
+  } catch (e) {
+    console.error("Error in generateInitialReel:", e);
+    return [];
   }
-
-  return reels;
 }
 
 function shuffleArray(array: any[]) {
@@ -80,16 +100,23 @@ export function sendInitData(gameInstance: SLLOL) {
   };
   gameInstance.sendMessage("InitData", dataToSend);
 }
+
+// export function calculatePayout(gameInstance: SLLOL,  symbolId: number, count: number): number {
+//   const symbol = gameInstance.settings.Symbols.find(sym => sym.Id === symbolId);
+//   if (!symbol) return 0;
+//
+//   const payoutIndex = Math.min(count - 3, symbol.payout.length - 1);
+//   return symbol.payout[payoutIndex] * gameInstance.settings.BetPerLines;
+// }
+
 export function makeResultJson(gameInstance: SLLOL) {
   try {
     const { settings, playerData } = gameInstance;
-    const credits = gameInstance.getPlayerData().credits
-    const Balance = credits.toFixed(2)
+    const credits = gameInstance.getPlayerData().credits;
+    const Balance = credits.toFixed(2);
     const sendData = {
       gameData: {
         resultSymbols: settings.resultSymbolMatrix,
-        // isFreeSpin: settings.isFreeSpin,
-        // freeSpinCount: settings.freeSpinCount
       },
       PlayerData: {
         Balance: Balance,
@@ -105,53 +132,76 @@ export function makeResultJson(gameInstance: SLLOL) {
   }
 }
 
+// export function getRandomSymbolForReel(symbols: SymbolType[], reelIndex: number): number {
+//   const availableSymbols = symbols.filter(symbol => symbol.reelInstance.hasOwnProperty(reelIndex));
+//   const totalInstances = availableSymbols.reduce((sum, symbol) => sum + symbol.reelInstance[reelIndex], 0);
+//   let randomValue = crypto.getRandomValues(new Uint32Array(1))[0] % totalInstances;
+//
+//   for (const symbol of availableSymbols) {
+//     if (randomValue < symbol.reelInstance[reelIndex]) {
+//       return symbol.Id;
+//     }
+//     randomValue -= symbol.reelInstance[reelIndex];
+//   }
+//
+//   // This should never happen, but TypeScript requires a return statement
+//   return availableSymbols[0].Id;
+// }
 
-export function getRandomSymbolForReel(symbols: SymbolType[], reelIndex: number): number {
-  const availableSymbols = symbols.filter(symbol => symbol.reelInstance.hasOwnProperty(reelIndex));
-  const totalInstances = availableSymbols.reduce((sum, symbol) => sum + symbol.reelInstance[reelIndex], 0);
-  let randomValue = crypto.getRandomValues(new Uint32Array(1))[0] % totalInstances;
-
-  for (const symbol of availableSymbols) {
-    if (randomValue < symbol.reelInstance[reelIndex]) {
-      return symbol.Id;
-    }
-    randomValue -= symbol.reelInstance[reelIndex];
-  }
-
-  // This should never happen, but TypeScript requires a return statement
-  return availableSymbols[0].Id;
-}
-
-export function printMatrix(matrix: GameResult, getSymbol: (id: number) => SymbolType | undefined, config: GameConfig): void {
-  const symbolNames = matrix.map(col => 
+export function printMatrix(matrix: GameResult, getSymbol: (id: number) => SymbolType | undefined, gameInstance: SLLOL): void {
+  const symbolNames = matrix.map(col =>
     col.map(symbolId => getSymbol(symbolId)?.Name.substring(0, 4) || 'Unkn')
   );
 
-  for (let row = 0; row < config.rows; row++) {
+  for (let row = 0; row < gameInstance.settings.matrix.y; row++) {
     console.log(symbolNames.map(col => col[row].padEnd(4)).join(' | '));
   }
 }
+export function printWinningCombinations(winningCombinations: WinningCombination[]): void {
+  if (winningCombinations.length === 0) {
+    console.log("No winning combinations.");
+    return;
+  }
 
-export function printWinningCombination(result: GameResult, positions: [number, number][], getSymbol: (id: number) => SymbolType | undefined, config: GameConfig): void {
-  const matrix = Array(config.rows).fill(null).map(() => 
-    Array(config.reels).fill(' -- ')
-  );
-
-  positions.forEach(([col, row]) => {
-    const symbolName = getSymbol(result[col][row])?.Name.substring(0, 4) || 'Unkn';
-    matrix[row][col] = symbolName.padEnd(4);
+  console.log("Winning Combinations:");
+  winningCombinations.forEach((combo, index) => {
+    console.log(`Combination ${index + 1}:`);
+    console.log(`  Symbol ID: ${combo.symbolId}`);
+    console.log(`  Positions: ${combo.positions.map(pos => `(${pos[0]},${pos[1]})`).join(', ')}`);
+    console.log(`  Payout: ${combo.payout}`);
+    console.log(); // Empty line for separation
   });
 
-  for (let row = 0; row < config.rows; row++) {
-    console.log(matrix[row].join(' | '));
-  }
+  const totalPayout = winningCombinations.reduce((sum, combo) => sum + combo.payout, 0);
+  console.log(`Total Payout: ${totalPayout}`);
 }
+// export function printWinningGrid(result: GameResult, winningCombinations: WinningCombination[]): void {
+//   // Print the game result matrix
+//   console.log("Game Result:");
+//   result.forEach(row => console.log(row.join(' ')));
+//
+//   console.log("\nWinning Combinations:");
+//
+//   winningCombinations.forEach(combo => {
+//     console.log(`${combo.symbolId} ->`);
+//
+//     const grid = result.map(row => row.map(() => '-'));
+//
+//     combo.positions.forEach(([col, row]) => {
+//       grid[row][col] = '0';
+//     });
+//
+//     grid.forEach(row => console.log(row.join(' ')));
+//     console.log();  // Empty line for separation
+//   });
+// }
 
-export function logGame(result: GameResult, payout: number, winningCombinations: WinningCombination[], getSymbol: (id: number) => SymbolType | undefined, config: GameConfig): void {
+
+export function logGame(result: GameResult, payout: number, winningCombinations: WinningCombination[], getSymbol: (id: number) => SymbolType | undefined, gameInstance: SLLOL): void {
   console.log("Game Result:");
-  printMatrix(result, getSymbol, config);
+  printMatrix(result, getSymbol, gameInstance);
   console.log("\nTotal Payout:", payout);
-  
+
   if (winningCombinations.length > 0) {
     console.log("\nWinning Combinations:");
     winningCombinations.forEach((combo, index) => {
@@ -159,10 +209,9 @@ export function logGame(result: GameResult, payout: number, winningCombinations:
       console.log(`\nCombination ${index + 1}:`);
       console.log(`Symbol: ${symbol?.Name}`);
       console.log(`Payout: ${combo.payout}`);
-      printWinningCombination(result, combo.positions, getSymbol, config);
+      // printWinningCombination(result, combo.positions, getSymbol, gameInstance);
     });
   } else {
     console.log("\nNo winning combinations.");
   }
 }
-
