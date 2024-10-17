@@ -472,7 +472,7 @@ export function sendInitData(gameInstance: SLPM) {
 export function makeResultJson(gameInstance: SLPM) {
   try {
     const { settings, playerData } = gameInstance;
-    const credits = gameInstance.getPlayerData().credits
+    const credits = gameInstance.getPlayerData().credits + settings.payoutAfterCascading
     const Balance = credits.toFixed(2)
     const sendData = {
       GameData: {

@@ -136,6 +136,7 @@ export class CheckResult {
             this.currentGame.settings._winData.winningSymbols.push(temp);
         }
     }
+    
 
     //check for win function
     private checkForWin() {
