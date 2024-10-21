@@ -14,9 +14,9 @@ export interface currentGamedata {
   username: string,
   currentGameManager: GameManager;
   gameSettings: any;
-  sendMessage: (action: string, message: any) => void;
-  sendError: (message: string) => void;
-  sendAlert: (message: string) => void;
+  sendMessage: (action: string, message: any, isGameSocket: boolean) => void;
+  sendError: (message: string, isGameSocket: boolean) => void;
+  sendAlert: (message: string, isGameSocket: boolean) => void;
   updatePlayerBalance: (message: number) => void;
   deductPlayerBalance: (message: number) => void;
   getPlayerData: () => playerData;
@@ -64,7 +64,6 @@ export default class PlayerSocket {
       cleanedUp: false
     }
 
-    // Initialize game socket data (game socket is null at first)
     this.gameData = {
       socket: null,
       heartbeatInterval: setInterval(() => { }, 0),
@@ -95,7 +94,19 @@ export default class PlayerSocket {
       username: this.playerData.username
     };
 
-    console.log("Welcome : ", this.playerData.username);
+    this.initializePlatformSocket(socket)
+  }
+
+  private initializePlatformSocket(socket: Socket) {
+    this.platformData.socket = socket;
+    this.messageHandler(false);
+    this.startPlatformHeartbeat()
+
+    this.platformData.socket.on("disconnect", () => {
+      console.log(`${this.playerData.username} has disconnected from the platform.`);
+      this.handlePlatformDisconnection();
+    });
+
   }
 
   // Initialze or update the game socket when a game is required
@@ -111,7 +122,7 @@ export default class PlayerSocket {
     this.initGameData(); // Initialize game-specific data
     this.startGameHeartbeat(); // Start a heartbeat for the game socket
     this.onExit(); // Handle user exit for game
-    this.messageHandler(); // handle game messages
+    this.messageHandler(true); // handle game messages
     this.gameData.socket.emit("socketState", true);
   }
 
@@ -240,7 +251,6 @@ export default class PlayerSocket {
     }
   }
 
-
   public sendMessage(action: string, message: any, isGameSocket: boolean = false) {
     const socket = isGameSocket ? this.gameData.socket : this.platformData.socket;
     if (socket) {
@@ -250,6 +260,7 @@ export default class PlayerSocket {
       )
     }
   }
+
   // Send an error message to the client (either platform or game)
   public sendError(message: string, isGameSocket: boolean = false) {
     const socket = isGameSocket ? this.gameData.socket : this.platformData.socket;
@@ -290,7 +301,6 @@ export default class PlayerSocket {
       })
     }
   }
-
 
   // Handle user exit event for the game or platform
   public onExit(isGameSocket: boolean = false) {

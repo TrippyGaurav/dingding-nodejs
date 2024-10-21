@@ -109,7 +109,7 @@ const socketController = (io: Server) => {
                 // Platform connection :  Only initialze the player, no game initialization
                 const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket);
                 users.set(username, newUser);
-                newUser.sendAlert(`Player initialized for ${newUser.playerData.username} on platform ${origin}`);
+                newUser.sendAlert(`Player initialized for ${newUser.playerData.username} on platform ${origin}`, false);
                 return;
             }
             else {
