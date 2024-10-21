@@ -164,7 +164,7 @@ export class UserController {
       });
 
       const socketUser = users.get(username);
-      if (socketUser?.socketData.gameSocket) {
+      if (socketUser?.gameData.socket) {
         throw createHttpError(403, "You Are Already Playing on another browser or tab");
       }
 

@@ -63,7 +63,9 @@ const socketController = (io: Server) => {
     io.on("connection", async (socket) => {
         try {
             const decoded = (socket as any).decoded;
-            const gameTag = socket.handshake.auth.gameId
+            const origin = socket.handshake.auth.origin;
+            const gameId = socket.handshake.auth.gameId;
+
 
             if (!decoded || !decoded.username || !decoded.role) {
                 console.error("Connection rejected: missing required fields in token");
@@ -84,25 +86,44 @@ const socketController = (io: Server) => {
                     throw createHttpError(403, "Please wait to disconnect")
                 }
 
-                await existingUser.updateGameSocket(socket);
-                existingUser.sendAlert(`Game socket created for ${username}`);
+                // Ensure the user has a platform connection before allowing a game connection
+                if (!existingUser.platformData.socket) {
+                    socket.emit("Error", "You need to have an active platform connection before joining a game.");
+                    socket.disconnect(true);
+                    return;
+                }
 
+                // If gameId is provided, this is a request for a game connection
+                if (gameId) {
+                    await existingUser.updateGameSocket(socket); // Initialize or update the game socket
+                    existingUser.sendAlert(`Game initialized for ${username} in game ${gameId}`);
+                }
+
+                // If no gameId is provided, just confirm platform connection
+                existingUser.sendAlert(`Platform connection for ${username} is already active.`);
                 return;
             }
 
-            // This is a new user connecting
-            const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket, gameTag);
-            users.set(username, newUser);
+            // If no existing user, this is a new connection
+            if (origin) {
+                // Platform connection :  Only initialze the player, no game initialization
+                const newUser = new Player(username, decoded.role, decoded.credits, userAgent, socket);
+                users.set(username, newUser);
+                newUser.sendAlert(`Player initialized for ${newUser.playerData.username} on platform ${origin}`);
+                return;
+            }
+            else {
+                // Reject game connection without an active platform connection
+                socket.emit("Error", "You need to have an active platform connection before joining a game.");
+                socket.disconnect(true);
+            }
 
-            newUser.sendAlert(`Welcome, ${newUser.playerData.username}!`);
         } catch (error) {
             console.error("An error occurred during socket connection:", error.message);
             if (socket.connected) {
                 socket.disconnect(true);
             }
         }
-
-
     });
 
     // Error handling middleware
